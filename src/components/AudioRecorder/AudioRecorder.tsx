@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import styles from "./AudioRecorder.module.css";
-import { WS_URL, API_BASE } from "./AudioRecorder.logic";
-import axios from "axios";
+import { WS_URL } from "./AudioRecorder.logic";
 
 export type AudioRecorderProps = Readonly<{
   transcript?: string;
@@ -44,8 +43,6 @@ export default function AudioRecorder({
   const isRecordingRef = useRef<boolean>(false);
   const isPausedRef = useRef<boolean>(false);
   const transcriptRef = useRef<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
   useEffect(() => {
     return () => {
       if (animFrameRef.current !== null) {
@@ -209,52 +206,6 @@ export default function AudioRecorder({
     } catch (err) {
       console.error("Mic access denied", err);
       if (onTranscriptionError) onTranscriptionError("Mic access denied");
-    }
-  };
-
-  const handleAudioUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Check if it's an audio file
-    if (!file.type.startsWith("audio/")) {
-      alert("Please upload a valid audio file.");
-      return;
-    }
-
-    setIsUploading(true);
-    if (onTranscriptionStart) onTranscriptionStart();
-
-    // Show preview of the uploaded file
-    const url = URL.createObjectURL(file);
-    setAudioURL(url);
-    const baseName = file.name.replace(/\.[^/.]+$/, "");
-    setFileName(baseName);
-
-    const formData = new FormData();
-    formData.append("audio", file);
-
-    try {
-      const response = await axios.post(`${API_BASE}/transcribe`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (response.data.transcript) {
-        const newText = response.data.transcript;
-        transcriptRef.current = newText;
-        if (onTranscriptionComplete) onTranscriptionComplete(newText);
-      }
-    } catch (error: any) {
-      console.error("Upload transcription failed:", error);
-      const errorMsg =
-        error.response?.data?.error || "Failed to transcribe uploaded file";
-      if (onTranscriptionError) onTranscriptionError(errorMsg);
-    } finally {
-      setIsUploading(false);
-      // Clear input so same file can be uploaded again
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -495,22 +446,6 @@ export default function AudioRecorder({
           </button>
 
           <button
-            className={`${styles.btn} ${styles.btnUpload}`}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isRecording || isUploading}
-          >
-            {isUploading ? "⏳ Uploading..." : "↑ Upload Audio"}
-          </button>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleAudioUpload}
-            style={{ display: "none" }}
-            accept="audio/*"
-          />
-
-          <button
             className={`${styles.btn} ${styles.btnPause} ${isPaused ? styles.paused : ""}`}
             onClick={togglePause}
             disabled={!isRecording}
@@ -540,5 +475,3 @@ export default function AudioRecorder({
     </div>
   );
 }
-
-
