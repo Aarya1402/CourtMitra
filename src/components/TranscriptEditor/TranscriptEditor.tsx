@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { FileText, Download, Copy, Check } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { FileText, Download, Copy, Check, Edit2, X } from "lucide-react";
 import Button from "../shared/Button";
 import styles from "./TranscriptEditor.module.css";
 import { DEFAULT_PLACEHOLDER } from "./TranscriptEditor.logic";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { Link } from "react-router-dom";
+import AudioRecorder from "../AudioRecorder/AudioRecorder";
 
 interface TranscriptEditorProps {
   transcript: string;
@@ -19,6 +20,59 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   isLoading,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const [selectionRange, setSelectionRange] = useState<{ start: number, end: number, text: string } | null>(null);
+  const [originalParts, setOriginalParts] = useState<{ before: string, after: string } | null>(null);
+  const [isModifying, setIsModifying] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const textarea = textareaRef.current;
+    
+    if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+      setSelectionRange({
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd,
+        text: transcript.slice(textarea.selectionStart, textarea.selectionEnd)
+      });
+      setContextMenu({ x: e.pageX, y: e.pageY });
+    } else {
+      setContextMenu(null);
+    }
+  };
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  useEffect(() => {
+    const handleClick = () => closeContextMenu();
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  const handleModifyClick = () => {
+    if (selectionRange) {
+      setOriginalParts({
+        before: transcript.slice(0, selectionRange.start),
+        after: transcript.slice(selectionRange.end)
+      });
+      setIsModifying(true);
+    }
+    setContextMenu(null);
+  };
+
+  const handleTranscriptionUpdate = (newText: string) => {
+    if (originalParts) {
+      const updatedTranscript = originalParts.before + newText + originalParts.after;
+      onChange(updatedTranscript);
+    }
+  };
+
+  const handleModifyDone = () => {
+    setIsModifying(false);
+    setSelectionRange(null);
+    setOriginalParts(null);
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(transcript);
@@ -109,12 +163,54 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             <p>Processing audio...</p>
           </div>
         ) : (
-          <textarea
-            className={styles.transcriptEditor}
-            value={transcript}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={DEFAULT_PLACEHOLDER}
-          />
+          <>
+            <textarea
+              ref={textareaRef}
+              className={`${styles.transcriptEditor} ${isModifying ? styles.modifying : ""}`}
+              value={transcript}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={DEFAULT_PLACEHOLDER}
+              onContextMenu={handleContextMenu}
+            />
+
+            {contextMenu && (
+              <div 
+                className={styles.contextMenu}
+                style={{ top: contextMenu.y, left: contextMenu.x }}
+              >
+                <div 
+                  className={styles.contextMenuItem}
+                  onClick={handleModifyClick}
+                >
+                  <Edit2 size={14} />
+                  <span>Modify with Voice</span>
+                </div>
+              </div>
+            )}
+
+            {isModifying && (
+              <div className={styles.modifyOverlay}>
+                <div className={styles.modifyRecorder}>
+                  <div className={styles.modifyHeader}>
+                    <h3>Modifying Selection</h3>
+                    <p>Recording will replace: "{selectionRange?.text.slice(0, 30)}..."</p>
+                    <button className={styles.closeBtn} onClick={() => setIsModifying(false)}>
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <AudioRecorder 
+                    onTranscriptionComplete={handleTranscriptionUpdate}
+                    onClose={handleModifyDone}
+                  />
+                  <div className={styles.modifyActions}>
+                    <Button onClick={handleModifyDone} className={styles.doneBtn}>
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/sarvam-blob/, ""),
         },
         "/api": {
-          target: env.VITE_API_BASE_URL || "http://localhost:5000",
+          target: env.API_BASE_URL || "http://localhost:5000",
           changeOrigin: true,
         },
         "/ws": {
