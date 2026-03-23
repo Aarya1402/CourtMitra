@@ -44,7 +44,7 @@ export const handleTalkumentProxy = async (
     const isStreaming = endpoint.includes("/bots/agui/interact");
     if (isStreaming) {
       const fetchRes = await fetch(
-        `https://nighthack.api.talkument.co/api${endpoint}`,
+        `${process.env.TALKUMENT_API_BASE || "https://nighthack.api.talkument.co/api"}${endpoint}`,
         {
           method: req.method,
           headers: {

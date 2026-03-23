@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-const TALKUMENT_API_BASE = "https://nighthack.api.talkument.co/api";
+const TALKUMENT_API_BASE =
+  process.env.TALKUMENT_API_BASE || "https://nighthack.api.talkument.co/api";
 
 export const talkumentApiCall = async (
   method: string,
