@@ -1,0 +1,24 @@
+import HomePage from "./pages/HomePage/HomePage";
+import "./App.css";
+import { Routes, Route } from "react-router";
+import AuthPage from "./pages/AuthPage/AuthPage";
+import ThreadPage from "./pages/ThreadPage/ThreadPage";
+
+function App() {
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <div className="app">
+            <HomePage />
+          </div>
+        }
+      />
+      <Route path="/threads/:threadId" element={<ThreadPage />} />
+      <Route path="/auth" element={<AuthPage />} />
+    </Routes>
+  );
+}
+
+export default App;

@@ -1,0 +1,317 @@
+import React, { useEffect, useRef, useState } from "react";
+import { Upload, FileText, Loader2, Trash2, X, LogOut } from "lucide-react";
+import styles from "./HomePage.module.css";
+import axios from "axios";
+import { checkAndCreateBot } from "../../utils/botAuthUtils";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store";
+import { useNavigate } from "react-router";
+import {
+  fetchThreads,
+  fetchUser,
+  uploadDocument,
+  deleteThread,
+} from "./HomePage.logic";
+
+const DeleteThreadModal = ({
+  isOpen,
+  onCancel,
+  onConfirm,
+  threadTitle,
+}: {
+  isOpen: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  threadTitle: string;
+}) => {
+  if (!isOpen) return null;
+  return (
+    <div className={styles.modalOverlay} onClick={onCancel}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h3>Delete thread?</h3>
+          <button onClick={onCancel} className={styles.closeBtn}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className={styles.modalBody}>
+          <p>
+            Are you sure you want to delete{" "}
+            <strong>"{threadTitle || "Untitled Chat"}"</strong>? This action
+            cannot be undone.
+          </p>
+        </div>
+        <div className={styles.modalFooter}>
+          <button className={styles.cancelBtn} onClick={onCancel}>
+            Cancel
+          </button>
+          <button className={styles.confirmDeleteBtn} onClick={onConfirm}>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const botId = useSelector((state: RootState) => state.bot.botId);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(null);
+  const [threads, setThreads] = useState<any[]>([]);
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    organisation: string;
+    admin: boolean;
+  } | null>(null);
+
+  const [threadToDelete, setThreadToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
+  const [showLogout, setShowLogout] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        `http://${window.location.hostname}:5000/api/talkument/auth/logout`,
+      );
+      navigate("/auth", { replace: true });
+    } catch (error) {
+      console.error("Logout error", error);
+      navigate("/auth", { replace: true });
+    }
+  };
+
+  useEffect(() => {
+    checkAndCreateBot();
+    async function getThreads() {
+      try {
+        if (botId) {
+          const threads = await fetchThreads(botId);
+          setThreads(threads);
+        }
+      } catch (error: any) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          navigate("/auth", { replace: true });
+        }
+      }
+    }
+    getThreads();
+    async function getUser() {
+      try {
+        const user = await fetchUser();
+        if (!user) {
+          navigate("/auth", { replace: true });
+          return;
+        }
+        setUser(user);
+      } catch (error: any) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          navigate("/auth", { replace: true });
+        }
+      }
+    }
+    getUser();
+  }, [botId, navigate]);
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      handleUpload(file);
+    }
+  };
+
+  const handleUpload = async (file: File) => {
+    if (!botId) {
+      alert("Bot not initialized. Please wait or refresh.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const newThreadId = await uploadDocument(file, botId);
+      setThreadId(newThreadId);
+      console.log("Upload successful to thread:", newThreadId);
+    } catch (error) {
+      alert("Upload failed. Please try again.");
+      console.error("Upload failed in HomePage:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleGetStarted = () => {
+    if (threadId) {
+      navigate(`/threads/${threadId}`);
+    } else if (selectedFile && isUploading) {
+      alert("Still uploading, please wait...");
+    } else {
+      alert("Please upload a document first.");
+    }
+  };
+
+  const handleDeleteClick = (
+    e: React.MouseEvent,
+    id: string,
+    title: string,
+  ) => {
+    e.stopPropagation();
+    setThreadToDelete({ id, title });
+  };
+
+  const confirmDelete = async () => {
+    if (!threadToDelete) return;
+    try {
+      await deleteThread(threadToDelete.id);
+      setThreads((prev) =>
+        prev.filter((t: any) => t.thread_uuid !== threadToDelete.id),
+      );
+      setThreadToDelete(null);
+    } catch (error) {
+      alert("Failed to delete thread.");
+    }
+  };
+
+  return (
+    <div className={styles.homeContainer}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+        accept=".pdf,.doc,.docx,.csv,.txt,.xlsx,.json,.md"
+      />
+      {/* Sidebar */}
+      <aside className={styles.sidebar}>
+        <div
+          className={styles.logoSection}
+          onClick={() => navigate("/")}
+          style={{ cursor: "pointer" }}
+        >
+          <FileText size={20} className={styles.textAccent} />
+          <span className={styles.logoText}>CourtMitra</span>
+        </div>
+
+        {/* 
+        <button className={styles.newChatBtn}>
+          <Plus size={18} />
+          <span>New Document Chat</span>
+        </button> */}
+
+        <div className={styles.navSection}>
+          <h3 className={styles.navTitle}>Document chats</h3>
+          <div className={styles.navList}>
+            {threads.map((thread: { thread_uuid: string; title: string }) => (
+              <div
+                key={thread.thread_uuid}
+                className={styles.navItemContainer}
+                onClick={() => navigate(`/threads/${thread.thread_uuid}`)}
+              >
+                <button className={styles.navItem}>
+                  {thread.title || "Untitled Chat"}
+                </button>
+                <button
+                  className={styles.deleteBtn}
+                  onClick={(e) =>
+                    handleDeleteClick(e, thread.thread_uuid, thread.title)
+                  }
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div
+          className={styles.userProfile}
+          onClick={() => setShowLogout(!showLogout)}
+          style={{ cursor: "pointer", position: "relative" }}
+        >
+          <div className={styles.avatar}>
+            {user?.name.charAt(0)?.toLocaleUpperCase() || "U"}
+          </div>
+          <div className={styles.userInfo}>
+            <span className={styles.userName}>{user?.name || "User"}</span>
+            <span className={styles.userEmail}>
+              {user?.email || "user@example.com"}
+            </span>
+          </div>
+          <div
+            style={{ marginLeft: "auto", display: "flex", gap: "4px" }}
+          ></div>
+
+          {showLogout && (
+            <div className={styles.logoutDropdown}>
+              <button
+                className={styles.logoutBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLogout();
+                }}
+              >
+                <LogOut size={16} /> Logout
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className={styles.mainContent}>
+        <h1 className={styles.welcomeTitle}>
+          Hey, Let's talk to your documents...
+        </h1>
+
+        <button
+          className={`${styles.uploadCard} ${selectedFile ? styles.hasFile : ""}`}
+          onClick={handleFileClick}
+        >
+          {isUploading ? (
+            <Loader2
+              className={`${styles.uploadIcon} ${styles.spin}`}
+              size={40}
+            />
+          ) : (
+            <Upload className={styles.uploadIcon} size={40} />
+          )}
+          <span className={styles.uploadText}>
+            {isUploading && "Uploading and processing..."}
+            {!isUploading && selectedFile
+              ? `File: ${selectedFile.name}`
+              : "Upload your documents to get started..."}
+          </span>
+        </button>
+
+        <button
+          className={styles.getStartedBtn}
+          onClick={handleGetStarted}
+          disabled={isUploading || !threadId}
+        >
+          {isUploading && "Processing..."}
+          {!isUploading && threadId ? "Get Started" : "Waiting for Upload..."}
+        </button>
+      </main>
+
+      <DeleteThreadModal
+        isOpen={!!threadToDelete}
+        onCancel={() => setThreadToDelete(null)}
+        onConfirm={confirmDelete}
+        threadTitle={threadToDelete?.title || ""}
+      />
+    </div>
+  );
+};
+
+export default HomePage;
