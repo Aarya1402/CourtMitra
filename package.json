@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "true"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
