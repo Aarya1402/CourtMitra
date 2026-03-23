@@ -193,16 +193,15 @@ const HomePage: React.FC = () => {
       />
       {/* Sidebar */}
       <aside className={styles.sidebar}>
-        
-        <div 
-          className={styles.logoSection} 
+        <div
+          className={styles.logoSection}
           onClick={() => navigate("/")}
           style={{ cursor: "pointer" }}
         >
           <FileText size={20} className={styles.textAccent} />
           <span className={styles.logoText}>CourtMitra</span>
         </div>
-          
+
         {/* 
         <button className={styles.newChatBtn}>
           <Plus size={18} />
@@ -234,8 +233,8 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        <div 
-          className={styles.userProfile} 
+        <div
+          className={styles.userProfile}
           onClick={() => setShowLogout(!showLogout)}
           style={{ cursor: "pointer", position: "relative" }}
         >
@@ -248,14 +247,14 @@ const HomePage: React.FC = () => {
               {user?.email || "user@example.com"}
             </span>
           </div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
-            
-          </div>
-          
+          <div
+            style={{ marginLeft: "auto", display: "flex", gap: "4px" }}
+          ></div>
+
           {showLogout && (
             <div className={styles.logoutDropdown}>
-              <button 
-                className={styles.logoutBtn} 
+              <button
+                className={styles.logoutBtn}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLogout();
@@ -270,7 +269,6 @@ const HomePage: React.FC = () => {
 
       {/* Main Content */}
       <main className={styles.mainContent}>
-
         <h1 className={styles.welcomeTitle}>
           Hey, Let's talk to your documents...
         </h1>

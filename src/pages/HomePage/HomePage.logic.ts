@@ -6,10 +6,10 @@ const API_BASE = `${API_BASE_URL}/api/talkument`;
 export const uploadDocument = async (file: File, botId: string) => {
   try {
     // 1. Create a Thread
-    const threadRes = await axios.post(
-      `${API_BASE}/bots/${botId}/thread`,
-      { history: true, data_limit: 10 }
-    );
+    const threadRes = await axios.post(`${API_BASE}/bots/${botId}/thread`, {
+      history: true,
+      data_limit: 10,
+    });
 
     const newThreadId = threadRes.data.thread_id;
 
@@ -34,7 +34,7 @@ export const fetchThreads = async (botId: string) => {
   if (!botId) return [];
   try {
     const res = await axios.get(
-      `${API_BASE}/bots/${botId}/threads?page=1&per_page=30`
+      `${API_BASE}/bots/${botId}/threads?page=1&per_page=30`,
     );
     return res.data.threads;
   } catch (error) {

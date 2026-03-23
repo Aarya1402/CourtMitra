@@ -3,6 +3,7 @@ import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
 
 export type AudioRecorderProps = Readonly<{
+  threadId?: string;
   transcript?: string;
   onTranscriptionStart?: () => void;
   onTranscriptionComplete?: (text: string) => void;
@@ -379,6 +380,14 @@ export default function AudioRecorder({
         >
           Reset
         </button>
+
+        {/* Brand */}
+        <div className={styles.brand}>
+          <span
+            className={`${styles.recDot} ${isActive ? "" : styles.inactive}`}
+          />{" "}
+          Recorder Studio
+        </div>
 
         {/* Timer */}
         <div className={styles.timer}>{formatTime(duration)}</div>

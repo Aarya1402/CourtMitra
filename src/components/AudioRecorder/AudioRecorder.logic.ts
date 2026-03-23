@@ -1,4 +1,2 @@
-import { API_BASE_URL, WS_BASE_URL } from "../../constants/api";
-
-export const WS_URL = WS_BASE_URL;
-export const API_BASE = API_BASE_URL + "/api";
+export const WS_URL = import.meta.env.VITE_WS_URL;
+export const API_BASE = import.meta.env.VITE_API_BASE;
