@@ -1,0 +1,101 @@
+.inputBar {
+  border-top: 1px solid var(--border);
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  background: var(--bg-secondary);
+  align-items: flex-end; /* Align to bottom as textarea expands */
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chatInput {
+  flex: 1;
+  min-height: 42px;
+  max-height: 150px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 10px 45px 10px 12px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.chatInput:focus {
+  border-color: var(--accent);
+}
+
+.micBtn {
+  position: absolute;
+  right: 12px;
+  bottom: 8px; /* Fixed to bottom right */
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.micBtn:hover {
+  color: var(--accent);
+  background: var(--bg-tertiary);
+}
+
+.micBtn.recording {
+  color: #ff3c3c;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.sendBtn {
+  height: 40px;
+  width: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.sendBtn:hover {
+  opacity: 0.9;
+}
+
+.sendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.errorText {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  font-size: 11px;
+  color: #ff3c3c;
+}

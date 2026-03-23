@@ -1,0 +1,464 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 1rem 1rem 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: #f5f5f5;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color, #eaeaea);
+  background-color: #f5f5f5;
+  z-index: 10;
+}
+
+.toolbar h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-color, #333);
+}
+
+.statusGroup {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.processingBadge {
+  background: var(--bg-hover, #f0f7ff);
+  color: var(--primary-color, #0066cc);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.pdfButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--primary-color, #0066cc);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.pdfButton:hover {
+  opacity: 0.9;
+}
+
+.pdfButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.formContainer {
+  flex: 1;
+  overflow: visible;
+  padding: 1.5rem 2rem 2rem 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Document Page Styles */
+.documentPage {
+  background: white;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 25mm 20mm;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: "Times New Roman", Times, serif;
+  color: black;
+  font-size: 13pt;
+  line-height: 1.6;
+  position: relative;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.docInput {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  font-weight: inherit;
+  border-bottom: 1px dashed #d1d5db;
+  width: auto;
+  min-width: 100px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.docInput:focus {
+  outline: none;
+  border-bottom: 1px dashed #111;
+}
+
+.docTextarea {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 100%;
+  resize: none;
+  min-height: 1.6em;
+  overflow: hidden;
+  border-bottom: 1px dashed transparent;
+  padding: 0;
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+.docTextarea:focus {
+  outline: none;
+  border-bottom: 1px dashed #111;
+}
+.docTextarea:hover {
+  border-bottom: 1px dashed #eee;
+}
+
+.docInlineTextarea {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  font-weight: inherit;
+  width: 100%;
+  resize: none;
+  min-height: 1.2em;
+  overflow: hidden;
+  padding: 0;
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  text-align: inherit;
+  line-height: inherit;
+  border-bottom: 1px dashed #d1d5db;
+  border-radius: 4px;
+}
+
+.docInlineTextarea:focus {
+  outline: none;
+  border-bottom: 1px dashed #111;
+}
+
+.docInlineTextarea:hover {
+  border-bottom: 1px dashed #eee;
+}
+
+.docInput:hover,
+.docTextarea:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+  font-size: 11pt;
+  font-weight: bold;
+}
+
+.caseNoTop {
+  text-align: right;
+}
+
+.courtNameSection {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.courtNameSection h2 {
+  font-size: 18pt;
+  margin: 0;
+  font-weight: bold;
+}
+.courtNameSection h2 input {
+  text-align: center;
+  width: 100%;
+}
+
+.courtNameSection h3 {
+  font-size: 14pt;
+  margin: 5px 0 0 0;
+  font-weight: normal;
+}
+.courtNameSection h3 input {
+  text-align: center;
+}
+
+.caseTypeSection {
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: bold;
+  font-size: 14pt;
+}
+
+.partiesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.partyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.partyDetails {
+  flex: 1;
+  max-width: 75%;
+}
+
+.partyRole {
+  width: 20%;
+  text-align: right;
+  font-weight: bold;
+}
+
+.vsText {
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.divider {
+  border: 0;
+  border-top: 2px solid black;
+  margin: 20px 0;
+}
+
+.advocatesSection {
+  margin-bottom: 30px;
+}
+
+.advocateRow {
+  margin-bottom: 5px;
+  display: flex;
+  gap: 10px;
+}
+
+.advocateRow span {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.advocateRow input {
+  flex: 1;
+}
+
+.orderBodyTitle {
+  text-align: center;
+  font-weight: bold;
+  font-size: 16pt;
+  margin: 40px 0 20px 0;
+}
+
+.orderContent {
+  margin-bottom: 40px;
+  text-align: justify;
+}
+
+.rawTextSection {
+  margin-bottom: 40px;
+  text-align: justify;
+}
+.rawTextSection h5 {
+  font-size: 13pt;
+  margin: 0 0 10px 0;
+  text-decoration: underline;
+}
+
+.signatureSection {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 50px;
+  page-break-inside: avoid;
+}
+
+.sigLeft {
+  width: 40%;
+}
+
+.sigRow {
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sigRow span {
+  font-weight: bold;
+}
+
+.sigRight {
+  width: 40%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sigPlaceholder {
+  margin-bottom: 40px;
+}
+
+.judgeName {
+  font-weight: bold;
+}
+.judgeName input,
+.judgeDesig input,
+.sigCourtName input {
+  text-align: center;
+  width: 100%;
+}
+
+.pdfMode {
+  font-family: "Times New Roman", serif;
+  line-height: 1.5;
+  color: #000;
+}
+
+/* 🔥 Force wrapping */
+.pdfMode * {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Optional: improve spacing */
+.pdfMode h2,
+.pdfMode h3,
+.pdfMode h4 {
+  text-align: center;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .wrapper,
+  .wrapper * {
+    visibility: visible;
+  }
+  .wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .toolbar {
+    display: none !important;
+  }
+  .formContainer {
+    padding: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+  }
+  .documentPage {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  .docInput,
+  .docTextarea {
+    border-bottom: none !important;
+    resize: none !important;
+  }
+  textarea {
+    overflow: hidden !important;
+  }
+}
+.reasoningSection {
+  margin-bottom: 30px;
+}
+
+.reasoningSection h5 {
+  font-size: 13pt;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+}
+
+.reasoningPoint, .directionPoint {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: flex-start;
+}
+
+.addBtn {
+  margin-top: 10px;
+  background: var(--bg-hover, #f0f7ff);
+  border: 1px dashed var(--primary-color, #0066cc);
+  color: var(--primary-color, #0066cc);
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.addBtn:hover {
+  background: var(--primary-color, #0066cc);
+  color: white;
+}
+
+.directionsList {
+  margin-top: 20px;
+}
+
+.directionsList h5 {
+  font-size: 13pt;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+}
+
+.removeBtn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: opacity 0.2s;
+  padding: 0 4px;
+}
+
+.removeBtn:hover {
+  opacity: 0.7;
+}
