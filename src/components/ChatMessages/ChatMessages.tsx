@@ -128,7 +128,7 @@ const MessageMenu = ({
   );
 };
 
-const ChatMessages: React.FC<Props> = ({ messages, loading, onDelete }) => {
+const ChatMessages: React.FC<Props> = ({ messages, onDelete }) => {
   return (
     <div className={styles.messagesContainer}>
       {messages.map((msg) => (

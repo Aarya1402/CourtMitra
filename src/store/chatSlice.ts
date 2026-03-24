@@ -85,7 +85,7 @@ const chatSlice = createSlice({
         }[];
       }>,
     ) => {
-      const { threadId, messages } = action.payload;
+      const { messages } = action.payload;
 
       const formatted = messages.map((msg) => ({
         id: msg.id || `${Date.now()}-${Math.random()}`,
