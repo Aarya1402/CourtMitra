@@ -104,7 +104,7 @@ const ThreadPage: React.FC = () => {
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
 
-  const [leftWidth, setLeftWidth] = useState(300);
+  const [leftWidth, setLeftWidth] = useState(Math.floor(window.innerWidth * 0.7));
   const [rightWidth, setRightWidth] = useState(320);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
@@ -565,7 +565,7 @@ const ThreadPage: React.FC = () => {
         {/* LEFT */}
         <div className={styles.headerLeftSection}>
           <div className={styles.logoSection} onClick={() => navigate("/")}>
-            <FileText size={20} className={styles.textAccent} />
+            <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
             <span className={styles.logoText}>CourtMitra</span>
           </div>
         </div>

@@ -28,16 +28,21 @@
   margin-left: auto;
 }
 
-/* Toolbar divider between action groups */
-.transcriptHeader > *:nth-child(2)::before {
-  content: "";
-  display: inline-block;
+.divider {
   width: 1px;
   height: 16px;
   background: var(--border);
-  margin-right: 0.25rem;
-  vertical-align: middle;
+  margin: 0 0.5rem;
   opacity: 0.6;
+}
+
+.actionButton {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
 }
 
 .editorWrapper {

@@ -128,21 +128,21 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
         <div className={styles.transcriptHeader}>
           <Button
             variant="ghost"
-            size="sm"
             onClick={handleCopy}
+            className={styles.actionButton}
             title="Copy transcript"
             icon={copied ? <Check size={16} /> : <Copy size={16} />}
           />
           <Button
             variant="ghost"
-            size="sm"
             onClick={handleDownload}
+            className={styles.actionButton}
             title="Download as PDF"
             icon={<Download size={16} />}
           />
           <Button
             variant="ghost"
-            size="sm"
+            className={styles.actionButton}
             onClick={async () => {
               const ok = await showConfirm(
                 "Are you sure you want to clear the transcript?",

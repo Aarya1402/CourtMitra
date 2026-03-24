@@ -112,10 +112,17 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.logoImg {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 .logoText {
-  font-weight: 600;
-  font-size: 1.1rem;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 .newChatBtn:hover {
   background-color: var(--bg-tertiary);
@@ -233,8 +240,11 @@
   cursor: pointer;
 }
 
-.textAccent {
-  color: var(--accent);
+.logoSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
 }
 
 .transcriptHeader {
@@ -289,22 +299,44 @@
 .tabContainer {
   display: flex;
   width: 100%;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
 }
 
 .tab,
 .activeTab {
-  flex: 1; /* 🔥 equal width */
+  flex: 1;
   text-align: center;
-  padding: 10px;
+  padding: 0.875rem 0.5rem;
   cursor: pointer;
   border: none;
   background: transparent;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  position: relative;
+  outline: none;
 }
 
 .tab:hover {
   color: var(--text-primary);
   background-color: var(--bg-tertiary);
-  border-radius: 6px 6px 0 0;
+}
+
+.activeTab {
+  color: var(--accent);
+}
+
+.activeTab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--accent);
+  border-radius: 2px 2px 0 0;
 }
 
 .card {
@@ -316,10 +348,9 @@
 
 .generateOrderBtn {
   padding: 0.75rem 1rem;
-  background-color: #2563eb; /* Fallback to a nice blue if var(--accent) is missing */
   background-color: var(--accent);
   color: white;
-  border: none;
+  border: 1px solid var(--accent);
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
@@ -328,25 +359,21 @@
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.generateOrderBtn:hover {
-  opacity: 0.9;
+.generateOrderBtn:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-}
-
-.generateOrderBtn:active {
-  transform: translateY(0);
 }
 
 .generateOrderBtn:disabled {
-  background-color: var(--bg-tertiary);
-  color: var(--text-secondary);
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  opacity: 0.7;
 }
 
 .startRecordingBtn {

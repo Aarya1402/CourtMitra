@@ -17,12 +17,10 @@ const Sidebar: React.FC = () => {
 
   return (
     <div className="nav-sidebar">
-      <div className="logo-container">
-        <div className="logo-box">
-          <Database size={24} />
-        </div>
-        <span className="logo-text">CourtMitra</span>
-      </div>
+      {/* <div className="logo-container"> */}
+        {/* <img src="/logo.svg" alt="CourtMitra" className="logo-img" /> */}
+        {/* <span className="logo-text">CourtMitra</span> */}
+      {/* </div> */}
 
       <button className="new-chat-btn">
         <Plus size={18} />
@@ -57,12 +55,10 @@ const Sidebar: React.FC = () => {
           gap: 0.75rem;
           padding: 0 0.5rem;
         }
-        .logo-box {
-          background: var(--accent);
-          color: white;
-          padding: 0.5rem;
-          border-radius: 8px;
-          display: flex;
+        .logo-img {
+          width: 32px;
+          height: 32px;
+          object-fit: contain;
         }
         .logo-text {
           font-family: 'Outfit', sans-serif;

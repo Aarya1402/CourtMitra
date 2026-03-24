@@ -23,21 +23,17 @@
   margin-bottom: 2rem;
 }
 
-.logoIcon {
-  width: 24px;
-  height: 24px;
-  background-color: #000;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
+.logoImg {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
 .logoText {
-  font-weight: 600;
-  font-size: 1.1rem;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .newChatBtn {

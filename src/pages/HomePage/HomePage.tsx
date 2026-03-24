@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Upload, FileText, Loader2, Trash2, X, LogOut, Plus } from "lucide-react";
+import { Upload, Loader2, Trash2, X, LogOut, Plus } from "lucide-react";
 import styles from "./HomePage.module.css";
 import axios from "axios";
 import { checkAndCreateBot } from "../../utils/botAuthUtils";
@@ -223,7 +223,7 @@ const HomePage: React.FC = () => {
           onClick={() => navigate("/")}
           style={{ cursor: "pointer" }}
         >
-          <FileText size={20} className={styles.textAccent} />
+          <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
           <span className={styles.logoText}>CourtMitra</span>
         </div>
 
@@ -302,7 +302,7 @@ const HomePage: React.FC = () => {
       {/* Main Content */}
       <main className={styles.mainContent}>
         <h1 className={styles.welcomeTitle}>
-          Hey, Let's talk to your documents...
+          Hey, Let's talk to your case papers...
         </h1>
 
         <button
