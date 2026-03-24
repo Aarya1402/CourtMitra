@@ -195,7 +195,9 @@
 }
 
 .divisionLeft {
-  width: 50%;
+  width: auto;
+  min-width: 200px;
+  max-width: 70vw;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -203,7 +205,10 @@
 }
 
 .resizeHandle {
-  width: 4px;
+  width: 6px; /* increased slightly for easier grabbing */
+  cursor: col-resize;
+  border: none;
+  padding: 0;
   background-color: var(--border);
   transition: background-color 0.2s;
 }
@@ -236,7 +241,7 @@
 }
 
 .divisionCenter {
-  width: 50%;
+  flex: 1;
   height: 100%;
   display: flex;
   flex-direction: column;

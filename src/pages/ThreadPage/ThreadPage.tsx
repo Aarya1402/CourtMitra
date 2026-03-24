@@ -584,7 +584,7 @@ const ThreadPage: React.FC = () => {
       {/* ✅ MAIN CONTENT */}
       <div className={styles.mainLayout}>
         {/* LEFT SIDE */}
-        <div className={styles.divisionLeft}>
+        <div className={styles.divisionLeft} style={{ width: leftWidth }}>
           <div className={styles.transcriptSection}>
             {/* Tabs */}
             <div className={styles.tabContainer}>
@@ -715,7 +715,11 @@ const ThreadPage: React.FC = () => {
         </div>
 
         {/* Divider */}
-        <button className={styles.resizeHandle} />
+        <button
+          className={styles.resizeHandle}
+          onMouseDown={() => setIsDraggingLeft(true)}
+          data-resize-handle-state={isDraggingLeft ? "drag" : "idle"}
+        />
 
         {/* CENTER */}
         <main className={styles.divisionCenter}>
