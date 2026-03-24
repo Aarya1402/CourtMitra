@@ -177,7 +177,10 @@ export default function AudioRecorder({
               msg.data?.text ||
               (typeof msg.data === "string" ? msg.data : null);
             if (text) {
-              const mergedText = mergeTranscriptChunk(transcriptRef.current, text);
+              const mergedText = mergeTranscriptChunk(
+                transcriptRef.current,
+                text,
+              );
               transcriptRef.current = mergedText;
               if (onTranscriptionComplete) onTranscriptionComplete(mergedText);
             }
@@ -326,6 +329,12 @@ export default function AudioRecorder({
     isRecordingRef.current = false;
     setIsPaused(false);
     isPausedRef.current = false;
+
+    setTimeout(() => {
+      if (!transcriptRef.current.trim()) {
+        onTranscriptionComplete?.(""); // force completion
+      }
+    }, 200);
   };
 
   const saveAsMP3 = async () => {
@@ -497,7 +506,9 @@ export default function AudioRecorder({
           {audioURL && (
             <button
               className={`${styles.btn} ${styles.btnDone} ${styles.ready}`}
-              onClick={() => onClose?.()}
+              onClick={() => {
+                onClose?.();
+              }}
             >
               <span style={{ fontSize: "13px" }}>Done</span>
             </button>

@@ -129,19 +129,6 @@ const MessageMenu = ({
 };
 
 const ChatMessages: React.FC<Props> = ({ messages, loading, onDelete }) => {
-  if (loading) {
-    return (
-      <div className={styles.rowLeft}>
-        <div className={styles.botMessage}>
-          <div className={styles.typingIndicator}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </div>
-    );
-  }
   return (
     <div className={styles.messagesContainer}>
       {messages.map((msg) => (

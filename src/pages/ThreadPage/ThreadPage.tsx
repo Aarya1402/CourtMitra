@@ -82,13 +82,7 @@ const ThreadPage: React.FC = () => {
   const lastProcessedTranscriptRef = useRef("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [modificationRange, setModificationRange] = useState<{
-    start: number;
-    end: number;
-  } | null>(null);
-  const [isActuallyRecording, setIsActuallyRecording] = useState(false);
-  const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
-    useState("");
+  console.log(isProcessing);
 
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
@@ -202,16 +196,17 @@ const ThreadPage: React.FC = () => {
 
   // Auto-scroll to bottom when messages update
   // Auto-scroll to bottom only for new bot messages (not for pagination)
-  const lastMsgCountRef = useRef(0);
   useEffect(() => {
-    if (scrollRef.current && centerTab === "chat") {
-      // If we got new messages and we weren't prepending
-      if (messages.length > lastMsgCountRef.current && page === 1) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
-      lastMsgCountRef.current = messages.length;
-    }
-  }, [messages, loading, centerTab, page]);
+    if (!scrollRef.current || centerTab !== "chat") return;
+
+    const el = scrollRef.current;
+
+    // scroll smoothly to bottom
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages, loading, centerTab]);
 
   const handleScroll = () => {
     if (!scrollRef.current || !hasMore || isFetchingHistory) return;
@@ -310,7 +305,7 @@ const ThreadPage: React.FC = () => {
         `${API_BASE_URL}/api/talkument/bots/${threadId}/chat_history?page=${pageNumber}&per_page=30`,
       );
       const history = chatHistory.data.history || [];
-      
+
       if (history.length < 30) {
         setHasMore(false);
       }
@@ -699,7 +694,11 @@ const ThreadPage: React.FC = () => {
             </button>
           </div>
 
-          <section className={styles.contentArea} ref={scrollRef} onScroll={handleScroll}>
+          <section
+            className={styles.contentArea}
+            ref={scrollRef}
+            onScroll={handleScroll}
+          >
             {centerTab === "chat" && (
               <>
                 {filteredMessages.length === 0 ? (
