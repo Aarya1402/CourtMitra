@@ -6,21 +6,6 @@
   padding: 0;
 }
 
-.card {
-  background: transparent;
-  width: 100%;
-  font-family: "Inter", sans-serif;
-  position: relative;
-}
-
-.brand {
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: #555;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-  font-weight: 500;
-}
 .recDot {
   display: inline-block;
   width: 8px;
@@ -318,4 +303,70 @@ audio {
   width: 100%;
   display: flex;
   flex-direction: column;
+}
+.inlineRecorder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Timer */
+.timerInline {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 50px;
+}
+
+/* Status */
+.statusInline {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Waveform */
+.waveformInline {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+}
+
+.barInline {
+  width: 2px;
+  border-radius: 2px;
+  transition: height 0.05s ease;
+}
+
+/* Buttons smaller */
+.inlineRecorder .btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.btnResetInline {
+  background: #fff;
+  color: #d81f26;
+  border: 1px solid #f1b5b8;
+}
+
+.btnResetInline:hover {
+  background: #d81f26;
+  color: white;
+}
+
+.languageInline {
+  height: 32px;
+  padding: 4px 8px;
+
+  font-size: 12px;
+  border-radius: 6px;
+
+  color: black;
+
+  border: 1px solid #e4e4e4;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
 }

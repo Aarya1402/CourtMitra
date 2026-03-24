@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef, Activity } from "react";
 import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor";
 import FileManager from "../../components/FileManager/FileManager";
-import { User, MessageSquare, Plus, LogOut, FileText } from "lucide-react";
+import {
+  User,
+  MessageSquare,
+  Plus,
+  LogOut,
+  FileText,
+  Upload,
+  Mic,
+} from "lucide-react";
 import styles from "./ThreadPage.module.css";
 import { useParams, useNavigate } from "react-router-dom";
 import ChatMessages from "../../components/ChatMessages/ChatMessages";
@@ -24,10 +32,10 @@ import OrderForm, {
 } from "../../components/OrderForm/OrderForm";
 import { saveThreadState, loadThreadState } from "../../utils/storageUtils";
 import { API_BASE_URL } from "../../constants/api";
-import FloatingRecorder from "../../components/AudioRecorder/FloatingRecorder";
 import { initialOrderData } from "../../components/OrderForm/OrderForm.logic";
 import { useAlert } from "../../context/AlertContext";
 import { updateThreadTitle } from "./ThreadPage.logic";
+import AudioRecorder from "../../components/AudioRecorder/AudioRecorder";
 
 const normalizeOrderData = (data: any): OrderData => {
   if (!data) return initialOrderData;
@@ -558,7 +566,7 @@ const ThreadPage: React.FC = () => {
         <div className={styles.headerLeftSection}>
           <div className={styles.logoSection} onClick={() => navigate("/")}>
             <FileText size={20} className={styles.textAccent} />
-            <span className={styles.logoText }>CourtMitra</span>
+            <span className={styles.logoText}>CourtMitra</span>
           </div>
         </div>
 
@@ -674,16 +682,18 @@ const ThreadPage: React.FC = () => {
                       <button
                         className={styles.startRecordingBtn}
                         onClick={() => setShowRecorder(true)}
+                        title="Recorder"
                       >
-                        ● Start Recording
+                        <Mic size={16} />
                       </button>
 
                       <button
                         className={styles.uploadBtn}
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
+                        title={isUploading ? "Uploading..." : "Upload Audio"}
                       >
-                        {isUploading ? "Uploading..." : "Upload Audio"}
+                        <Upload size={16} />
                       </button>
 
                       <input
@@ -697,46 +707,44 @@ const ThreadPage: React.FC = () => {
                   )}
 
                   {showRecorder && (
-                    <div className={styles.floatingRecorder}>
-                      <FloatingRecorder
-                        transcript={transcript}
-                        onTranscriptionStart={() => {
-                          setIsProcessing(true);
-                          setErrorMessage(null);
-                        }}
-                        onTranscriptionComplete={(text: string) => {
-                          if (modificationRange) {
-                            const { start, end } = modificationRange;
-                            const before = originalTranscriptBeforeModify.substring(
-                              0,
-                              start,
-                            );
-                            const after =
-                              originalTranscriptBeforeModify.substring(end);
-                            setTranscript(before + text + after);
-                            setModificationRange(null);
-                          } else {
-                            setTranscript(text);
-                          }
-                          setIsProcessing(false);
-                        }}
-                        onRecordingStateChange={setIsActuallyRecording}
-                        onTranscriptionError={(msg: string) => {
-                          setErrorMessage(msg);
-                          setIsProcessing(false);
-                        }}
-                        onAudioBlobComplete={(blob: Blob) => {
-                          setAudioBlob(blob);
-                        }}
-                        resetTranscript={() => {
-                          setTranscript("");
-                          setAudioBlob(null);
-                        }}
-                        onClose={() => {
-                          setShowRecorder(false);
-                        }}
-                      />
-                    </div>
+                    <AudioRecorder
+                      autoStart={true} // 🔥 ADD THIS
+                      fileName={threadTitle}
+                      transcript={transcript}
+                      onTranscriptionStart={() => {
+                        setIsProcessing(true);
+                        setErrorMessage(null);
+                      }}
+                      onTranscriptionComplete={(text: string) => {
+                        if (modificationRange) {
+                          const { start, end } = modificationRange;
+                          const before =
+                            originalTranscriptBeforeModify.substring(0, start);
+                          const after =
+                            originalTranscriptBeforeModify.substring(end);
+                          setTranscript(before + text + after);
+                          setModificationRange(null);
+                        } else {
+                          setTranscript(text);
+                        }
+                        setIsProcessing(false);
+                      }}
+                      onRecordingStateChange={setIsActuallyRecording}
+                      onTranscriptionError={(msg: string) => {
+                        setErrorMessage(msg);
+                        setIsProcessing(false);
+                      }}
+                      onAudioBlobComplete={(blob: Blob) => {
+                        setAudioBlob(blob);
+                      }}
+                      resetTranscript={() => {
+                        setTranscript("");
+                        setAudioBlob(null);
+                      }}
+                      onClose={() => {
+                        setShowRecorder(false);
+                      }}
+                    />
                   )}
                 </div>
               </>

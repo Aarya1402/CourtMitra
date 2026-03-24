@@ -1,8 +1,9 @@
-import { useRef, useState, useEffect, Activity } from "react";
+import { useRef, useState, useEffect } from "react";
 import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
 
 export type AudioRecorderProps = Readonly<{
+  autoStart: boolean;
   threadId?: string;
   transcript?: string;
   onTranscriptionStart?: () => void;
@@ -13,6 +14,7 @@ export type AudioRecorderProps = Readonly<{
   onClose?: () => void;
   onRecordingStateChange?: (isRecording: boolean) => void;
   title?: string;
+  fileName: string | null;
 }>;
 
 const mergeTranscriptChunk = (previous: string, incoming: string) => {
@@ -27,10 +29,11 @@ const mergeTranscriptChunk = (previous: string, incoming: string) => {
   if (prev.startsWith(next)) return prev;
 
   // For delta chunks, append with spacing.
-  return `${prev} ${next}`.replace(/\s+/g, " ").trim();
+  return `${prev} ${next}`.replaceAll(/\s+/g, " ").trim();
 };
 
 export default function AudioRecorder({
+  autoStart,
   transcript = "",
   onTranscriptionStart,
   onTranscriptionComplete,
@@ -39,6 +42,7 @@ export default function AudioRecorder({
   resetTranscript,
   onClose,
   onRecordingStateChange,
+  fileName,
 }: AudioRecorderProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -51,7 +55,6 @@ export default function AudioRecorder({
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [audioURL, setAudioURL] = useState("");
-  const [fileName, setFileName] = useState("recording");
   const [duration, setDuration] = useState(0);
   const [barHeights, setBarHeights] = useState(new Array(40).fill(2));
   const [language, setLanguage] = useState("unknown"); // Defaulting to Gujarati as requested
@@ -62,6 +65,7 @@ export default function AudioRecorder({
   const isRecordingRef = useRef<boolean>(false);
   const isPausedRef = useRef<boolean>(false);
   const transcriptRef = useRef<string>("");
+
   const stopResources = () => {
     if (wsRef.current) {
       wsRef.current.send(JSON.stringify({ type: "stop" }));
@@ -251,6 +255,15 @@ export default function AudioRecorder({
     }
   };
 
+  const hasStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (autoStart && !hasStartedRef.current) {
+      hasStartedRef.current = true;
+      startRecording();
+    }
+  }, [autoStart]);
+
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
     if (isPaused) {
@@ -385,129 +398,95 @@ export default function AudioRecorder({
     return `${m}:${sec}`;
   };
 
-  const getStatusClass = () => {
-    if (isActive) return styles.active;
-    if (isPaused) return styles.paused;
-    return "";
-  };
-
-  const getStatusText = () => {
-    if (isActive) return "● Recording";
-    if (isPaused) return "⏸ Paused";
-    if (audioURL) return "✓ Ready";
-    return "Standby";
-  };
-
   const isActive = isRecording && !isPaused;
 
   return (
-    <div className={styles.outerWrap}>
-      <div className={styles.card}>
-        {/* Reset Button */}
-        <Activity mode={isRecording ? "hidden" : "visible"}>
-          <button
-            className={styles.btnReset}
-            onClick={resetRecording}
-            title="Reset Recording"
-          >
-            Reset
-          </button>
-        </Activity>
+    <div className={styles.inlineRecorder}>
+      {/* Timer */}
+      <span className={styles.timerInline}>{formatTime(duration)}</span>
 
-        {/* Timer */}
-        <div className={styles.timer}>{formatTime(duration)}</div>
-        <div className={`${styles.statusLabel} ${getStatusClass()}`}>
-          {getStatusText()}
-        </div>
-
-        {/* Waveform */}
-        <div className={styles.waveform}>
-          {barHeights.map((h, i) => (
-            <div
-              key={`bar-${i}-${h}`}
-              className={styles.bar}
-              style={{
-                height: `${h}px`,
-                opacity: isActive ? 0.85 : 0.2,
-                background: isPaused ? "#f5a623" : "#ff3c3c",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* File name */}
-        <div className={styles.inputGroup}>
-          <div className={styles.fieldWrap}>
-            <div className={styles.fieldLabel}>Language</div>
-            <select
-              className={styles.languageSelect}
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              disabled={isRecording}
-            >
-              <option value="gu-IN">Gujarati</option>
-              <option value="en-IN">English</option>
-              <option value="hi-IN">Hindi</option>
-              <option value="ta-IN">Tamil</option>
-              <option value="te-IN">Telugu</option>
-              <option value="kn-IN">Kannada</option>
-              <option value="ml-IN">Malayalam</option>
-              <option value="mr-IN">Marathi</option>
-              <option value="bn-IN">Bengali</option>
-              <option value="pa-IN">Punjabi</option>
-              <option value="od-IN">Odia</option>
-              <option value="unknown">Auto-detect</option>
-            </select>
-          </div>
-          <div className={styles.fieldWrap}>
-            <div className={styles.fieldLabel}>File name</div>
-            <input
-              className={styles.filenameInput}
-              value={fileName}
-              onChange={(e) => setFileName(e.target.value)}
-              placeholder="recording"
-            />
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className={styles.btnRow}>
-          <button
-            className={`${styles.btn} ${styles.btnRecord} ${isRecording ? styles.recording : ""}`}
-            onClick={isRecording ? stopRecording : startRecording}
-          >
-            {isRecording ? "■ Stop" : "● Record"}
-          </button>
-
-          <button
-            className={`${styles.btn} ${styles.btnPause} ${isPaused ? styles.paused : ""}`}
-            onClick={togglePause}
-            disabled={!isRecording}
-          >
-            {isPaused ? "▶ Resume" : "⏸ Pause"}
-          </button>
-
-          {audioURL && (
-            <button
-              className={`${styles.btn} ${styles.btnSave} ${styles.ready}`}
-              onClick={saveAsMP3}
-            >
-              <span style={{ fontSize: "13px" }}>↓ Save</span>
-            </button>
-          )}
-
-          {audioURL && (
-            <button
-              className={`${styles.btn} ${styles.btnDone} ${styles.ready}`}
-              onClick={() => {
-                onClose?.();
-              }}
-            >
-              <span style={{ fontSize: "13px" }}>Done</span>
-            </button>
-          )}
-        </div>
+      {/* Waveform */}
+      <div className={styles.waveformInline}>
+        {barHeights.map((h, i) => (
+          <div
+            key={`bar-${i}-${h}`}
+            className={styles.barInline}
+            style={{
+              height: `${h}px`,
+              opacity: isActive ? 0.85 : 0.2,
+              background: isPaused ? "#f5a623" : "#ff3c3c",
+            }}
+          />
+        ))}
       </div>
+
+      {/* Record */}
+      <button
+        className={`${styles.btn} ${styles.btnRecord}`}
+        onClick={isRecording ? stopRecording : startRecording}
+      >
+        {isRecording ? "■" : "●"}
+      </button>
+
+      {/* Pause */}
+      <button
+        className={`${styles.btn} ${styles.btnPause}`}
+        onClick={togglePause}
+        disabled={!isRecording}
+      >
+        {isPaused ? "▶" : "⏸"}
+      </button>
+
+      {/* Save */}
+      {audioURL && (
+        <button
+          className={`${styles.btn} ${styles.btnSave}`}
+          onClick={saveAsMP3}
+          title="Save As MP3"
+        >
+          ↓
+        </button>
+      )}
+
+      {/* Done */}
+      {audioURL && (
+        <button
+          className={`${styles.btn} ${styles.btnDone}`}
+          onClick={() => onClose?.()}
+          title="Done Recording"
+        >
+          ✓
+        </button>
+      )}
+      {audioURL && (
+        <button
+          className={`${styles.btn} ${styles.btnResetInline}`}
+          onClick={resetRecording}
+          title="Reset"
+        >
+          ⟲
+        </button>
+      )}
+      {/* File name */}
+      <select
+        className={styles.languageInline}
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+        disabled={isRecording}
+      >
+        <option value="gu-IN">Gujarati</option>
+        <option value="en-IN">English</option>
+        <option value="hi-IN">Hindi</option>
+        <option value="ta-IN">Tamil</option>
+        <option value="te-IN">Telugu</option>
+        <option value="kn-IN">Kannada</option>
+        <option value="ml-IN">Malayalam</option>
+        <option value="mr-IN">Marathi</option>
+        <option value="bn-IN">Bengali</option>
+        <option value="pa-IN">Punjabi</option>
+        <option value="od-IN">Odia</option>
+        <option value="unknown">Auto-detect</option>
+      </select>
     </div>
   );
 }
