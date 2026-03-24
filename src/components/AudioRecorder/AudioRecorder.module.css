@@ -220,11 +220,6 @@ select:focus {
 .btnRecord:hover {
   background: #c0181f;
 }
-.btnRecord.recording {
-  background: #1a0a0a;
-  color: #ff3c3c;
-  border: 1px solid #3a1010;
-}
 .btnRecord.recording:hover {
   background: #220d0d;
 }

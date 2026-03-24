@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, Activity } from "react";
 import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
 
@@ -39,7 +39,6 @@ export default function AudioRecorder({
   resetTranscript,
   onClose,
   onRecordingStateChange,
-  title,
 }: AudioRecorderProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -405,21 +404,15 @@ export default function AudioRecorder({
     <div className={styles.outerWrap}>
       <div className={styles.card}>
         {/* Reset Button */}
-        <button
-          className={styles.btnReset}
-          onClick={resetRecording}
-          title="Reset Recording"
-        >
-          Reset
-        </button>
-
-        {/* Brand */}
-        <div className={styles.brand}>
-          <span
-            className={`${styles.recDot} ${isActive ? "" : styles.inactive}`}
-          />{" "}
-          {title || "Recorder Studio"}
-        </div>
+        <Activity mode={isRecording ? "hidden" : "visible"}>
+          <button
+            className={styles.btnReset}
+            onClick={resetRecording}
+            title="Reset Recording"
+          >
+            Reset
+          </button>
+        </Activity>
 
         {/* Timer */}
         <div className={styles.timer}>{formatTime(duration)}</div>

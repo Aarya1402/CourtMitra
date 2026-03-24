@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Activity } from "react";
 import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor";
 import FileManager from "../../components/FileManager/FileManager";
 import { User, MessageSquare, Plus, LogOut, FileText } from "lucide-react";
@@ -96,10 +96,26 @@ const ThreadPage: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
+    console.log(file);
     if (!file) return;
 
-    if (!file.type.startsWith("audio/")) {
-      showAlert("Please upload a valid audio file.", { title: "Invalid File" });
+    const validTypes = [
+      "audio/mpeg",
+      "audio/ogg",
+      "application/ogg",
+      "audio/wav",
+      "audio/x-wav",
+    ];
+
+    const validExtensions = [".mp3", ".ogg", ".wav"];
+
+    const isValidType = validTypes.includes(file.type);
+    const isValidExt = validExtensions.some((ext) =>
+      file.name.toLowerCase().endsWith(ext),
+    );
+
+    if (!isValidType && !isValidExt) {
+      showAlert("Only MP3, OGG, and WAV files are allowed");
       return;
     }
 
@@ -286,12 +302,8 @@ const ThreadPage: React.FC = () => {
       const threadsRes = await axios.get(
         `${API_BASE_URL}/api/talkument/bots/thread/${threadId}`,
       );
-
-      const threadTitle = threadsRes.data.title || [];
-
-      if (threadTitle) {
-        setThreadTitle(threadTitle);
-      }
+      const threadTitle = threadsRes.data.title || "";
+      setThreadTitle(threadTitle);
     } catch (e) {
       console.error("Failed to fetch thread title:", e);
     }
@@ -587,7 +599,7 @@ const ThreadPage: React.FC = () => {
               </div>
             )}
 
-            {leftTab === "transcript" && (
+            <Activity mode={leftTab === "transcript" ? "visible" : "hidden"}>
               <>
                 <TranscriptEditor
                   transcript={transcript}
@@ -625,7 +637,7 @@ const ThreadPage: React.FC = () => {
                         type="file"
                         ref={fileInputRef}
                         onChange={handleAudioUpload}
-                        accept="audio/*"
+                        accept=".mp3,.ogg,.wav,audio/mpeg,audio/ogg,audio/wav"
                         style={{ display: "none" }}
                       />
                     </>
@@ -654,21 +666,23 @@ const ThreadPage: React.FC = () => {
                           setTranscript("");
                           setAudioBlob(null);
                         }}
-                        onClose={() => setShowRecorder(false)}
+                        onClose={() => {
+                          setShowRecorder(false);
+                        }}
                       />
                     </div>
                   )}
                 </div>
               </>
-            )}
+            </Activity>
 
-            {leftTab === "order" && (
+            <Activity mode={leftTab === "order" ? "visible" : "hidden"}>
               <OrderForm
                 data={orderData}
                 onUpdate={setOrderData}
                 isProcessing={isExtracting}
               />
-            )}
+            </Activity>
           </div>
         </div>
 
@@ -699,9 +713,15 @@ const ThreadPage: React.FC = () => {
             ref={scrollRef}
             onScroll={handleScroll}
           >
-            {centerTab === "chat" && (
+            <Activity mode={centerTab === "chat" ? "visible" : "hidden"}>
               <>
-                {filteredMessages.length === 0 ? (
+                {isFetchingHistory && (
+                  <div className={styles.topLoader}>
+                    <div className={styles.spinner}></div>
+                    <span>Loading previous messages...</span>
+                  </div>
+                )}
+                {!isFetchingHistory && filteredMessages.length === 0 ? (
                   <div className={styles.emptyState}>
                     <div className={styles.iconCircle}>
                       <MessageSquare size={32} />
@@ -719,14 +739,16 @@ const ThreadPage: React.FC = () => {
                   />
                 )}
               </>
-            )}
+            </Activity>
 
-            {centerTab === "files" && <FileManager />}
+            <Activity mode={centerTab === "files" ? "visible" : "hidden"}>
+              <FileManager />
+            </Activity>
           </section>
 
-          {centerTab === "chat" && (
+          <Activity mode={centerTab === "chat" ? "visible" : "hidden"}>
             <ChatInput onSend={handleSend} disabled={loading} />
-          )}
+          </Activity>
         </main>
       </div>
     </div>
