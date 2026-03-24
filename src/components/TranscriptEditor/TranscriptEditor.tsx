@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import { FileText, Download, Copy, Check } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Download, Copy, Check, RefreshCcw } from "lucide-react";
 import Button from "../shared/Button";
 import styles from "./TranscriptEditor.module.css";
 import { DEFAULT_PLACEHOLDER } from "./TranscriptEditor.logic";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { Link } from "react-router-dom";
 
 interface TranscriptEditorProps {
   transcript: string;
@@ -123,16 +122,8 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
   return (
     <div className={styles.transcriptContainer}>
-      <div className={styles.transcriptHeader}>
-        <Link
-          className={styles.headerLeft}
-          to={"/"}
-          style={{ cursor: "pointer", textDecoration: "none", color: "black" }}
-        >
-          <FileText size={20} className={styles.textAccent} />
-          <h3>CourtMitra</h3>
-        </Link>
-        <div className={styles.headerActions}>
+      <div className={styles.headerActions}>
+        <div className={styles.transcriptHeader}>
           <Button
             variant="ghost"
             size="sm"
@@ -145,9 +136,14 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             onClick={handleDownload}
             icon={<Download size={16} />}
           />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange("")}
+            icon={<RefreshCcw size={16} />}
+          />
         </div>
       </div>
-
       <div className={styles.editorWrapper}>
         {isLoading ? (
           <div className={styles.loadingOverlay}>

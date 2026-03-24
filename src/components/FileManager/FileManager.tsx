@@ -259,7 +259,6 @@ const FileManager: React.FC<FileManagerProps> = () => {
         accept=".pdf,.doc,.docx,.csv,.txt,.xlsx,.json,.md,.mp3,.png,.jpg,.jpeg,.ogg,.wav"
       />
       <div className={styles.fmHeader}>
-        <h3>File Manager</h3>
         <div className={styles.fmActions}>
           <button
             className={styles.iconBtn}

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor";
 import FileManager from "../../components/FileManager/FileManager";
-import { User, MessageSquare, Plus, LogOut, Wand2 } from "lucide-react";
+import { User, MessageSquare, Plus, LogOut, FileText } from "lucide-react";
 import styles from "./ThreadPage.module.css";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import ChatMessages from "../../components/ChatMessages/ChatMessages";
 import ChatInput from "../../components/ChatMessages/ChatInput";
 import { useDispatch, useSelector } from "react-redux";
@@ -67,7 +67,8 @@ const ThreadPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [threadTitle, setThreadTitle] = useState<string | null>(null);
   const [showLogout, setShowLogout] = useState(false);
-  const [activeTab, setActiveTab] = useState<"order" | "chat">("chat");
+  const [leftTab, setLeftTab] = useState<"transcript" | "order">("transcript");
+  const [centerTab, setCenterTab] = useState<"chat" | "files">("chat");
   const [orderData, setOrderData] = useState<OrderData>(initialOrderData);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -90,8 +91,6 @@ const ThreadPage: React.FC = () => {
   const [rightWidth, setRightWidth] = useState(320);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
-
-  console.log(activeTab);
 
   const handleAudioUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -197,29 +196,26 @@ const ThreadPage: React.FC = () => {
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
-    if (scrollRef.current && activeTab === "chat") {
+    if (scrollRef.current && centerTab === "chat") {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, loading, activeTab]);
+  }, [messages, loading, centerTab]);
 
   // Load persistent workspace state on mount
   useEffect(() => {
-    if (threadId) {
-      loadThreadState(threadId).then((state) => {
-        if (state) {
-          if (state.transcript && transcript === "")
-            setTranscript(state.transcript);
-          if (state.orderData)
-            setOrderData(normalizeOrderData(state.orderData));
-          if (state.audioBlob) setAudioBlob(state.audioBlob);
-          lastProcessedTranscriptRef.current = state.transcript
-            ? state.transcript
-            : "";
-        }
-        setIsStateLoaded(true);
-      });
-    }
-  }, [threadId, transcript]);
+    if (!threadId) return;
+
+    loadThreadState(threadId).then((state) => {
+      if (state) {
+        setTranscript(state.transcript || "");
+        setOrderData(normalizeOrderData(state.orderData));
+        setAudioBlob(state.audioBlob || null);
+
+        lastProcessedTranscriptRef.current = state.transcript || "";
+      }
+      setIsStateLoaded(true);
+    });
+  }, [threadId]); // ✅ ONLY threadId
 
   // Save persistent workspace state whenever it updates (after initial load)
   useEffect(() => {
@@ -230,7 +226,6 @@ const ThreadPage: React.FC = () => {
 
   const extractDataFromChunk = async (fullTranscript: string) => {
     setIsExtracting(true);
-    setActiveTab("order");
     const currentJsonString = JSON.stringify(orderData);
 
     try {
@@ -488,250 +483,221 @@ const ThreadPage: React.FC = () => {
         userSelect: isDraggingLeft || isDraggingRight ? "none" : "auto",
       }}
     >
-      {/* Division 1: Leftmost Part (Sidebar + Recorder + Transcript) */}
-      <aside
-        className={styles.divisionLeft}
-        style={{ width: leftWidth, flexShrink: 0 }}
-      >
-        <div className={styles.transcriptSection}>
-          {errorMessage && (
-            <div className={styles.errorBanner}>
-              {errorMessage}
-              <button onClick={() => setErrorMessage(null)}>Dismiss</button>
-            </div>
-          )}
-          <TranscriptEditor
-            transcript={transcript}
-            onChange={setTranscript}
-            isLoading={isProcessing}
-            isRecording={isActuallyRecording}
-            onModify={(start, end) => {
-              if (showRecorder) {
-                if (isActuallyRecording) {
-                  alert("Please complete the current recording first.");
-                } else {
-                  alert(
-                    "Please close the current recorder before starting a new modification.",
-                  );
-                }
-                return;
-              }
-              setModificationRange({ start, end });
-              setOriginalTranscriptBeforeModify(transcript);
-              setShowRecorder(true);
-            }}
-          />
+      {/* ✅ GLOBAL HEADER */}
+      <div className={styles.globalHeader}>
+        {/* LEFT */}
+        <div className={styles.headerLeftSection}>
+          <Link className={styles.headerLeft} to={"/"}>
+            <FileText size={20} className={styles.textAccent} />
+            <h3>CourtMitra</h3>
+          </Link>
+        </div>
+
+        {/* CENTER */}
+        <div className={styles.headerCenterSection}>
+          <h2 className={styles.threadTitle}>
+            {threadTitle || "Untitled Chat"}
+          </h2>
+        </div>
+
+        {/* RIGHT */}
+        <div className={styles.headerRightSection}>
+          <button className={styles.newChatBtn} onClick={() => navigate("/")}>
+            <Plus size={18} />
+            <span>New Chat</span>
+          </button>
+
           <button
-            className={styles.generateOrderBtn}
-            onClick={() => extractDataFromChunk(transcript)}
-            disabled={isExtracting || !transcript.trim()}
+            className={styles.userProfile}
+            onClick={() => setShowLogout(!showLogout)}
           >
-            {isExtracting ? (
-              "Generating..."
-            ) : (
-              <>
-                <Wand2 size={16} /> Generate Order
-              </>
+            <User size={18} />
+            {showLogout && (
+              <div className={styles.logoutDropdown}>
+                <button
+                  className={styles.logoutBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
+                >
+                  <LogOut size={16} /> Logout
+                </button>
+              </div>
             )}
           </button>
         </div>
-        <div className={styles.recorderSection}>
-          {!showRecorder && (
-            <>
-              <button
-                className={styles.startRecordingBtn}
-                onClick={() => setShowRecorder(true)}
-              >
-                ● Start Recording
-              </button>
-              <button
-                className={styles.uploadBtn}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? "Uploading..." : "Upload Audio"}
-              </button>
+      </div>
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleAudioUpload}
-                accept="audio/*"
-                style={{ display: "none" }}
-              />
-            </>
-          )}
-
-          {showRecorder && (
-            <div className={styles.floatingRecorder}>
-              <FloatingRecorder
-                title={
-                  modificationRange ? "Modify Selection" : "Recorder Studio"
+      {/* ✅ MAIN CONTENT */}
+      <div className={styles.mainLayout}>
+        {/* LEFT SIDE */}
+        <div className={styles.divisionLeft}>
+          <div className={styles.transcriptSection}>
+            {/* Tabs */}
+            <div className={styles.tabContainer}>
+              <button
+                className={
+                  leftTab === "transcript" ? styles.activeTab : styles.tab
                 }
-                transcript={transcript}
-                onTranscriptionStart={() => {
-                  setIsProcessing(true);
-                  setErrorMessage(null);
-                }}
-                onTranscriptionComplete={(text: string) => {
-                  if (modificationRange) {
-                    const updated =
-                      originalTranscriptBeforeModify.substring(
-                        0,
-                        modificationRange.start,
-                      ) +
-                      text +
-                      originalTranscriptBeforeModify.substring(
-                        modificationRange.end,
-                      );
-                    setTranscript(updated);
-                  } else {
-                    setTranscript(text);
-                  }
-                  setIsProcessing(false);
-                }}
-                onRecordingStateChange={setIsActuallyRecording}
-                onTranscriptionError={(msg: string) => {
-                  setErrorMessage(msg);
-                  setIsProcessing(false);
-                }}
-                onAudioBlobComplete={(blob: Blob) => {
-                  setAudioBlob(blob);
-                }}
-                resetTranscript={() => {
-                  setTranscript("");
-                  setAudioBlob(null);
-                }}
-                onClose={() => {
-                  setShowRecorder(false);
-                  setModificationRange(null);
-                }}
-              />
+                onClick={() => setLeftTab("transcript")}
+              >
+                Transcript
+              </button>
+
+              <button
+                className={leftTab === "order" ? styles.activeTab : styles.tab}
+                onClick={() => setLeftTab("order")}
+              >
+                Order
+              </button>
             </div>
-          )}
-        </div>
-      </aside>
 
-      <button
-        className={styles.resizeHandle}
-        onMouseDown={() => setIsDraggingLeft(true)}
-        data-resize-handle-state={isDraggingLeft ? "drag" : "idle"}
-      />
+            {errorMessage && (
+              <div className={styles.errorBanner}>
+                {errorMessage}
+                <button onClick={() => setErrorMessage(null)}>Dismiss</button>
+              </div>
+            )}
 
-      {/* Division 2: Center Part (Main Interaction Area) */}
-      <main className={styles.divisionCenter} style={{ flex: 1, minWidth: 0 }}>
-        <header className={styles.mainHeader}>
-          <div
-            className={styles.searchBar}
-            style={{
-              background: "transparent",
-              padding: 0,
-              justifyContent: "flex-start",
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: "1.2rem",
-                fontWeight: 600,
-                margin: 0,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {threadTitle || "Untitled Chat"}
-            </h2>
-          </div>
+            {leftTab === "transcript" && (
+              <>
+                <TranscriptEditor
+                  transcript={transcript}
+                  onChange={setTranscript}
+                  isLoading={isProcessing}
+                />
 
-          <div className={styles.headerNav}>
-            <button className={styles.newChatBtn} onClick={() => navigate("/")}>
-              <Plus size={18} />
-              <span>New Chat</span>
-            </button>
-            <button
-              className={styles.userProfile}
-              onClick={() => setShowLogout(!showLogout)}
-            >
-              <User size={18} />
-              {showLogout && (
-                <div className={styles.logoutDropdown}>
+                <div className={styles.recorderSection}>
                   <button
-                    className={styles.logoutBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLogout();
-                    }}
+                    className={styles.generateOrderBtn}
+                    onClick={() => extractDataFromChunk(transcript)}
+                    disabled={isExtracting || !transcript.trim()}
                   >
-                    <LogOut size={16} /> Logout
+                    {isExtracting ? "Generating..." : "Generate Order"}
                   </button>
+
+                  {!showRecorder && (
+                    <>
+                      <button
+                        className={styles.startRecordingBtn}
+                        onClick={() => setShowRecorder(true)}
+                      >
+                        ● Start Recording
+                      </button>
+
+                      <button
+                        className={styles.uploadBtn}
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? "Uploading..." : "Upload Audio"}
+                      </button>
+
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleAudioUpload}
+                        accept="audio/*"
+                        style={{ display: "none" }}
+                      />
+                    </>
+                  )}
+
+                  {showRecorder && (
+                    <div className={styles.floatingRecorder}>
+                      <FloatingRecorder
+                        transcript={transcript}
+                        onTranscriptionStart={() => {
+                          setIsProcessing(true);
+                          setErrorMessage(null);
+                        }}
+                        onTranscriptionComplete={(text: string) => {
+                          setTranscript(text);
+                          setIsProcessing(false);
+                        }}
+                        onTranscriptionError={(msg: string) => {
+                          setErrorMessage(msg);
+                          setIsProcessing(false);
+                        }}
+                        onAudioBlobComplete={(blob: Blob) => {
+                          setAudioBlob(blob);
+                        }}
+                        resetTranscript={() => {
+                          setTranscript("");
+                          setAudioBlob(null);
+                        }}
+                        onClose={() => setShowRecorder(false)}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </button>
+              </>
+            )}
+
+            {leftTab === "order" && (
+              <OrderForm
+                data={orderData}
+                onUpdate={setOrderData}
+                isProcessing={isExtracting}
+              />
+            )}
           </div>
-        </header>
-        <div className={styles.tabsWrapper}>
+        </div>
+
+        {/* Divider */}
+        <button className={styles.resizeHandle} />
+
+        {/* CENTER */}
+        <main className={styles.divisionCenter}>
+          {/* Tabs */}
           <div className={styles.tabContainer}>
             <button
-              className={activeTab === "order" ? styles.activeTab : styles.tab}
-              onClick={() => setActiveTab("order")}
+              className={centerTab === "chat" ? styles.activeTab : styles.tab}
+              onClick={() => setCenterTab("chat")}
             >
-              Order Details / PDF
+              Chat
             </button>
+
             <button
-              className={activeTab === "chat" ? styles.activeTab : styles.tab}
-              onClick={() => setActiveTab("chat")}
+              className={centerTab === "files" ? styles.activeTab : styles.tab}
+              onClick={() => setCenterTab("files")}
             >
-              Chat Section
+              Files
             </button>
           </div>
-        </div>
 
-        <section className={styles.contentArea} ref={scrollRef}>
-          {activeTab === "order" && (
-            <OrderForm
-              data={orderData}
-              onUpdate={setOrderData}
-              isProcessing={isExtracting}
-            />
+          <section className={styles.contentArea} ref={scrollRef}>
+            {centerTab === "chat" && (
+              <>
+                {filteredMessages.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <div className={styles.iconCircle}>
+                      <MessageSquare size={32} />
+                    </div>
+                    <h2>Universal Workspace</h2>
+                    <p>
+                      Select a document or start a new conversation to begin.
+                    </p>
+                  </div>
+                ) : (
+                  <ChatMessages
+                    messages={filteredMessages}
+                    loading={loading}
+                    onDelete={handleDelete}
+                  />
+                )}
+              </>
+            )}
+
+            {centerTab === "files" && <FileManager />}
+          </section>
+
+          {centerTab === "chat" && (
+            <ChatInput onSend={handleSend} disabled={loading} />
           )}
-
-          {activeTab === "chat" &&
-            (filteredMessages.length === 0 ? (
-              <div className={styles.emptyState}>
-                <div className={styles.iconCircle}>
-                  <MessageSquare size={32} />
-                </div>
-                <h2>Universal Workspace</h2>
-                <p>Select a document or start a new conversation to begin.</p>
-              </div>
-            ) : (
-              <ChatMessages
-                messages={filteredMessages}
-                loading={loading}
-                onDelete={handleDelete}
-              />
-            ))}
-        </section>
-        {activeTab === "chat" && (
-          <ChatInput onSend={handleSend} disabled={loading} />
-        )}
-      </main>
-
-      <button
-        className={styles.resizeHandle}
-        onMouseDown={() => setIsDraggingRight(true)}
-        data-resize-handle-state={isDraggingRight ? "drag" : "idle"}
-      />
-
-      {/* Division 3: Right Part (File Manager) */}
-      <aside
-        className={styles.divisionRight}
-        style={{ width: rightWidth, flexShrink: 0 }}
-      >
-        <FileManager />
-      </aside>
+        </main>
+      </div>
     </div>
   );
 };

@@ -288,10 +288,10 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <h3>Extracted Court Order</h3>
+        <h3>Court Order</h3>
         <div className={styles.statusGroup}>
           {isProcessing && (
-            <span className={styles.processingBadge}>Extracting text...</span>
+            <span className={styles.processingBadge}>Filling Order...</span>
           )}
           <button
             className={styles.pdfButton}
