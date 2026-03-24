@@ -62,3 +62,15 @@ export const deleteThread = async (threadId: string) => {
     throw error;
   }
 };
+export const createEmptyThread = async (botId: string) => {
+  try {
+    const threadRes = await axios.post(`${API_BASE}/bots/${botId}/thread`, {
+      history: true,
+      data_limit: 10,
+    });
+    return threadRes.data.thread_id;
+  } catch (error) {
+    console.error("Failed to create empty thread:", error);
+    throw error;
+  }
+};

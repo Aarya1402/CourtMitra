@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Upload, FileText, Loader2, Trash2, X, LogOut } from "lucide-react";
+import { Upload, FileText, Loader2, Trash2, X, LogOut, Plus } from "lucide-react";
 import styles from "./HomePage.module.css";
 import axios from "axios";
 import { checkAndCreateBot } from "../../utils/botAuthUtils";
@@ -11,6 +11,7 @@ import {
   fetchUser,
   uploadDocument,
   deleteThread,
+  createEmptyThread,
 } from "./HomePage.logic";
 import { API_BASE_URL } from "../../constants/api";
 import { useAlert } from "../../context/AlertContext";
@@ -76,6 +77,7 @@ const HomePage: React.FC = () => {
     id: string;
     title: string;
   } | null>(null);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   const [showLogout, setShowLogout] = useState(false);
 
@@ -184,6 +186,27 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const handleCreateNewChat = async () => {
+    if (!botId) {
+      showAlert("Bot not initialized. Please wait or refresh.", {
+        title: "Notice",
+      });
+      return;
+    }
+
+    setIsCreatingChat(true);
+    try {
+      const newThreadId = await createEmptyThread(botId);
+      navigate(`/threads/${newThreadId}`);
+    } catch (error) {
+      showAlert("Failed to create new chat. Please try again.", {
+        title: "Error",
+      });
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
+
   return (
     <div className={styles.homeContainer}>
       <input
@@ -204,11 +227,18 @@ const HomePage: React.FC = () => {
           <span className={styles.logoText}>CourtMitra</span>
         </div>
 
-        {/* 
-        <button className={styles.newChatBtn}>
-          <Plus size={18} />
-          <span>New Document Chat</span>
-        </button> */}
+        <button
+          className={styles.newChatBtn}
+          onClick={handleCreateNewChat}
+          disabled={isCreatingChat}
+        >
+          {isCreatingChat ? (
+            <Loader2 size={18} className={styles.spin} />
+          ) : (
+            <Plus size={18} />
+          )}
+          <span>New Chat</span>
+        </button>
 
         <div className={styles.navSection}>
           <h3 className={styles.navTitle}>Document chats</h3>
@@ -303,6 +333,15 @@ const HomePage: React.FC = () => {
           {isUploading && "Processing..."}
           {!isUploading && threadId ? "Get Started" : "Waiting for Upload..."}
         </button>
+
+        {!threadId && !isUploading && (
+          <button
+            className={styles.skipBtn}
+            onClick={handleCreateNewChat}
+          >
+            Or start a fresh chat without documents
+          </button>
+        )}
       </main>
 
       <DeleteThreadModal

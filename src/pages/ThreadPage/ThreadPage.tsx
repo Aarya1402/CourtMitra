@@ -3,7 +3,7 @@ import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor
 import FileManager from "../../components/FileManager/FileManager";
 import { User, MessageSquare, Plus, LogOut, FileText } from "lucide-react";
 import styles from "./ThreadPage.module.css";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import ChatMessages from "../../components/ChatMessages/ChatMessages";
 import ChatInput from "../../components/ChatMessages/ChatInput";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,6 +27,7 @@ import { API_BASE_URL } from "../../constants/api";
 import FloatingRecorder from "../../components/AudioRecorder/FloatingRecorder";
 import { initialOrderData } from "../../components/OrderForm/OrderForm.logic";
 import { useAlert } from "../../context/AlertContext";
+import { updateThreadTitle } from "./ThreadPage.logic";
 
 const normalizeOrderData = (data: any): OrderData => {
   if (!data) return initialOrderData;
@@ -79,6 +80,7 @@ const ThreadPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const lastProcessedTranscriptRef = useRef("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -322,6 +324,21 @@ const ThreadPage: React.FC = () => {
     }
   };
 
+  const handleTitleUpdate = async (newTitle: string) => {
+    if (!threadId || !newTitle.trim()) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    try {
+      setThreadTitle(newTitle);
+      await updateThreadTitle(threadId, newTitle);
+    } catch (e) {
+      console.error("Failed to update title:", e);
+      setIsEditingTitle(false);
+    }
+  };
+
   const fetchChatHistory = async (pageNumber: number = 1) => {
     if (!threadId || isFetchingHistory) return;
     setIsFetchingHistory(true);
@@ -539,17 +556,38 @@ const ThreadPage: React.FC = () => {
       <div className={styles.globalHeader}>
         {/* LEFT */}
         <div className={styles.headerLeftSection}>
-          <Link className={styles.headerLeft} to={"/"}>
+          <div className={styles.logoSection} onClick={() => navigate("/")}>
             <FileText size={20} className={styles.textAccent} />
-            <h3>CourtMitra</h3>
-          </Link>
+            <span className={styles.logoText }>CourtMitra</span>
+          </div>
         </div>
 
         {/* CENTER */}
         <div className={styles.headerCenterSection}>
-          <h2 className={styles.threadTitle}>
-            {threadTitle || "Untitled Chat"}
-          </h2>
+          {isEditingTitle ? (
+            <input
+              autoFocus
+              className={styles.threadTitleInput}
+              value={threadTitle || ""}
+              onChange={(e) => setThreadTitle(e.target.value)}
+              onBlur={() => setIsEditingTitle(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleTitleUpdate(threadTitle || "");
+                  setIsEditingTitle(false);
+                }
+                if (e.key === "Escape") setIsEditingTitle(false);
+              }}
+            />
+          ) : (
+            <h2
+              className={styles.threadTitle}
+              onClick={() => setIsEditingTitle(true)}
+              title="Click to edit"
+            >
+              {threadTitle || "Untitled Chat"}
+            </h2>
+          )}
         </div>
 
         {/* RIGHT */}
