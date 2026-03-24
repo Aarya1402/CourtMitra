@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Download, Copy, Check, RefreshCcw } from "lucide-react";
+import { Download, Copy, Check, Trash2 } from "lucide-react";
 import Button from "../shared/Button";
 import styles from "./TranscriptEditor.module.css";
 import { DEFAULT_PLACEHOLDER } from "./TranscriptEditor.logic";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useAlert } from "../../context/AlertContext";
 
 interface TranscriptEditorProps {
   transcript: string;
@@ -21,6 +22,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   onModify,
   isRecording,
 }) => {
+  const { showAlert, showConfirm } = useAlert();
   const [copied, setCopied] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -45,9 +47,9 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     }
   };
 
-  const handleModifyClick = () => {
+  const handleModifyClick = async () => {
     if (isRecording) {
-      alert("Please complete the recording first");
+      await showAlert("Please complete the recording first");
       setContextMenu(null);
       return;
     }
@@ -128,19 +130,29 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleCopy}
+            title="Copy transcript"
             icon={copied ? <Check size={16} /> : <Copy size={16} />}
           />
           <Button
             variant="ghost"
             size="sm"
             onClick={handleDownload}
+            title="Download as PDF"
             icon={<Download size={16} />}
           />
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onChange("")}
-            icon={<RefreshCcw size={16} />}
+            onClick={async () => {
+              const ok = await showConfirm(
+                "Are you sure you want to clear the transcript?",
+              );
+              if (ok) {
+                onChange("");
+              }
+            }}
+            title="Clear transcript"
+            icon={<Trash2 size={16} />}
           />
         </div>
       </div>

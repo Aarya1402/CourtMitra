@@ -1,5 +1,20 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { WS_URL } from "../components/AudioRecorder/AudioRecorder.logic";
+ 
+const mergeTranscriptChunk = (previous: string, incoming: string) => {
+  const prev = previous.trim();
+  const next = incoming.trim();
+  if (!next) return previous;
+  if (!prev) return next;
+ 
+  // If backend sends full cumulative text, trust it and replace.
+  if (next.startsWith(prev)) return next;
+  // If backend repeats older content, keep the longest stable transcript.
+  if (prev.startsWith(next)) return prev;
+ 
+  // For delta chunks, append with spacing.
+  return `${prev} ${next}`.replace(/\s+/g, " ").trim();
+};
 
 export function useTranscriber() {
   const [isRecording, setIsRecording] = useState(false);
@@ -19,7 +34,7 @@ export function useTranscriber() {
     transcriptRef.current = "";
   }, []);
 
-  const stop = useCallback(() => {
+  const stopResources = useCallback(() => {
     if (wsRef.current) {
       wsRef.current.send(JSON.stringify({ type: "stop" }));
       setTimeout(() => wsRef.current?.close(), 100);
@@ -33,14 +48,21 @@ export function useTranscriber() {
       sourceRef.current.disconnect();
       sourceRef.current = null;
     }
-    audioCtxRef.current?.close();
-    audioCtxRef.current = null;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close();
+      audioCtxRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t: MediaStreamTrack) => t.stop());
+      streamRef.current = null;
+    }
+  }, []);
+ 
+  const stop = useCallback(() => {
+    stopResources();
     setIsRecording(false);
     isRecordingRef.current = false;
-  }, []);
+  }, [stopResources]);
 
   const start = useCallback(
     async (language: string = "unknown") => {
@@ -91,12 +113,9 @@ export function useTranscriber() {
                 msg.data?.text ||
                 (typeof msg.data === "string" ? msg.data : null);
               if (text) {
-                const newFullText =
-                  transcriptRef.current +
-                  (transcriptRef.current ? " " : "") +
-                  text;
-                transcriptRef.current = newFullText;
-                setTranscript(newFullText);
+                const mergedText = mergeTranscriptChunk(transcriptRef.current, text);
+                transcriptRef.current = mergedText;
+                setTranscript(mergedText);
               }
             } else if (msg.type === "error") {
               setError(msg.message);

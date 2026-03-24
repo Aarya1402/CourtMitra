@@ -6,13 +6,16 @@ import { Provider } from "react-redux";
 import { store } from "./store/index.ts";
 import axios from "axios";
 
+import { AlertProvider } from "./context/AlertContext.tsx";
+
 axios.defaults.withCredentials = true;
 
-
 createRoot(document.getElementById("root")!).render(
-    <Provider store={store}>
+  <Provider store={store}>
+    <AlertProvider>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </Provider>
+    </AlertProvider>
+  </Provider>,
 );

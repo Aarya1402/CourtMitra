@@ -25,6 +25,7 @@ import { saveThreadState, loadThreadState } from "../../utils/storageUtils";
 import { API_BASE_URL } from "../../constants/api";
 import FloatingRecorder from "../../components/AudioRecorder/FloatingRecorder";
 import { initialOrderData } from "../../components/OrderForm/OrderForm.logic";
+import { useAlert } from "../../context/AlertContext";
 
 const normalizeOrderData = (data: any): OrderData => {
   if (!data) return initialOrderData;
@@ -59,6 +60,7 @@ const normalizeOrderData = (data: any): OrderData => {
 };
 
 const ThreadPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const { threadId } = useParams<{ threadId: string }>();
   const navigate = useNavigate();
   const [transcript, setTranscript] = useState("");
@@ -99,7 +101,7 @@ const ThreadPage: React.FC = () => {
     if (!file) return;
 
     if (!file.type.startsWith("audio/")) {
-      alert("Please upload a valid audio file.");
+      showAlert("Please upload a valid audio file.", { title: "Invalid File" });
       return;
     }
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Mic, Square, Pause, Play, Save, RotateCcw } from "lucide-react";
 import Button from "../shared/Button";
+import { useAlert } from "../../context/AlertContext";
 
 interface AudioRecorderProps {
   onRecordingComplete: (audioBlob: Blob) => void;
@@ -9,6 +10,7 @@ interface AudioRecorderProps {
 const AudioRecorder: React.FC<AudioRecorderProps> = ({
   onRecordingComplete,
 }) => {
+  const { showAlert } = useAlert();
   const [status, setStatus] = useState<
     "idle" | "recording" | "paused" | "completed"
   >("idle");
@@ -62,7 +64,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       startTimer();
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      alert("Microphone access denied or not available.");
+      showAlert("Microphone access denied or not available.", { title: "Error" });
     }
   };
 

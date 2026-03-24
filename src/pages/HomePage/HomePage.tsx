@@ -13,6 +13,7 @@ import {
   deleteThread,
 } from "./HomePage.logic";
 import { API_BASE_URL } from "../../constants/api";
+import { useAlert } from "../../context/AlertContext";
 
 const DeleteThreadModal = ({
   isOpen,
@@ -56,6 +57,7 @@ const DeleteThreadModal = ({
 };
 
 const HomePage: React.FC = () => {
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const botId = useSelector((state: RootState) => state.bot.botId);
@@ -133,7 +135,7 @@ const HomePage: React.FC = () => {
 
   const handleUpload = async (file: File) => {
     if (!botId) {
-      alert("Bot not initialized. Please wait or refresh.");
+      showAlert("Bot not initialized. Please wait or refresh.", { title: "Notice" });
       return;
     }
 
@@ -143,7 +145,7 @@ const HomePage: React.FC = () => {
       setThreadId(newThreadId);
       console.log("Upload successful to thread:", newThreadId);
     } catch (error) {
-      alert("Upload failed. Please try again.");
+      showAlert("Upload failed. Please try again.", { title: "Error" });
       console.error("Upload failed in HomePage:", error);
     } finally {
       setIsUploading(false);
@@ -154,9 +156,9 @@ const HomePage: React.FC = () => {
     if (threadId) {
       navigate(`/threads/${threadId}`);
     } else if (selectedFile && isUploading) {
-      alert("Still uploading, please wait...");
+      showAlert("Still uploading, please wait...", { title: "Notice" });
     } else {
-      alert("Please upload a document first.");
+      showAlert("Please upload a document first.", { title: "Notice" });
     }
   };
 
@@ -178,7 +180,7 @@ const HomePage: React.FC = () => {
       );
       setThreadToDelete(null);
     } catch (error) {
-      alert("Failed to delete thread.");
+      showAlert("Failed to delete thread.", { title: "Error" });
     }
   };
 

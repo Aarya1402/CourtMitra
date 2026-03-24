@@ -15,6 +15,7 @@ import axios from "axios";
 import { API_BASE } from "./FileManager.logic";
 import type { ThreadFile } from "./FileManager.logic";
 import { useParams } from "react-router-dom";
+import { useAlert } from "../../context/AlertContext";
 
 interface FileManagerProps {
   threadId?: string;
@@ -65,6 +66,7 @@ const DeleteFileModal = ({
 };
 
 const FileManager: React.FC<FileManagerProps> = () => {
+  const { showAlert } = useAlert();
   const mimeTypes: Record<string, string> = {
     txt: "text/plain",
     pdf: "application/pdf",
@@ -136,7 +138,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
 
   const handlePlusClick = () => {
     if (!threadId) {
-      alert("Please select or create a thread first.");
+      showAlert("Please select or create a thread first.", { title: "Notice" });
       return;
     }
     fileInputRef.current?.click();
@@ -166,7 +168,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       await fetchFiles(); // Refresh list
     } catch (error) {
       console.error("Upload failed:", error);
-      alert("Upload failed. Please try again.");
+      showAlert("Upload failed. Please try again.", { title: "Error" });
     } finally {
       setIsUploading(false);
     }
@@ -184,7 +186,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       const fileUrl: string | undefined = response.data?.file_url;
 
       if (!fileUrl) {
-        alert("Preview URL not found.");
+        showAlert("Preview URL not found.", { title: "Error" });
         return;
       }
       console.log(fileUrl);
@@ -203,7 +205,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       setPreviewFileName(file.name);
     } catch (err) {
       console.error("Preview error:", err);
-      alert("Failed to load preview.");
+      showAlert("Failed to load preview.", { title: "Error" });
     }
   };
 
@@ -220,7 +222,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       setFileToDelete(null);
     } catch (err) {
       console.error("Delete error:", err);
-      alert("Failed to delete file.");
+      showAlert("Failed to delete file.", { title: "Error" });
     }
   };
 
