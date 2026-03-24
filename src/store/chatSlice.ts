@@ -73,6 +73,29 @@ const chatSlice = createSlice({
 
       state.messages.push(...formatted);
     },
+    prependMessagesForThread: (
+      state,
+      action: PayloadAction<{
+        threadId?: string;
+        messages: {
+          id?: string;
+          text: string;
+          sender: "user" | "bot";
+          threadId?: string;
+        }[];
+      }>,
+    ) => {
+      const { threadId, messages } = action.payload;
+
+      const formatted = messages.map((msg) => ({
+        id: msg.id || `${Date.now()}-${Math.random()}`,
+        text: msg.text,
+        sender: msg.sender,
+        threadId: msg.threadId,
+      }));
+
+      state.messages.unshift(...formatted);
+    },
     deleteMessage: (state, action: PayloadAction<string>) => {
       state.messages = state.messages.filter((m) => m.id !== action.payload);
     },
@@ -95,6 +118,7 @@ export const {
   addBotMessage,
   setLoading,
   setMessagesForThread,
+  prependMessagesForThread,
   deleteMessage,
   updateBotMessage,
 } = chatSlice.actions;

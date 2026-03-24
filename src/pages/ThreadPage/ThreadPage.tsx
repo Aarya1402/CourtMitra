@@ -14,6 +14,7 @@ import {
   setMessagesForThread,
   deleteMessage,
   updateBotMessage,
+  prependMessagesForThread,
 } from "../../store/chatSlice";
 import type { RootState } from "../../store";
 import axios from "axios";
@@ -75,6 +76,9 @@ const ThreadPage: React.FC = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isStateLoaded, setIsStateLoaded] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const lastProcessedTranscriptRef = useRef("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -197,11 +201,27 @@ const ThreadPage: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages update
+  // Auto-scroll to bottom only for new bot messages (not for pagination)
+  const lastMsgCountRef = useRef(0);
   useEffect(() => {
     if (scrollRef.current && centerTab === "chat") {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      // If we got new messages and we weren't prepending
+      if (messages.length > lastMsgCountRef.current && page === 1) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+      lastMsgCountRef.current = messages.length;
     }
-  }, [messages, loading, centerTab]);
+  }, [messages, loading, centerTab, page]);
+
+  const handleScroll = () => {
+    if (!scrollRef.current || !hasMore || isFetchingHistory) return;
+
+    if (scrollRef.current.scrollTop === 0) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchChatHistory(nextPage);
+    }
+  };
 
   // Load persistent workspace state on mount
   useEffect(() => {
@@ -282,13 +302,18 @@ const ThreadPage: React.FC = () => {
     }
   };
 
-  const fetchChatHistory = async () => {
-    if (!threadId) return;
+  const fetchChatHistory = async (pageNumber: number = 1) => {
+    if (!threadId || isFetchingHistory) return;
+    setIsFetchingHistory(true);
     try {
       const chatHistory = await axios.get(
-        `${API_BASE_URL}/api/talkument/bots/${threadId}/chat_history?page=1&per_page=30`,
+        `${API_BASE_URL}/api/talkument/bots/${threadId}/chat_history?page=${pageNumber}&per_page=30`,
       );
       const history = chatHistory.data.history || [];
+      
+      if (history.length < 30) {
+        setHasMore(false);
+      }
 
       const formattedMessages = history.flatMap((item: any) => {
         const arr: {
@@ -323,33 +348,38 @@ const ThreadPage: React.FC = () => {
 
         return arr;
       });
-      dispatch(
-        setMessagesForThread({
-          threadId,
-          messages: formattedMessages,
-        }),
-      );
-      console.log(botId);
-      // Fetch the thread title if botId is present
-      if (botId) {
-        try {
-          const threadsRes = await axios.get(
-            `${API_BASE_URL}/api/talkument/bots/${botId}/threads?page=1&per_page=100`,
-          );
-          const allThreads = threadsRes.data.threads || [];
-          const currentThread = allThreads.find(
-            (s: any) => s.thread_uuid === threadId,
-          );
-          if (currentThread) {
-            console.log("Current thread details:", currentThread.title);
-            setThreadTitle(currentThread.title);
+
+      if (pageNumber === 1) {
+        dispatch(
+          setMessagesForThread({
+            threadId,
+            messages: formattedMessages,
+          }),
+        );
+      } else {
+        // Prepend and Maintain scroll height
+        const scrollContainer = scrollRef.current;
+        const prevHeight = scrollContainer?.scrollHeight || 0;
+
+        dispatch(
+          prependMessagesForThread({
+            threadId,
+            messages: formattedMessages,
+          }),
+        );
+
+        // We use requestAnimationFrame to wait for the DOM render
+        requestAnimationFrame(() => {
+          if (scrollContainer) {
+            const newHeight = scrollContainer.scrollHeight;
+            scrollContainer.scrollTop = newHeight - prevHeight;
           }
-        } catch (e) {
-          console.error("Failed to fetch thread title:", e);
-        }
+        });
       }
     } catch (err) {
-      console.error("Error fetching history for thread:", threadId, " ", err);
+      console.error("Failed to fetch chat history:", err);
+    } finally {
+      setIsFetchingHistory(false);
     }
   };
 
@@ -669,7 +699,7 @@ const ThreadPage: React.FC = () => {
             </button>
           </div>
 
-          <section className={styles.contentArea} ref={scrollRef}>
+          <section className={styles.contentArea} ref={scrollRef} onScroll={handleScroll}>
             {centerTab === "chat" && (
               <>
                 {filteredMessages.length === 0 ? (
