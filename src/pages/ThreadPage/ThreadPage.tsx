@@ -82,6 +82,13 @@ const ThreadPage: React.FC = () => {
   const lastProcessedTranscriptRef = useRef("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [modificationRange, setModificationRange] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
+  const [isActuallyRecording, setIsActuallyRecording] = useState(false);
+  const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
+    useState("");
   console.log(isProcessing);
 
   const dispatch = useDispatch();
@@ -293,6 +300,12 @@ const ThreadPage: React.FC = () => {
     } finally {
       setIsExtracting(false);
     }
+  };
+
+  const handleModify = (start: number, end: number) => {
+    setModificationRange({ start, end });
+    setOriginalTranscriptBeforeModify(transcript);
+    setShowRecorder(true);
   };
 
   const fetchThreadTitle = async () => {
@@ -605,6 +618,8 @@ const ThreadPage: React.FC = () => {
                   transcript={transcript}
                   onChange={setTranscript}
                   isLoading={isProcessing}
+                  onModify={handleModify}
+                  isRecording={isActuallyRecording}
                 />
 
                 <div className={styles.recorderSection}>
@@ -652,9 +667,22 @@ const ThreadPage: React.FC = () => {
                           setErrorMessage(null);
                         }}
                         onTranscriptionComplete={(text: string) => {
-                          setTranscript(text);
+                          if (modificationRange) {
+                            const { start, end } = modificationRange;
+                            const before = originalTranscriptBeforeModify.substring(
+                              0,
+                              start,
+                            );
+                            const after =
+                              originalTranscriptBeforeModify.substring(end);
+                            setTranscript(before + text + after);
+                            setModificationRange(null);
+                          } else {
+                            setTranscript(text);
+                          }
                           setIsProcessing(false);
                         }}
+                        onRecordingStateChange={setIsActuallyRecording}
                         onTranscriptionError={(msg: string) => {
                           setErrorMessage(msg);
                           setIsProcessing(false);
