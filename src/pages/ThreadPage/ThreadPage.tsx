@@ -75,6 +75,13 @@ const ThreadPage: React.FC = () => {
   const lastProcessedTranscriptRef = useRef("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [modificationRange, setModificationRange] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
+  const [isActuallyRecording, setIsActuallyRecording] = useState(false);
+  const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
+    useState("");
 
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
@@ -497,6 +504,22 @@ const ThreadPage: React.FC = () => {
             transcript={transcript}
             onChange={setTranscript}
             isLoading={isProcessing}
+            isRecording={isActuallyRecording}
+            onModify={(start, end) => {
+              if (showRecorder) {
+                if (isActuallyRecording) {
+                  alert("Please complete the current recording first.");
+                } else {
+                  alert(
+                    "Please close the current recorder before starting a new modification.",
+                  );
+                }
+                return;
+              }
+              setModificationRange({ start, end });
+              setOriginalTranscriptBeforeModify(transcript);
+              setShowRecorder(true);
+            }}
           />
           <button
             className={styles.generateOrderBtn}
@@ -542,15 +565,32 @@ const ThreadPage: React.FC = () => {
           {showRecorder && (
             <div className={styles.floatingRecorder}>
               <FloatingRecorder
+                title={
+                  modificationRange ? "Modify Selection" : "Recorder Studio"
+                }
                 transcript={transcript}
                 onTranscriptionStart={() => {
                   setIsProcessing(true);
                   setErrorMessage(null);
                 }}
                 onTranscriptionComplete={(text: string) => {
-                  setTranscript(text);
+                  if (modificationRange) {
+                    const updated =
+                      originalTranscriptBeforeModify.substring(
+                        0,
+                        modificationRange.start,
+                      ) +
+                      text +
+                      originalTranscriptBeforeModify.substring(
+                        modificationRange.end,
+                      );
+                    setTranscript(updated);
+                  } else {
+                    setTranscript(text);
+                  }
                   setIsProcessing(false);
                 }}
+                onRecordingStateChange={setIsActuallyRecording}
                 onTranscriptionError={(msg: string) => {
                   setErrorMessage(msg);
                   setIsProcessing(false);
@@ -562,7 +602,10 @@ const ThreadPage: React.FC = () => {
                   setTranscript("");
                   setAudioBlob(null);
                 }}
-                onClose={() => setShowRecorder(false)}
+                onClose={() => {
+                  setShowRecorder(false);
+                  setModificationRange(null);
+                }}
               />
             </div>
           )}

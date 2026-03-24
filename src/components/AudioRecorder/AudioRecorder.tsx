@@ -11,7 +11,24 @@ export type AudioRecorderProps = Readonly<{
   onAudioBlobComplete?: (blob: Blob) => void;
   resetTranscript?: () => void;
   onClose?: () => void;
+  onRecordingStateChange?: (isRecording: boolean) => void;
+  title?: string;
 }>;
+
+const mergeTranscriptChunk = (previous: string, incoming: string) => {
+  const prev = previous.trim();
+  const next = incoming.trim();
+  if (!next) return previous;
+  if (!prev) return next;
+
+  // If backend sends full cumulative text, trust it and replace.
+  if (next.startsWith(prev)) return next;
+  // If backend repeats older content, keep the longest stable transcript.
+  if (prev.startsWith(next)) return prev;
+
+  // For delta chunks, append with spacing.
+  return `${prev} ${next}`.replace(/\s+/g, " ").trim();
+};
 
 export default function AudioRecorder({
   transcript = "",
@@ -21,6 +38,8 @@ export default function AudioRecorder({
   onAudioBlobComplete,
   resetTranscript,
   onClose,
+  onRecordingStateChange,
+  title,
 }: AudioRecorderProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -44,8 +63,29 @@ export default function AudioRecorder({
   const isRecordingRef = useRef<boolean>(false);
   const isPausedRef = useRef<boolean>(false);
   const transcriptRef = useRef<string>("");
+  const stopResources = () => {
+    if (wsRef.current) {
+      wsRef.current.send(JSON.stringify({ type: "stop" }));
+      setTimeout(() => wsRef.current?.close(), 100);
+      wsRef.current = null;
+    }
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close();
+      audioCtxRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t: MediaStreamTrack) => t.stop());
+      streamRef.current = null;
+    }
+  };
+
   useEffect(() => {
     return () => {
+      stopResources();
       if (animFrameRef.current !== null) {
         cancelAnimationFrame(animFrameRef.current);
       }
@@ -57,7 +97,9 @@ export default function AudioRecorder({
 
   // Sync ref with the transcript prop so we always append to the latest version (including manual edits)
   useEffect(() => {
-    transcriptRef.current = transcript;
+    if (!isRecordingRef.current) {
+      transcriptRef.current = transcript;
+    }
   }, [transcript]);
 
   const drawBars = () => {
@@ -135,13 +177,9 @@ export default function AudioRecorder({
               msg.data?.text ||
               (typeof msg.data === "string" ? msg.data : null);
             if (text) {
-              // Update local ref immediately to handle rapid messages
-              const newFullText =
-                transcriptRef.current +
-                (transcriptRef.current ? " " : "") +
-                text;
-              transcriptRef.current = newFullText;
-              if (onTranscriptionComplete) onTranscriptionComplete(newFullText);
+              const mergedText = mergeTranscriptChunk(transcriptRef.current, text);
+              transcriptRef.current = mergedText;
+              if (onTranscriptionComplete) onTranscriptionComplete(mergedText);
             }
           } else if (msg.type === "error") {
             console.error("Backend reported error:", msg.message);
@@ -193,6 +231,7 @@ export default function AudioRecorder({
 
       mediaRecorder.start();
       setIsRecording(true);
+      if (onRecordingStateChange) onRecordingStateChange(true);
       isRecordingRef.current = true;
       setIsPaused(false);
       isPausedRef.current = false;
@@ -244,16 +283,7 @@ export default function AudioRecorder({
     }
     streamRef.current?.getTracks().forEach((t: MediaStreamTrack) => t.stop());
 
-    if (wsRef.current) {
-      wsRef.current.send(JSON.stringify({ type: "stop" }));
-      setTimeout(() => wsRef.current?.close(), 100);
-      wsRef.current = null;
-    }
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    audioCtxRef.current?.close();
+    stopResources();
 
     if (timerRef.current !== null) {
       clearInterval(timerRef.current);
@@ -265,6 +295,7 @@ export default function AudioRecorder({
     }
 
     setIsRecording(false);
+    if (onRecordingStateChange) onRecordingStateChange(false);
     isRecordingRef.current = false;
     setIsPaused(false);
     isPausedRef.current = false;
@@ -280,16 +311,7 @@ export default function AudioRecorder({
     mediaRecorderRef.current?.stop();
     streamRef.current?.getTracks().forEach((t: MediaStreamTrack) => t.stop());
 
-    if (wsRef.current) {
-      wsRef.current.send(JSON.stringify({ type: "stop" }));
-      setTimeout(() => wsRef.current?.close(), 100);
-      wsRef.current = null;
-    }
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    audioCtxRef.current?.close();
+    stopResources();
 
     if (timerRef.current !== null) {
       clearInterval(timerRef.current);
@@ -300,6 +322,7 @@ export default function AudioRecorder({
       animFrameRef.current = null;
     }
     setIsRecording(false);
+    if (onRecordingStateChange) onRecordingStateChange(false);
     isRecordingRef.current = false;
     setIsPaused(false);
     isPausedRef.current = false;
@@ -386,7 +409,7 @@ export default function AudioRecorder({
           <span
             className={`${styles.recDot} ${isActive ? "" : styles.inactive}`}
           />{" "}
-          Recorder Studio
+          {title || "Recorder Studio"}
         </div>
 
         {/* Timer */}
