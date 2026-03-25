@@ -247,19 +247,57 @@ const ThreadPage: React.FC = () => {
   const loading = useSelector((state: RootState) => state.chat.loading);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages update
-  // Auto-scroll to bottom only for new bot messages (not for pagination)
+  const prevLengthRef = useRef(0);
+  const scrollPositionRef = useRef(0);
+  const isRestoringRef = useRef(false);
+  const isFirstLoadRef = useRef(true);
+
   useEffect(() => {
-    if (!scrollRef.current || centerTab !== "chat") return;
+    if (!scrollRef.current || messages.length === 0) return;
 
-    const el = scrollRef.current;
+    // ✅ FIRST LOAD → always go to bottom
+    if (isFirstLoadRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      isFirstLoadRef.current = false;
+      prevLengthRef.current = messages.length;
+      return;
+    }
 
-    // scroll smoothly to bottom
-    el.scrollTo({
-      top: el.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages, loading, centerTab]);
+    // 🚫 Skip when restoring (tab switch)
+    if (isRestoringRef.current) {
+      isRestoringRef.current = false;
+      prevLengthRef.current = messages.length;
+      return;
+    }
+
+    const lastMessage = messages[messages.length - 1];
+
+    // ✅ Normal behavior (new messages)
+    if (
+      messages.length > prevLengthRef.current &&
+      lastMessage.sender === "bot"
+    ) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+
+    prevLengthRef.current = messages.length;
+  }, [messages]);
+
+  useEffect(() => {
+    if (centerTab === "chat" && scrollRef.current) {
+      isRestoringRef.current = true;
+
+      // wait for DOM render
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollPositionRef.current;
+        }
+      });
+    }
+  }, [centerTab]);
 
   const handleScroll = () => {
     if (!scrollRef.current || !hasMore || isFetchingHistory) return;
@@ -819,7 +857,12 @@ const ThreadPage: React.FC = () => {
             </button>
             <button
               className={centerTab === "files" ? styles.activeTab : styles.tab}
-              onClick={() => setCenterTab("files")}
+              onClick={() => {
+                if (centerTab === "chat" && scrollRef.current) {
+                  scrollPositionRef.current = scrollRef.current.scrollTop;
+                }
+                setCenterTab("files");
+              }}
             >
               Files
             </button>
