@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Activity } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor";
 import FileManager from "../../components/FileManager/FileManager";
 import { User, MessageSquare, Plus, LogOut, Upload, Mic } from "lucide-react";
@@ -29,6 +29,14 @@ import { useAlert } from "../../context/AlertContext";
 import { updateThreadTitle } from "./ThreadPage.logic";
 import AudioRecorder from "../../components/AudioRecorder/AudioRecorder";
 import { isLoggedIn } from "../HomePage/HomePage.logic";
+
+const Activity: React.FC<{
+  children: React.ReactNode;
+  mode: "visible" | "hidden";
+}> = ({ children, mode }) => {
+  return mode === "visible" ? <>{children}</> : null;
+};
+
 
 const normalizeOrderData = (data: any): OrderData => {
   if (!data) return initialOrderData;
@@ -122,10 +130,8 @@ const ThreadPage: React.FC = () => {
     checkAuth();
   }, [navigate]);
 
-  const [leftWidth, setLeftWidth] = useState(
-    Math.floor(window.innerWidth * 0.7)
-  );
-  const [rightWidth, setRightWidth] = useState(320);
+  const [leftWidth, setLeftWidth] = useState(70);
+  const [rightWidth, setRightWidth] = useState(30);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
 
@@ -198,24 +204,18 @@ const ThreadPage: React.FC = () => {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      const percentage = (e.clientX / window.innerWidth) * 100;
+
       if (isDraggingLeft) {
-        setLeftWidth(
-          Math.max(
-            200,
-            Math.min(e.clientX, window.innerWidth - rightWidth - 300)
-          )
-        );
+        const newLeft = Math.max(20, Math.min(percentage, 80));
+        setLeftWidth(newLeft);
+        setRightWidth(100 - newLeft);
       } else if (isDraggingRight) {
-        setRightWidth(
-          Math.max(
-            200,
-            Math.min(
-              window.innerWidth - e.clientX,
-              window.innerWidth - leftWidth - 300
-            )
-          )
-        );
+        const newRight = Math.max(20, Math.min(100 - percentage, 80));
+        setRightWidth(newRight);
+        setLeftWidth(100 - newRight);
       }
+      console.log(leftWidth, rightWidth);
     };
 
     const handleMouseUp = () => {
@@ -323,6 +323,7 @@ const ThreadPage: React.FC = () => {
       if (parsedObj && typeof parsedObj === "object") {
         if (parsedObj.header || parsedObj.case_title) {
           setOrderData(normalizeOrderData(parsedObj));
+          setLeftTab("order");
         }
       }
     } catch (err) {
@@ -650,7 +651,7 @@ const ThreadPage: React.FC = () => {
       {/* ✅ MAIN CONTENT */}
       <div className={styles.mainLayout}>
         {/* LEFT SIDE */}
-        <div className={styles.divisionLeft} style={{ width: leftWidth }}>
+        <div className={styles.divisionLeft} style={{ width: `${leftWidth}%` }}>
           <div className={styles.transcriptSection}>
             {/* Tabs */}
             <div className={styles.tabContainer}>
@@ -692,7 +693,7 @@ const ThreadPage: React.FC = () => {
                   <button
                     className={styles.generateOrderBtn}
                     onClick={() => extractDataFromChunk(transcript)}
-                    disabled={isExtracting || !transcript.trim()}
+                    disabled={isExtracting || !transcript || !transcript.trim()}
                   >
                     {isExtracting ? "Generating..." : "Generate Order"}
                   </button>
@@ -809,7 +810,6 @@ const ThreadPage: React.FC = () => {
 
         {/* CENTER */}
         <main className={styles.divisionCenter}>
-          {/* Tabs */}
           <div className={styles.tabContainer}>
             <button
               className={centerTab === "chat" ? styles.activeTab : styles.tab}
@@ -817,7 +817,6 @@ const ThreadPage: React.FC = () => {
             >
               Chat
             </button>
-
             <button
               className={centerTab === "files" ? styles.activeTab : styles.tab}
               onClick={() => setCenterTab("files")}
@@ -826,12 +825,12 @@ const ThreadPage: React.FC = () => {
             </button>
           </div>
 
-          <section
-            className={styles.contentArea}
+          <div
+            className={styles.centerWorkspace}
             ref={scrollRef}
             onScroll={handleScroll}
           >
-            <Activity mode={centerTab === "chat" ? "visible" : "hidden"}>
+            {centerTab === "chat" && (
               <>
                 {isFetchingHistory && (
                   <div className={styles.topLoader}>
@@ -839,34 +838,31 @@ const ThreadPage: React.FC = () => {
                     <span>Loading previous messages...</span>
                   </div>
                 )}
-                {!isFetchingHistory && filteredMessages.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <div className={styles.iconCircle}>
-                      <MessageSquare size={32} />
+                <div className={styles.contentArea}>
+                  {filteredMessages.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <div className={styles.iconCircle}>
+                        <MessageSquare size={32} />
+                      </div>
+                      <h2>Universal Workspace</h2>
+                      <p>
+                        Select a document or start a new conversation to begin.
+                      </p>
                     </div>
-                    <h2>Universal Workspace</h2>
-                    <p>
-                      Select a document or start a new conversation to begin.
-                    </p>
-                  </div>
-                ) : (
-                  <ChatMessages
-                    messages={filteredMessages}
-                    loading={loading}
-                    onDelete={handleDelete}
-                  />
-                )}
+                  ) : (
+                    <ChatMessages
+                      messages={filteredMessages}
+                      loading={loading}
+                      onDelete={handleDelete}
+                    />
+                  )}
+                </div>
+                <ChatInput onSend={handleSend} disabled={loading} />
               </>
-            </Activity>
+            )}
 
-            <Activity mode={centerTab === "files" ? "visible" : "hidden"}>
-              <FileManager />
-            </Activity>
-          </section>
-
-          <Activity mode={centerTab === "chat" ? "visible" : "hidden"}>
-            <ChatInput onSend={handleSend} disabled={loading} />
-          </Activity>
+            {centerTab === "files" && <FileManager />}
+          </div>
         </main>
       </div>
     </div>

@@ -352,6 +352,14 @@
   background-color: var(--bg-primary);
 }
 
+.centerWorkspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .divisionRight {
   width: var(--right-panel-width);
   height: 100%;
@@ -466,6 +474,16 @@
   transition: all var(--transition-base);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 14px;
+}
+
+.generateOrderBtn:disabled {
+  opacity: 0.5;
+  background-color: var(--bg-tertiary);
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .generateOrderBtn:hover:not(:disabled) {
