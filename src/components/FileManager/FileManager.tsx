@@ -114,6 +114,22 @@ const FileManager: React.FC<FileManagerProps> = () => {
     fetchFiles();
   }, [threadId, fetchFiles]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(`.${styles.actionMenu}`)) {
+        setActiveDropdownId(null);
+      }
+    };
+
+    if (activeDropdownId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [activeDropdownId]);
+
   // Handle automatic status updates for pending files
   useEffect(() => {
     let timeoutId: number;

@@ -84,6 +84,7 @@ const HomePage: React.FC = () => {
   const logoRef = useRef<HTMLDivElement>(null);
   const newChatBtnRef = useRef<HTMLButtonElement>(null);
   const threadsRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const botId = useSelector((state: RootState) => state.bot.botId);
   const [isUploading, setIsUploading] = useState(false);
@@ -128,6 +129,24 @@ const HomePage: React.FC = () => {
 
     checkAuth();
   }, [navigate]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowLogout(false);
+      }
+    };
+
+    if (showLogout) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showLogout]);
 
   const handleLogout = async () => {
     try {
@@ -367,6 +386,7 @@ const HomePage: React.FC = () => {
           className={styles.userProfile}
           onClick={() => setShowLogout(!showLogout)}
           style={{ cursor: "pointer", position: "relative" }}
+          ref={userMenuRef}
         >
           <div className={styles.avatar}>
             {user?.name.charAt(0)?.toLocaleUpperCase() || "U"}

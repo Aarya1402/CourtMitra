@@ -100,6 +100,7 @@ const ThreadPage: React.FC = () => {
   const [isActuallyRecording, setIsActuallyRecording] = useState(false);
   const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
     useState("");
+  const userMenuRef = useRef<HTMLButtonElement>(null);
   console.log(isProcessing);
 
   const dispatch = useDispatch();
@@ -128,6 +129,24 @@ const ThreadPage: React.FC = () => {
 
     checkAuth();
   }, [navigate]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowLogout(false);
+      }
+    };
+
+    if (showLogout) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showLogout]);
 
   const [leftWidth, setLeftWidth] = useState(70);
   const [rightWidth, setRightWidth] = useState(30);
@@ -666,6 +685,7 @@ const ThreadPage: React.FC = () => {
           <button
             className={styles.userProfile}
             onClick={() => setShowLogout(!showLogout)}
+            ref={userMenuRef}
           >
             <User size={18} />
             {showLogout && (
