@@ -28,6 +28,7 @@ import { initialOrderData } from "../../components/OrderForm/OrderForm.logic";
 import { useAlert } from "../../context/AlertContext";
 import { updateThreadTitle } from "./ThreadPage.logic";
 import AudioRecorder from "../../components/AudioRecorder/AudioRecorder";
+import { isLoggedIn } from "../HomePage/HomePage.logic";
 
 const normalizeOrderData = (data: any): OrderData => {
   if (!data) return initialOrderData;
@@ -95,6 +96,30 @@ const ThreadPage: React.FC = () => {
 
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const name = await isLoggedIn();
+        console.log("User:", name);
+      } catch (error: any) {
+        console.log("User is not logged in");
+        console.log(error.response);
+
+        // ✅ handle both cases
+        if (
+          !error.response ||
+          error.response.status === 401 ||
+          error.response.status === 403 ||
+          error.response.status === 502
+        ) {
+          navigate("/auth", { replace: true });
+        }
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   const [leftWidth, setLeftWidth] = useState(
     Math.floor(window.innerWidth * 0.7)
