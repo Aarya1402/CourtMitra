@@ -725,6 +725,7 @@ const ThreadPage: React.FC = () => {
                   isLoading={isProcessing}
                   onModify={handleModify}
                   isRecording={isActuallyRecording}
+                  language={language}
                 />
 
                 <div className={styles.recorderSection}>
@@ -834,6 +835,7 @@ const ThreadPage: React.FC = () => {
                 data={orderData}
                 onUpdate={setOrderData}
                 isProcessing={isExtracting}
+                language={language}
               />
             </Activity>
           </div>

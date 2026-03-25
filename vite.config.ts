@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     optimizeDeps: {
-      include: ["lamejs"],
+      include: ["lamejs", "pako"],
     },
     server: {
       host: "0.0.0.0",

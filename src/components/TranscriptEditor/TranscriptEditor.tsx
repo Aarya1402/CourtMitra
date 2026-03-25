@@ -3,8 +3,9 @@ import { Download, Copy, Check, Trash2 } from "lucide-react";
 import Button from "../shared/Button";
 import styles from "./TranscriptEditor.module.css";
 import { DEFAULT_PLACEHOLDER } from "./TranscriptEditor.logic";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { pdf } from "@react-pdf/renderer";
+import TranscriptDocument from "./TranscriptDocument";
+import { getTranslation } from "../../constants/translations";
 import { useAlert } from "../../context/AlertContext";
 
 interface TranscriptEditorProps {
@@ -13,6 +14,7 @@ interface TranscriptEditorProps {
   isLoading?: boolean;
   onModify?: (start: number, end: number) => void;
   isRecording?: boolean;
+  language?: string;
 }
 
 const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
@@ -21,7 +23,9 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   isLoading,
   onModify,
   isRecording,
+  language,
 }) => {
+  const t = getTranslation(language || "en-IN");
   const { showAlert, showConfirm } = useAlert();
   const [copied, setCopied] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -75,50 +79,16 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
   const handleDownload = async () => {
     try {
-      // Create a temporary element to render the text with correct fonts
-      const element = document.createElement("div");
-      element.style.padding = "40px";
-      element.style.background = "#fff";
-      element.style.color = "#000";
-      // Apply fonts to correctly render Indic scripts
-      element.style.fontFamily =
-        "var(--font-main), 'Inter', 'Shruti', 'Noto Sans Gujarati', 'Mangal', 'Noto Sans Devanagari', sans-serif";
-      element.style.fontSize = "16px";
-      element.style.lineHeight = "1.6";
-      element.style.position = "absolute";
-      element.style.left = "-9999px";
-      element.style.top = "0";
-      element.style.width = "800px";
-      element.innerHTML = `
-        <h2 style="text-align: center; margin-bottom: 20px; font-family: sans-serif;">Transcription</h2>
-        <div style="white-space: pre-wrap;">${transcript}</div>
-      `;
-      document.body.appendChild(element);
-
-      const canvas = await html2canvas(element, { scale: 2 });
-      element.remove();
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`transcript-${new Date().toISOString()}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF, falling back to text:", error);
-      const blob = new Blob([transcript], { type: "text/plain" });
+      const doc = <TranscriptDocument transcript={transcript} language={language} />;
+      const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `transcript-${new Date().toISOString()}.txt`;
+      a.download = `transcript-${new Date().toISOString()}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("PDF generation error:", error);
     }
   };
 
@@ -130,28 +100,26 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             variant="ghost"
             onClick={handleCopy}
             className={styles.actionButton}
-            title="Copy transcript"
+            title={t.copy_transcript}
             icon={copied ? <Check size={16} /> : <Copy size={16} />}
           />
           <Button
             variant="ghost"
             onClick={handleDownload}
             className={styles.actionButton}
-            title="Download as PDF"
+            title={t.download_pdf}
             icon={<Download size={16} />}
           />
           <Button
             variant="ghost"
             className={styles.actionButton}
             onClick={async () => {
-              const ok = await showConfirm(
-                "Are you sure you want to clear the transcript?"
-              );
+              const ok = await showConfirm(t.clear_confirm);
               if (ok) {
                 onChange("");
               }
             }}
-            title="Clear transcript"
+            title={t.clear_transcript}
             icon={<Trash2 size={16} />}
           />
         </div>

@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from "react";
 import styles from "./OrderForm.module.css";
 import { Download } from "lucide-react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { pdf } from "@react-pdf/renderer";
+import OrderDocument from "./OrderDocument";
 import { initialOrderData } from "./OrderForm.logic";
+import { getTranslation } from "../../constants/translations";
 
 export type OrderData = {
   header: {
@@ -72,6 +73,7 @@ interface Props {
   data: OrderData | null;
   onUpdate: (data: OrderData) => void;
   isProcessing?: boolean;
+  language?: string;
 }
 
 // Custom text area that auto-resizes its height
@@ -102,123 +104,31 @@ const AutoResizeTextarea: React.FC<{
   );
 };
 
-const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
+const OrderForm: React.FC<Props> = ({
+  data,
+  onUpdate,
+  isProcessing,
+  language,
+}) => {
+  const t = getTranslation(language || "en-IN");
   const containerRef = useRef<HTMLDivElement>(null);
   const formData = data || initialOrderData;
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleGeneratePDF = async () => {
-    if (!containerRef.current) return;
-
     setIsGeneratingPdf(true);
-
-    let clone: HTMLDivElement | null = null;
-
     try {
-      const element = containerRef.current;
-
-      // ✅ Expand original textareas
-      element.querySelectorAll("textarea").forEach((t) => {
-        const ta = t;
-        ta.style.height = "auto";
-        ta.style.height = `${ta.scrollHeight}px`;
-      });
-
-      // ✅ Clone
-      clone = element.cloneNode(true) as HTMLDivElement;
-      clone.classList.add(styles.pdfMode);
-
-      // ✅ Remove all buttons from PDF view
-      clone
-        .querySelectorAll("button")
-        .forEach((btn) => ((btn as HTMLElement).style.display = "none"));
-
-      Object.assign(clone.style, {
-        position: "absolute",
-        top: "0",
-        left: "-100000px",
-        width: "794px",
-        background: "#ffffff",
-        padding: "20px",
-        margin: "0",
-        boxShadow: "none",
-      });
-
-      // 🔥 IMPORTANT: Replace textarea → div
-      clone.querySelectorAll("textarea").forEach((ta) => {
-        const div = document.createElement("div");
-
-        div.innerText = ta.value || "";
-
-        Object.assign(div.style, {
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          overflowWrap: "break-word",
-          fontFamily: "inherit",
-          fontSize: "inherit",
-          lineHeight: "inherit",
-          padding: "6px",
-          minHeight: "20px",
-        });
-
-        ta.parentNode?.replaceChild(div, ta);
-      });
-
-      // 🔥 Force wrapping everywhere
-      clone.querySelectorAll("*").forEach((el) => {
-        const e = el as HTMLElement;
-        e.style.whiteSpace = "normal";
-        e.style.wordBreak = "break-word";
-        e.style.overflowWrap = "break-word";
-        e.style.maxWidth = "100%";
-      });
-
-      document.body.appendChild(clone);
-
-      // wait for layout
-      await new Promise((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(resolve))
-      );
-
-      // ✅ Canvas
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const pageWidth = 210;
-      const pageHeight = 297;
-
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // ✅ Multi-page logic (fixed)
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`order-details-${Date.now()}.pdf`);
+      const doc = <OrderDocument data={formData} language={language || "en-IN"} />;
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `order-${formData.header.case_number || Date.now()}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF generation error:", err);
-      globalThis.print();
     } finally {
-      if (clone && document.body.contains(clone)) {
-        clone.remove();
-      }
       setIsGeneratingPdf(false);
     }
   };
@@ -288,10 +198,10 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <h3>Court Order</h3>
+        <h3>{t.order_title}</h3>
         <div className={styles.statusGroup}>
           {isProcessing && (
-            <span className={styles.processingBadge}>Filling Order...</span>
+            <span className={styles.processingBadge}>{t.filling_order}</span>
           )}
           <button
             className={styles.pdfButton}
@@ -299,7 +209,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
             type="button"
             title="Reset the form to its initial state"
           >
-            Reset Form
+            {t.reset_form}
           </button>
           <button
             className={styles.pdfButton}
@@ -310,7 +220,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
             title="Generates a multi-page PDF (handles overflow)"
           >
             <Download size={16} />
-            {isGeneratingPdf ? "Generating..." : "Print / Save PDF"}
+            {isGeneratingPdf ? t.generating : t.save_pdf}
           </button>
         </div>
       </div>
@@ -329,14 +239,14 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
               {renderInline(
                 formData.header?.court_name,
                 ["header", "court_name"],
-                "કોર્ટનું નામ (Court Name)"
+                t.court_name
               )}
             </h2>
             <h3>
               {renderInline(
                 formData.header?.location,
                 ["header", "location"],
-                "સ્થળ (Location)"
+                t.location
               )}
             </h3>
           </div>
@@ -346,13 +256,13 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
               {renderInline(
                 formData.header?.case_type,
                 ["header", "case_type"],
-                "કેસનો પ્રકાર"
+                t.case_type
               )}
-              &nbsp;નં.&nbsp;
+              &nbsp;NO.&nbsp;
               {renderInline(
                 formData.header?.case_number,
                 ["header", "case_number"],
-                "નંબર"
+                t.case_number
               )}
             </h4>
           </div>
@@ -363,23 +273,23 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderTextArea(
                   formData.case_title?.petitioner,
                   ["case_title", "petitioner"],
-                  "વાદીનું સંપૂર્ણ નામ અને સરનામું (Petitioner Details)"
+                  `${t.petitioner} ${t.full_name_address}`
                 )}
               </div>
-              <div className={styles.partyRole}>વાદી (Petitioner)</div>
+              <div className={styles.partyRole}>{t.petitioner}</div>
             </div>
 
-            <div className={styles.vsText}>વિરુદ્ધ (Versus)</div>
+            <div className={styles.vsText}>{t.versus}</div>
 
             <div className={styles.partyRow}>
               <div className={styles.partyDetails}>
                 {renderTextArea(
                   formData.case_title?.respondent,
                   ["case_title", "respondent"],
-                  "પ્રતિવાદીનું સંપૂર્ણ નામ અને સરનામું (Respondent Details)"
+                  `${t.respondent} ${t.full_name_address}`
                 )}
               </div>
-              <div className={styles.partyRole}>પ્રતિવાદી (Respondent)</div>
+              <div className={styles.partyRole}>{t.respondent}</div>
             </div>
           </div>
 
@@ -387,22 +297,22 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
 
           <div className={styles.advocatesSection}>
             <div className={styles.advocateRow}>
-              <span>વાદી તરફે વિધ્વાન વકીલશ્રી:</span>
+              <span>{t.advocate_petitioner}:</span>
               <div style={{ flex: 1 }}>
                 {renderTextArea(
                   safeJoinArray(formData.advocates?.petitioner_side),
                   ["advocates", "petitioner_side"],
-                  "વકીલશ્રીનું નામ"
+                  t.judge // Placeholder misuse? Let's use a generic one
                 )}
               </div>
             </div>
             <div className={styles.advocateRow}>
-              <span>પ્રતિવાદી તરફે વિધ્વાન વકીલશ્રી:</span>
+              <span>{t.advocate_respondent}:</span>
               <div style={{ flex: 1 }}>
                 {renderTextArea(
                   safeJoinArray(formData.advocates?.respondent_side),
                   ["advocates", "respondent_side"],
-                  "વકીલશ્રીનું નામ"
+                  t.judge
                 )}
               </div>
             </div>
@@ -415,7 +325,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 marginBottom: "15px",
               }}
             >
-              Reasoning / Analysis (મુદ્દાઓ):
+              {t.reasoning}:
             </h5>
             {Array.isArray(formData.reasoning_points) &&
               formData.reasoning_points.map((p, idx) => (
@@ -459,22 +369,22 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 })
               }
             >
-              + Add Reasoning Point
+              {t.add_point}
             </button>
           </div>
 
-          <div className={styles.orderBodyTitle}>---- હુકમ (ORDER) ----</div>
+          <div className={styles.orderBodyTitle}>---- {t.final_order} (ORDER) ----</div>
 
           <div className={styles.orderContent}>
             {renderTextArea(
               formData.operative_order?.full_text,
               ["operative_order", "full_text"],
-              "હુકમની વિગત (Order Details)"
+              t.operative_order
             )}
 
             <div className={styles.directionsList}>
               <h5 style={{ marginTop: "15px" }}>
-                Specific Directions / Conditions:
+                {t.directions}:
               </h5>
               {Array.isArray(formData.operative_order?.directions) &&
                 formData.operative_order.directions.map((d, idx) => (
@@ -519,24 +429,24 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                   });
                 }}
               >
-                + Add Direction
+                {t.add_direction}
               </button>
             </div>
           </div>
 
           <div className={styles.rawTextSection}>
-            <h5>અન્ય વિગતો / રજૂઆતો (Other Details / Arguments):</h5>
+            <h5>{t.additional_text}:</h5>
             {renderTextArea(
               formData.raw_text,
               ["raw_text"],
-              "સંપૂર્ણ લખાણ (Additional Text...)"
+              "..."
             )}
           </div>
 
           <div className={styles.signatureSection}>
             <div className={styles.sigLeft}>
               <div className={styles.sigRow}>
-                <span>તારીખ:</span>{" "}
+                <span>{t.date}:</span>{" "}
                 {renderInline(
                   formData.signature?.date,
                   ["signature", "date"],
@@ -544,35 +454,35 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 )}
               </div>
               <div className={styles.sigRow}>
-                <span>સ્થળ:</span>{" "}
+                <span>{t.place}:</span>{" "}
                 {renderInline(
                   formData.signature?.place,
                   ["signature", "place"],
-                  "સ્થળ"
+                  t.place
                 )}
               </div>
             </div>
             <div className={styles.sigRight}>
-              <div className={styles.sigPlaceholder}>(સહી)</div>
+              <div className={styles.sigPlaceholder}>{t.signature_placeholder}</div>
               <div className={styles.judgeName}>
                 {renderInline(
                   formData.signature?.judge_name,
                   ["signature", "judge_name"],
-                  "જજ સાહેબનું નામ"
+                  t.judge
                 )}
               </div>
               <div className={styles.judgeDesig}>
                 {renderInline(
                   formData.signature?.designation,
                   ["signature", "designation"],
-                  "હોદ્દો"
+                  t.designation
                 )}
               </div>
               <div className={styles.sigCourtName}>
                 {renderInline(
                   formData.signature?.court,
                   ["signature", "court"],
-                  "કોર્ટ"
+                  t.court_name
                 )}
               </div>
             </div>
