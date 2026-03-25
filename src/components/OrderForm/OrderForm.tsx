@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import styles from "./OrderForm.module.css";
 import { Download } from "lucide-react";
-import { pdf, PDFViewer } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import OrderDocument from "./OrderDocument";
 import { initialOrderData } from "./OrderForm.logic";
 import { getTranslation } from "../../constants/translations";
