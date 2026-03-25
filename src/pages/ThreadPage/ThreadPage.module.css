@@ -49,19 +49,19 @@
 .navBtn:hover {
   background: var(--bg-tertiary);
 }
-
 .userProfile {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5rem;
-  position: relative;
   cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
 }
 
 .logoutDropdown {
@@ -208,21 +208,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-.userProfile {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-strong);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-base);
-  position: relative;
-}
-
 .userProfile:hover {
   background-color: white;
   box-shadow: var(--shadow-sm);
@@ -350,13 +335,6 @@
   cursor: pointer;
 }
 
-.logoSection {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-}
-
 .transcriptHeader {
   display: flex;
   justify-content: space-between;
@@ -389,14 +367,12 @@
 }
 
 .recorderSection {
-  display: flex; /* 🔥 important */
-  gap: 10px;
-  flex-wrap: wrap;
+  display: flex;
+  gap: 12px;
   align-items: center;
   width: 100%;
-
-  background-color: var(--bg-tertiary);
-  padding: 1rem;
+  background-color: white;
+  padding: 1.25rem;
   border-top: 1px solid var(--border-strong);
 }
 
@@ -458,14 +434,21 @@
   padding: 16px;
 }
 
-.recorderSection {
+.languageInline {
+  width: auto;
+  height: 42px;
+  padding: 4px 8px;
+
+  font-size: 12px;
+  border-radius: 6px;
+
+  color: black;
+
+  border: 1px solid #e4e4e4;
+  background: #fff;
+
   display: flex;
-  gap: 12px;
   align-items: center;
-  width: 100%;
-  background-color: white;
-  padding: 1.25rem;
-  border-top: 1px solid var(--border-strong);
 }
 
 .generateOrderBtn {

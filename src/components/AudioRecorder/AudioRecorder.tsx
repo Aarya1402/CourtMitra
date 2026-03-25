@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
+import { Check, Download, RotateCcw, X } from "lucide-react";
 
 export type AudioRecorderProps = Readonly<{
   autoStart: boolean;
@@ -15,6 +16,7 @@ export type AudioRecorderProps = Readonly<{
   onRecordingStateChange?: (isRecording: boolean) => void;
   title?: string;
   fileName: string | null;
+  language: string;
 }>;
 
 const mergeTranscriptChunk = (previous: string, incoming: string) => {
@@ -43,6 +45,7 @@ export default function AudioRecorder({
   onClose,
   onRecordingStateChange,
   fileName,
+  language,
 }: AudioRecorderProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -57,7 +60,7 @@ export default function AudioRecorder({
   const [audioURL, setAudioURL] = useState("");
   const [duration, setDuration] = useState(0);
   const [barHeights, setBarHeights] = useState(new Array(40).fill(2));
-  const [language, setLanguage] = useState("unknown"); // Defaulting to Gujarati as requested
+
   const timerRef = useRef<number | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -444,7 +447,7 @@ export default function AudioRecorder({
           onClick={saveAsMP3}
           title="Save As MP3"
         >
-          ↓
+          <Download size={16} />
         </button>
       )}
 
@@ -455,38 +458,30 @@ export default function AudioRecorder({
           onClick={() => onClose?.()}
           title="Done Recording"
         >
-          ✓
+          <Check size={16} />
         </button>
       )}
-      {audioURL && (
+
+      {/* Cancel */}
+      {!audioURL && (
         <button
           className={`${styles.btn} ${styles.btnResetInline}`}
-          onClick={resetRecording}
-          title="Reset"
+          onClick={() => {
+            onClose?.();
+            onTranscriptionComplete?.("");
+          }}
+          title="Cancel Recording"
         >
-          ⟲
+          <X size={16} />
         </button>
       )}
-      {/* File name */}
-      <select
-        className={styles.languageInline}
-        value={language}
-        onChange={(e) => setLanguage(e.target.value)}
-        disabled={isRecording}
+      <button
+        className={`${styles.btn} ${styles.btnResetInline}`}
+        onClick={resetRecording}
+        title="Reset"
       >
-        <option value="gu-IN">Gujarati</option>
-        <option value="en-IN">English</option>
-        <option value="hi-IN">Hindi</option>
-        <option value="ta-IN">Tamil</option>
-        <option value="te-IN">Telugu</option>
-        <option value="kn-IN">Kannada</option>
-        <option value="ml-IN">Malayalam</option>
-        <option value="mr-IN">Marathi</option>
-        <option value="bn-IN">Bengali</option>
-        <option value="pa-IN">Punjabi</option>
-        <option value="od-IN">Odia</option>
-        <option value="unknown">Auto-detect</option>
-      </select>
+        <RotateCcw size={16} />
+      </button>
     </div>
   );
 }

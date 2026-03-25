@@ -89,6 +89,7 @@ const ThreadPage: React.FC = () => {
     start: number;
     end: number;
   } | null>(null);
+  const [language, setLanguage] = useState("unknown"); // Defaulting to Gujarati as requested
   const [isActuallyRecording, setIsActuallyRecording] = useState(false);
   const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
     useState("");
@@ -722,6 +723,25 @@ const ThreadPage: React.FC = () => {
                         accept=".mp3,.ogg,.wav,audio/mpeg,audio/ogg,audio/wav"
                         style={{ display: "none" }}
                       />
+
+                      <select
+                        className={styles.languageInline}
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                      >
+                        <option value="gu-IN">Gujarati</option>
+                        <option value="en-IN">English</option>
+                        <option value="hi-IN">Hindi</option>
+                        <option value="ta-IN">Tamil</option>
+                        <option value="te-IN">Telugu</option>
+                        <option value="kn-IN">Kannada</option>
+                        <option value="ml-IN">Malayalam</option>
+                        <option value="mr-IN">Marathi</option>
+                        <option value="bn-IN">Bengali</option>
+                        <option value="pa-IN">Punjabi</option>
+                        <option value="od-IN">Odia</option>
+                        <option value="unknown">Auto-detect</option>
+                      </select>
                     </>
                   )}
 
@@ -763,6 +783,7 @@ const ThreadPage: React.FC = () => {
                       onClose={() => {
                         setShowRecorder(false);
                       }}
+                      language={language}
                     />
                   )}
                 </div>

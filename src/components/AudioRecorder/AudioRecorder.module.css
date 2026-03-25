@@ -354,19 +354,3 @@ audio {
   background: #d81f26;
   color: white;
 }
-
-.languageInline {
-  height: 32px;
-  padding: 4px 8px;
-
-  font-size: 12px;
-  border-radius: 6px;
-
-  color: black;
-
-  border: 1px solid #e4e4e4;
-  background: #fff;
-
-  display: flex;
-  align-items: center;
-}
