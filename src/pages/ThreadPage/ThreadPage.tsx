@@ -37,7 +37,6 @@ const Activity: React.FC<{
   return mode === "visible" ? <>{children}</> : null;
 };
 
-
 const normalizeOrderData = (data: any): OrderData => {
   if (!data) return initialOrderData;
 
@@ -775,7 +774,6 @@ const ThreadPage: React.FC = () => {
                         <option value="ta-IN">Tamil</option>
                         <option value="te-IN">Telugu</option>
                         <option value="kn-IN">Kannada</option>
-                        <option value="ml-IN">Malayalam</option>
                         <option value="mr-IN">Marathi</option>
                         <option value="bn-IN">Bengali</option>
                         <option value="pa-IN">Punjabi</option>

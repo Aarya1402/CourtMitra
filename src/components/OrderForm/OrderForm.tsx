@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import styles from "./OrderForm.module.css";
 import { Download } from "lucide-react";
-import { pdf } from "@react-pdf/renderer";
+import { pdf, PDFViewer } from "@react-pdf/renderer";
 import OrderDocument from "./OrderDocument";
 import { initialOrderData } from "./OrderForm.logic";
 import { getTranslation } from "../../constants/translations";
@@ -118,7 +118,10 @@ const OrderForm: React.FC<Props> = ({
   const handleGeneratePDF = async () => {
     setIsGeneratingPdf(true);
     try {
-      const doc = <OrderDocument data={formData} language={language || "en-IN"} />;
+      const doc = (
+        <OrderDocument data={formData} language={language || "en-IN"} />
+      );
+      console.log(doc);
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -373,7 +376,9 @@ const OrderForm: React.FC<Props> = ({
             </button>
           </div>
 
-          <div className={styles.orderBodyTitle}>---- {t.final_order} (ORDER) ----</div>
+          <div className={styles.orderBodyTitle}>
+            ---- {t.final_order} (ORDER) ----
+          </div>
 
           <div className={styles.orderContent}>
             {renderTextArea(
@@ -383,9 +388,7 @@ const OrderForm: React.FC<Props> = ({
             )}
 
             <div className={styles.directionsList}>
-              <h5 style={{ marginTop: "15px" }}>
-                {t.directions}:
-              </h5>
+              <h5 style={{ marginTop: "15px" }}>{t.directions}:</h5>
               {Array.isArray(formData.operative_order?.directions) &&
                 formData.operative_order.directions.map((d, idx) => (
                   <div key={idx} className={styles.directionPoint}>
@@ -436,11 +439,7 @@ const OrderForm: React.FC<Props> = ({
 
           <div className={styles.rawTextSection}>
             <h5>{t.additional_text}:</h5>
-            {renderTextArea(
-              formData.raw_text,
-              ["raw_text"],
-              "..."
-            )}
+            {renderTextArea(formData.raw_text, ["raw_text"], "...")}
           </div>
 
           <div className={styles.signatureSection}>
@@ -463,7 +462,9 @@ const OrderForm: React.FC<Props> = ({
               </div>
             </div>
             <div className={styles.sigRight}>
-              <div className={styles.sigPlaceholder}>{t.signature_placeholder}</div>
+              <div className={styles.sigPlaceholder}>
+                {t.signature_placeholder}
+              </div>
               <div className={styles.judgeName}>
                 {renderInline(
                   formData.signature?.judge_name,
