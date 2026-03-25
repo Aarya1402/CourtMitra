@@ -177,7 +177,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
 
       // wait for layout
       await new Promise((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
       );
 
       // ✅ Canvas
@@ -258,7 +258,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
   const renderInline = (
     value: string | undefined,
     path: string[],
-    placeholder: string,
+    placeholder: string
   ) => {
     return (
       <AutoResizeTextarea
@@ -273,7 +273,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
   const renderTextArea = (
     value: string | undefined,
     path: string[],
-    placeholder: string,
+    placeholder: string
   ) => {
     return (
       <AutoResizeTextarea
@@ -329,14 +329,14 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
               {renderInline(
                 formData.header?.court_name,
                 ["header", "court_name"],
-                "કોર્ટનું નામ (Court Name)",
+                "કોર્ટનું નામ (Court Name)"
               )}
             </h2>
             <h3>
               {renderInline(
                 formData.header?.location,
                 ["header", "location"],
-                "સ્થળ (Location)",
+                "સ્થળ (Location)"
               )}
             </h3>
           </div>
@@ -346,13 +346,13 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
               {renderInline(
                 formData.header?.case_type,
                 ["header", "case_type"],
-                "કેસનો પ્રકાર",
+                "કેસનો પ્રકાર"
               )}
               &nbsp;નં.&nbsp;
               {renderInline(
                 formData.header?.case_number,
                 ["header", "case_number"],
-                "નંબર",
+                "નંબર"
               )}
             </h4>
           </div>
@@ -363,7 +363,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderTextArea(
                   formData.case_title?.petitioner,
                   ["case_title", "petitioner"],
-                  "વાદીનું સંપૂર્ણ નામ અને સરનામું (Petitioner Details)",
+                  "વાદીનું સંપૂર્ણ નામ અને સરનામું (Petitioner Details)"
                 )}
               </div>
               <div className={styles.partyRole}>વાદી (Petitioner)</div>
@@ -376,7 +376,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderTextArea(
                   formData.case_title?.respondent,
                   ["case_title", "respondent"],
-                  "પ્રતિવાદીનું સંપૂર્ણ નામ અને સરનામું (Respondent Details)",
+                  "પ્રતિવાદીનું સંપૂર્ણ નામ અને સરનામું (Respondent Details)"
                 )}
               </div>
               <div className={styles.partyRole}>પ્રતિવાદી (Respondent)</div>
@@ -392,7 +392,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderTextArea(
                   safeJoinArray(formData.advocates?.petitioner_side),
                   ["advocates", "petitioner_side"],
-                  "વકીલશ્રીનું નામ",
+                  "વકીલશ્રીનું નામ"
                 )}
               </div>
             </div>
@@ -402,7 +402,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderTextArea(
                   safeJoinArray(formData.advocates?.respondent_side),
                   ["advocates", "respondent_side"],
-                  "વકીલશ્રીનું નામ",
+                  "વકીલશ્રીનું નામ"
                 )}
               </div>
             </div>
@@ -427,7 +427,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                     {renderTextArea(
                       p,
                       ["reasoning_points", idx.toString()],
-                      `Point ${idx + 1}`,
+                      `Point ${idx + 1}`
                     )}
                   </div>
                   <button
@@ -469,7 +469,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
             {renderTextArea(
               formData.operative_order?.full_text,
               ["operative_order", "full_text"],
-              "હુકમની વિગત (Order Details)",
+              "હુકમની વિગત (Order Details)"
             )}
 
             <div className={styles.directionsList}>
@@ -484,7 +484,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                       {renderTextArea(
                         d,
                         ["operative_order", "directions", idx.toString()],
-                        `Direction ${idx + 1}`,
+                        `Direction ${idx + 1}`
                       )}
                     </div>
                     <button
@@ -529,7 +529,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
             {renderTextArea(
               formData.raw_text,
               ["raw_text"],
-              "સંપૂર્ણ લખાણ (Additional Text...)",
+              "સંપૂર્ણ લખાણ (Additional Text...)"
             )}
           </div>
 
@@ -540,7 +540,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderInline(
                   formData.signature?.date,
                   ["signature", "date"],
-                  "DD/MM/YYYY",
+                  "DD/MM/YYYY"
                 )}
               </div>
               <div className={styles.sigRow}>
@@ -548,7 +548,7 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderInline(
                   formData.signature?.place,
                   ["signature", "place"],
-                  "સ્થળ",
+                  "સ્થળ"
                 )}
               </div>
             </div>
@@ -558,21 +558,21 @@ const OrderForm: React.FC<Props> = ({ data, onUpdate, isProcessing }) => {
                 {renderInline(
                   formData.signature?.judge_name,
                   ["signature", "judge_name"],
-                  "જજ સાહેબનું નામ",
+                  "જજ સાહેબનું નામ"
                 )}
               </div>
               <div className={styles.judgeDesig}>
                 {renderInline(
                   formData.signature?.designation,
                   ["signature", "designation"],
-                  "હોદ્દો",
+                  "હોદ્દો"
                 )}
               </div>
               <div className={styles.sigCourtName}>
                 {renderInline(
                   formData.signature?.court,
                   ["signature", "court"],
-                  "કોર્ટ",
+                  "કોર્ટ"
                 )}
               </div>
             </div>

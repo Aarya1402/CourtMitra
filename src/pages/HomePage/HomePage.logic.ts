@@ -34,7 +34,7 @@ export const fetchThreads = async (botId: string) => {
   if (!botId) return [];
   try {
     const res = await axios.get(
-      `${API_BASE}/bots/${botId}/threads?page=1&per_page=30`,
+      `${API_BASE}/bots/${botId}/threads?page=1&per_page=30`
     );
     return res.data.threads;
   } catch (error) {

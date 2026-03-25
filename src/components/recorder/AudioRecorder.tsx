@@ -64,7 +64,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       startTimer();
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      showAlert("Microphone access denied or not available.", { title: "Error" });
+      showAlert("Microphone access denied or not available.", {
+        title: "Error",
+      });
     }
   };
 

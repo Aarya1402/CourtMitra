@@ -23,7 +23,7 @@ const chatSlice = createSlice({
   reducers: {
     addUserMessage: (
       state,
-      action: PayloadAction<{ id?: string; text: string; threadId?: string }>,
+      action: PayloadAction<{ id?: string; text: string; threadId?: string }>
     ) => {
       state.messages.push({
         id: action.payload.id || Date.now().toString(),
@@ -35,7 +35,7 @@ const chatSlice = createSlice({
 
     addBotMessage: (
       state,
-      action: PayloadAction<{ id?: string; text: string; threadId?: string }>,
+      action: PayloadAction<{ id?: string; text: string; threadId?: string }>
     ) => {
       state.messages.push({
         id: action.payload.id || Date.now().toString(),
@@ -58,7 +58,7 @@ const chatSlice = createSlice({
           sender: "user" | "bot";
           threadId?: string;
         }[];
-      }>,
+      }>
     ) => {
       const { threadId, messages } = action.payload;
 
@@ -83,7 +83,7 @@ const chatSlice = createSlice({
           sender: "user" | "bot";
           threadId?: string;
         }[];
-      }>,
+      }>
     ) => {
       const { messages } = action.payload;
 
@@ -103,7 +103,7 @@ const chatSlice = createSlice({
       const { id, text, threadId } = action.payload;
 
       const msg = state.messages.find(
-        (m) => m.id === id && m.threadId === threadId && m.sender === "bot",
+        (m) => m.id === id && m.threadId === threadId && m.sender === "bot"
       );
 
       if (msg) {

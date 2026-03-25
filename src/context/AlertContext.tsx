@@ -13,7 +13,10 @@ interface AlertOptions {
 
 interface AlertContextType {
   showAlert: (message: string, options?: AlertOptions) => Promise<void>;
-  showConfirm: (message: string, options?: Omit<AlertOptions, "confirm">) => Promise<boolean>;
+  showConfirm: (
+    message: string,
+    options?: Omit<AlertOptions, "confirm">
+  ) => Promise<boolean>;
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
@@ -26,7 +29,9 @@ export const useAlert = () => {
   return context;
 };
 
-export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState<{
     message: string;
@@ -34,34 +39,43 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     resolve?: (value: any) => void;
   }>({ message: "", options: {} });
 
-  const showAlert = useCallback((message: string, options?: AlertOptions): Promise<void> => {
-    return new Promise((resolve) => {
-        setConfig({ 
-          message, 
-          options: { ...options, confirm: false }, 
-          resolve: () => resolve() 
+  const showAlert = useCallback(
+    (message: string, options?: AlertOptions): Promise<void> => {
+      return new Promise((resolve) => {
+        setConfig({
+          message,
+          options: { ...options, confirm: false },
+          resolve: () => resolve(),
         });
         setIsOpen(true);
-    });
-  }, []);
-
-  const showConfirm = useCallback((message: string, options?: Omit<AlertOptions, "confirm">): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setConfig({ 
-        message, 
-        options: { ...options, confirm: true }, 
-        resolve 
       });
-      setIsOpen(true);
-    });
-  }, []);
+    },
+    []
+  );
+
+  const showConfirm = useCallback(
+    (
+      message: string,
+      options?: Omit<AlertOptions, "confirm">
+    ): Promise<boolean> => {
+      return new Promise((resolve) => {
+        setConfig({
+          message,
+          options: { ...options, confirm: true },
+          resolve,
+        });
+        setIsOpen(true);
+      });
+    },
+    []
+  );
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
     if (config.resolve && !config.options?.confirm) {
-        config.resolve(true); 
+      config.resolve(true);
     } else if (config.resolve && config.options?.confirm) {
-        config.resolve(false); 
+      config.resolve(false);
     }
   }, [config]);
 
@@ -83,7 +97,10 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       <Modal
         isOpen={isOpen}
         onClose={handleClose}
-        title={config.options?.title || (config.options?.confirm ? "Confirm" : "Alert")}
+        title={
+          config.options?.title ||
+          (config.options?.confirm ? "Confirm" : "Alert")
+        }
         size="sm"
         footer={
           config.options?.confirm ? (

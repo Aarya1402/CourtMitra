@@ -16,6 +16,7 @@ import {
 } from "./HomePage.logic";
 import { API_BASE_URL } from "../../constants/api";
 import { useAlert } from "../../context/AlertContext";
+import gsap from "gsap";
 
 const DeleteThreadModal = ({
   isOpen,
@@ -28,10 +29,26 @@ const DeleteThreadModal = ({
   onConfirm: () => void;
   threadTitle: string;
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      gsap.fromTo(
+        modalRef.current,
+        { opacity: 0, scale: 0.95, y: 10 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "power2.out" }
+      );
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
   return (
     <div className={styles.modalOverlay} onClick={onCancel}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={modalRef}
+        className={styles.modalContent}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={styles.modalHeader}>
           <h3>Delete thread?</h3>
           <button onClick={onCancel} className={styles.closeBtn}>
@@ -62,6 +79,12 @@ const HomePage: React.FC = () => {
   const { showAlert } = useAlert();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
+  const newChatBtnRef = useRef<HTMLButtonElement>(null);
+  const threadsRef = useRef<HTMLDivElement>(null);
+
   const botId = useSelector((state: RootState) => state.bot.botId);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -148,6 +171,52 @@ const HomePage: React.FC = () => {
     getUser();
   }, [botId, navigate]);
 
+  useEffect(() => {
+    const tl = gsap.timeline();
+
+    tl.fromTo(
+      sidebarRef.current,
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }
+    )
+      .fromTo(
+        logoRef.current,
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" },
+        "-=0.3"
+      )
+      .fromTo(
+        newChatBtnRef.current,
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+        "-=0.2"
+      )
+      .fromTo(
+        threadsRef.current?.children || [],
+        { x: -20, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.4,
+          stagger: 0.05,
+          ease: "power2.out",
+        },
+        "-=0.2"
+      )
+      .fromTo(
+        mainContentRef.current?.children || [],
+        { y: 30, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: "power3.out",
+        },
+        "-=0.4"
+      );
+  }, []);
+
   const handleFileClick = () => {
     fileInputRef.current?.click();
   };
@@ -194,7 +263,7 @@ const HomePage: React.FC = () => {
   const handleDeleteClick = (
     e: React.MouseEvent,
     id: string,
-    title: string,
+    title: string
   ) => {
     e.stopPropagation();
     setThreadToDelete({ id, title });
@@ -205,7 +274,7 @@ const HomePage: React.FC = () => {
     try {
       await deleteThread(threadToDelete.id);
       setThreads((prev) =>
-        prev.filter((t: any) => t.thread_uuid !== threadToDelete.id),
+        prev.filter((t: any) => t.thread_uuid !== threadToDelete.id)
       );
       setThreadToDelete(null);
     } catch (error) {
@@ -244,11 +313,12 @@ const HomePage: React.FC = () => {
         accept=".pdf,.doc,.docx,.csv,.txt,.xlsx,.json,.md"
       />
       {/* Sidebar */}
-      <aside className={styles.sidebar}>
+      <aside className={styles.sidebar} ref={sidebarRef}>
         <div
           className={styles.logoSection}
           onClick={() => navigate("/")}
           style={{ cursor: "pointer" }}
+          ref={logoRef}
         >
           <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
           <span className={styles.logoText}>CourtMitra</span>
@@ -258,6 +328,7 @@ const HomePage: React.FC = () => {
           className={styles.newChatBtn}
           onClick={handleCreateNewChat}
           disabled={isCreatingChat}
+          ref={newChatBtnRef}
         >
           {isCreatingChat ? (
             <Loader2 size={18} className={styles.spin} />
@@ -269,7 +340,7 @@ const HomePage: React.FC = () => {
 
         <div className={styles.navSection}>
           <h3 className={styles.navTitle}>Document chats</h3>
-          <div className={styles.navList}>
+          <div className={styles.navList} ref={threadsRef}>
             {threads.map((thread: { thread_uuid: string; title: string }) => (
               <div
                 key={thread.thread_uuid}
@@ -327,7 +398,7 @@ const HomePage: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className={styles.mainContent}>
+      <main className={styles.mainContent} ref={mainContentRef}>
         <h1 className={styles.welcomeTitle}>
           Hey, Let's talk to your case papers...
         </h1>

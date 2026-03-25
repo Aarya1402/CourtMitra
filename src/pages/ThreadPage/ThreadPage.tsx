@@ -97,14 +97,14 @@ const ThreadPage: React.FC = () => {
   const botId = useSelector((state: RootState) => state.bot.botId);
 
   const [leftWidth, setLeftWidth] = useState(
-    Math.floor(window.innerWidth * 0.7),
+    Math.floor(window.innerWidth * 0.7)
   );
   const [rightWidth, setRightWidth] = useState(320);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
 
   const handleAudioUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     console.log(file);
@@ -122,7 +122,7 @@ const ThreadPage: React.FC = () => {
 
     const isValidType = validTypes.includes(file.type);
     const isValidExt = validExtensions.some((ext) =>
-      file.name.toLowerCase().endsWith(ext),
+      file.name.toLowerCase().endsWith(ext)
     );
 
     if (!isValidType && !isValidExt) {
@@ -176,8 +176,8 @@ const ThreadPage: React.FC = () => {
         setLeftWidth(
           Math.max(
             200,
-            Math.min(e.clientX, window.innerWidth - rightWidth - 300),
-          ),
+            Math.min(e.clientX, window.innerWidth - rightWidth - 300)
+          )
         );
       } else if (isDraggingRight) {
         setRightWidth(
@@ -185,9 +185,9 @@ const ThreadPage: React.FC = () => {
             200,
             Math.min(
               window.innerWidth - e.clientX,
-              window.innerWidth - leftWidth - 300,
-            ),
-          ),
+              window.innerWidth - leftWidth - 300
+            )
+          )
         );
       }
     };
@@ -209,13 +209,13 @@ const ThreadPage: React.FC = () => {
   }, [isDraggingLeft, isDraggingRight, leftWidth, rightWidth]);
 
   const messages = useSelector((state: RootState) =>
-    state.chat.messages.filter((m) => m.threadId === threadId),
+    state.chat.messages.filter((m) => m.threadId === threadId)
   );
 
   const filteredMessages = messages.filter(
     (m) =>
       !m.text.includes("You are an expert legal document parser") &&
-      !m.text.includes("CURRENT EXTRACTED JSON:"),
+      !m.text.includes("CURRENT EXTRACTED JSON:")
   );
 
   const loading = useSelector((state: RootState) => state.chat.loading);
@@ -280,7 +280,7 @@ const ThreadPage: React.FC = () => {
 
       const response = await axios.post(
         `${API_BASE_URL}/api/gemini/extract`,
-        data,
+        data
       );
 
       let resultText =
@@ -317,7 +317,7 @@ const ThreadPage: React.FC = () => {
 
     try {
       const threadsRes = await axios.get(
-        `${API_BASE_URL}/api/talkument/bots/thread/${threadId}`,
+        `${API_BASE_URL}/api/talkument/bots/thread/${threadId}`
       );
       const threadTitle = threadsRes.data.title || "";
       setThreadTitle(threadTitle);
@@ -346,7 +346,7 @@ const ThreadPage: React.FC = () => {
     setIsFetchingHistory(true);
     try {
       const chatHistory = await axios.get(
-        `${API_BASE_URL}/api/talkument/bots/${threadId}/chat_history?page=${pageNumber}&per_page=30`,
+        `${API_BASE_URL}/api/talkument/bots/${threadId}/chat_history?page=${pageNumber}&per_page=30`
       );
       const history = chatHistory.data.history || [];
 
@@ -393,7 +393,7 @@ const ThreadPage: React.FC = () => {
           setMessagesForThread({
             threadId,
             messages: formattedMessages,
-          }),
+          })
         );
       } else {
         // Prepend and Maintain scroll height
@@ -404,7 +404,7 @@ const ThreadPage: React.FC = () => {
           prependMessagesForThread({
             threadId,
             messages: formattedMessages,
-          }),
+          })
         );
 
         // We use requestAnimationFrame to wait for the DOM render
@@ -433,7 +433,7 @@ const ThreadPage: React.FC = () => {
     try {
       // ✅ Fetch the LATEST files for this thread to ensure all uploaded docs are included
       const responseFile = await axios.get(
-        `${API_BASE_URL}/api/talkument/bots/file/${threadId}/status`,
+        `${API_BASE_URL}/api/talkument/bots/file/${threadId}/status`
       );
 
       const allFiles = responseFile.data.files || [];
@@ -445,7 +445,7 @@ const ThreadPage: React.FC = () => {
           setDocumentIds({
             threadId: threadId!,
             documentIds: currentDocumentIds,
-          }),
+          })
         );
       }
 
@@ -464,7 +464,7 @@ const ThreadPage: React.FC = () => {
           id: botMessageId,
           text: "",
           threadId,
-        }),
+        })
       );
 
       // 🚀 STREAM CALL (NO AXIOS)
@@ -477,7 +477,7 @@ const ThreadPage: React.FC = () => {
           },
           credentials: "include",
           body: JSON.stringify(data),
-        },
+        }
       );
 
       const reader = response.body?.getReader();
@@ -511,7 +511,7 @@ const ThreadPage: React.FC = () => {
                   id: botMessageId,
                   text: botText,
                   threadId,
-                }),
+                })
               );
             }
           } catch (err) {
@@ -528,7 +528,7 @@ const ThreadPage: React.FC = () => {
         addBotMessage({
           text: "Error getting response",
           threadId,
-        }),
+        })
       );
     } finally {
       dispatch(setLoading(false));
@@ -538,7 +538,7 @@ const ThreadPage: React.FC = () => {
   const handleDelete = async (messageId: string) => {
     try {
       await axios.delete(
-        `${API_BASE_URL}/api/talkument/bots/chat/${messageId}/delete`,
+        `${API_BASE_URL}/api/talkument/bots/chat/${messageId}/delete`
       );
       dispatch(deleteMessage(messageId));
     } catch (err) {

@@ -1,7 +1,7 @@
 // Simple IndexedDB wrapper for persisting thread state
 
-const DB_NAME = 'TalkumentStateDB';
-const STORE_NAME = 'ThreadStateStore';
+const DB_NAME = "TalkumentStateDB";
+const STORE_NAME = "ThreadStateStore";
 const DB_VERSION = 1;
 
 function getDb(): Promise<IDBDatabase> {
@@ -18,11 +18,14 @@ function getDb(): Promise<IDBDatabase> {
   });
 }
 
-export async function saveThreadState(threadId: string, state: any): Promise<void> {
+export async function saveThreadState(
+  threadId: string,
+  state: any
+): Promise<void> {
   if (!threadId) return;
   const db = await getDb();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const transaction = db.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
     const request = store.put(state, threadId);
     request.onsuccess = () => resolve();
@@ -34,7 +37,7 @@ export async function loadThreadState(threadId: string): Promise<any> {
   if (!threadId) return null;
   const db = await getDb();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readonly');
+    const transaction = db.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
     const request = store.get(threadId);
     request.onsuccess = () => resolve(request.result);

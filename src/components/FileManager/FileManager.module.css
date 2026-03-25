@@ -1,45 +1,65 @@
 .fileManager {
   color: var(--text-primary);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .fmHeader {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 2rem;
-  gap: 10px;
+  margin-bottom: 1.5rem;
+  gap: 12px;
 }
 
 .fmHeader h3 {
   font-size: 1.1rem;
-  flex: 1; /* 🔥 take remaining space */
-  min-width: 0; /* 🔥 required for ellipsis */
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* 🔥 truncate long file names */
+  text-overflow: ellipsis;
 }
 
 .fmActions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .iconBtn {
-  background: transparent;
+  background: white;
   color: var(--text-secondary);
   cursor: pointer;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
+  transition: all var(--transition-base);
+}
+
+.iconBtn:hover:not(:disabled) {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  transform: translateY(-1px);
 }
 
 .iconBtn.primary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.iconBtn.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .fileList {
@@ -52,24 +72,36 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: white;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.fileItem:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--text-muted);
 }
 
 .fileInfo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   overflow: hidden;
 }
 
 .fileIcon {
   color: var(--accent);
-  background: var(--accent-soft);
-  padding: 0.5rem;
-  border-radius: 8px;
+  background: var(--bg-tertiary);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
 }
 
 .fileDetails {
@@ -79,20 +111,21 @@
 }
 
 .fileName {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .fileStatus {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  text-transform: capitalize;
+  margin-top: 2px;
 }
 
 .statusDot {
@@ -104,15 +137,29 @@
 .statusDot.processed {
   background: var(--success);
 }
-
 .statusDot.pending {
   background: var(--warning);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .spin {
-  animation: spin 2s linear infinite;
+  animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -124,30 +171,34 @@
 
 .emptyFiles {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 1.5rem;
   color: var(--text-muted);
-  font-size: 0.9rem;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
+  background: var(--bg-tertiary);
 }
 
 .uploadBtn {
   background-color: var(--accent);
   color: white;
   border: none;
-  border-radius: var(--radius-sm);
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all var(--transition-base);
 }
 
 .uploadBtn:hover {
-  opacity: 0.9;
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .actionMenu {
@@ -159,70 +210,83 @@
   top: 100%;
   right: 0;
   background: white;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   padding: 4px;
   z-index: 50;
-  min-width: 140px;
+  min-width: 160px;
+  margin-top: 4px;
+  animation: dropdownFade 0.2s ease-out;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dropdownItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 10px 14px;
   background: transparent;
   border: none;
   font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background 0.2s;
-  color: var(--text-primary);
+  transition: all var(--transition-base);
+  color: var(--text-secondary);
   text-align: left;
 }
 
 .dropdownItem:hover {
   background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .deleteItem {
-  color: #e53e3e;
+  color: var(--danger);
 }
-
 .deleteItem:hover {
-  background: #fff5f5;
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .previewContainer {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-tertiary);
+  background-color: white;
   overflow: hidden;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  margin-top: -1rem;
-  height: calc(100vh - 120px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  margin-top: 1rem;
+  height: calc(100% - 60px);
+  box-shadow: var(--shadow-xl);
 }
 
 .previewFrame {
   width: 100%;
   height: 100%;
   border: none;
-  background: white;
 }
 
 /* Modal Styles */
 .modalOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -231,71 +295,72 @@
 
 .modalContent {
   background: white;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   width: 90%;
-  max-width: 440px;
-  padding: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-xl);
 }
 
 .modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0.75rem;
 }
 
 .modalHeader h3 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: "Outfit", sans-serif;
 }
 
 .closeBtn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
   padding: 4px;
 }
 
 .modalBody p {
-  color: #666;
-  font-size: 14px;
-  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem 0;
 }
 
 .modalFooter {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
 .cancelBtn {
-  padding: 8px 20px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
   background: white;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  transition: all var(--transition-base);
 }
 
 .cancelBtn:hover {
-  background: #f9f9f9;
+  background: var(--bg-tertiary);
 }
 
 .confirmDeleteBtn {
-  padding: 8px 20px;
-  border-radius: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
   border: none;
-  background: #ef4444;
+  background: var(--danger);
   color: white;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  transition: all var(--transition-base);
 }
 
 .confirmDeleteBtn:hover {
-  background: #dc2626;
+  background: #b91c1c;
 }

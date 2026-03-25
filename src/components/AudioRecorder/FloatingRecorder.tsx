@@ -31,10 +31,7 @@ const FloatingRecorder = (props: AudioRecorderProps) => {
           }}
         >
           Recorder{" "}
-          <button
-            onClick={() => props.onClose?.()}
-            style={{ float: "right" }}
-          >
+          <button onClick={() => props.onClose?.()} style={{ float: "right" }}>
             ✕
           </button>
         </div>

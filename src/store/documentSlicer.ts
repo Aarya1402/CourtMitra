@@ -17,10 +17,10 @@ const documentSlice = createSlice({
   reducers: {
     setDocumentIds: (
       state,
-      action: PayloadAction<{ threadId: string; documentIds: number[] }>,
+      action: PayloadAction<{ threadId: string; documentIds: number[] }>
     ) => {
       state.documentsByThread[action.payload.threadId] =
-        action.payload.documentIds; 
+        action.payload.documentIds;
     },
   },
 });

@@ -160,7 +160,7 @@ export default function AudioRecorder({
             type: "start",
             sampleRate: audioCtx.sampleRate,
             language: language,
-          }),
+          })
         );
       };
 
@@ -182,7 +182,7 @@ export default function AudioRecorder({
             if (text) {
               const mergedText = mergeTranscriptChunk(
                 transcriptRef.current,
-                text,
+                text
               );
               transcriptRef.current = mergedText;
               if (onTranscriptionComplete) onTranscriptionComplete(mergedText);
@@ -246,7 +246,7 @@ export default function AudioRecorder({
 
       timerRef.current = globalThis.setInterval(
         () => setDuration((d) => d + 1),
-        1000,
+        1000
       );
       drawBars();
     } catch (err) {
@@ -272,7 +272,7 @@ export default function AudioRecorder({
       isPausedRef.current = false;
       timerRef.current = globalThis.setInterval(
         () => setDuration((d) => d + 1),
-        1000,
+        1000
       );
       drawBars();
     } else {
@@ -365,7 +365,7 @@ export default function AudioRecorder({
     const mp3encoder = new (globalThis as any).lamejs.Mp3Encoder(
       1,
       sampleRate,
-      128,
+      128
     );
 
     const sampleBlockSize = 1152;
@@ -374,7 +374,7 @@ export default function AudioRecorder({
     for (let i = 0; i < samples.length; i += sampleBlockSize) {
       const sampleChunk = samples.subarray(i, i + sampleBlockSize);
       const mp3buf = mp3encoder.encodeBuffer(
-        Int16Array.from(sampleChunk.map((n) => n * 32767)),
+        Int16Array.from(sampleChunk.map((n) => n * 32767))
       );
       if (mp3buf.length > 0) mp3Data.push(mp3buf);
     }

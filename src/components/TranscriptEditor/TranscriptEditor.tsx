@@ -145,7 +145,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             className={styles.actionButton}
             onClick={async () => {
               const ok = await showConfirm(
-                "Are you sure you want to clear the transcript?",
+                "Are you sure you want to clear the transcript?"
               );
               if (ok) {
                 onChange("");

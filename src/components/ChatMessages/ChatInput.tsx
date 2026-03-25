@@ -21,15 +21,17 @@ const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
   }, [input]);
- 
+
   // Track recording state transition to sync transcript back to input
   const wasRecordingRef = useRef(false);
   useEffect(() => {
     if (wasRecordingRef.current && !isRecording) {
       if (transcript.trim()) {
-        setInput(prev => {
+        setInput((prev) => {
           const trimmedPrev = prev.trim();
-          return trimmedPrev ? `${trimmedPrev} ${transcript.trim()}` : transcript.trim();
+          return trimmedPrev
+            ? `${trimmedPrev} ${transcript.trim()}`
+            : transcript.trim();
         });
       }
     }

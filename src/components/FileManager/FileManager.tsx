@@ -107,7 +107,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
         setIsLoading(false);
       }
     },
-    [threadId],
+    [threadId]
   );
 
   useEffect(() => {
@@ -122,7 +122,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       (file) =>
         file.status.toLowerCase() !== "completed" &&
         file.status.toLowerCase() !== "failed" &&
-        file.status.toLowerCase() !== "error",
+        file.status.toLowerCase() !== "error"
     );
 
     if (hasPendingFiles && threadId) {
@@ -180,7 +180,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
     try {
       // Step 1: Get signed URL from your API
       const response = await axios.get(
-        `${API_BASE}/bots/file/${file.id}/download`,
+        `${API_BASE}/bots/file/${file.id}/download`
       );
 
       const fileUrl: string | undefined = response.data?.file_url;
@@ -317,7 +317,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
                 className={styles.iconBtn}
                 onClick={() =>
                   setActiveDropdownId(
-                    activeDropdownId === file.id ? null : file.id,
+                    activeDropdownId === file.id ? null : file.id
                   )
                 }
               >

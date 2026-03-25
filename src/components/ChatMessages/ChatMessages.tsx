@@ -1,6 +1,7 @@
 import styles from "./ChatMessages.module.css";
 import { Copy, Check, ChevronDown, Trash2, X } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import gsap from "gsap";
 
 interface Message {
   id: string;
@@ -9,9 +10,9 @@ interface Message {
 }
 
 interface Props {
-  messages: Message[];
-  loading: boolean;
-  onDelete?: (id: string) => void;
+  readonly messages: Message[];
+  readonly loading: boolean;
+  readonly onDelete?: (id: string) => void;
 }
 
 const DeleteModal = ({
@@ -23,10 +24,23 @@ const DeleteModal = ({
   onCancel: () => void;
   onConfirm: () => void;
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      gsap.fromTo(
+        modalRef.current,
+        { opacity: 0, scale: 0.9, y: 10 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "power2.out" }
+      );
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
   return (
-    <button className={styles.modalOverlay} onClick={onCancel}>
-      <button
+    <div className={styles.modalOverlay} onClick={onCancel}>
+      <div
+        ref={modalRef}
         className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
       >
@@ -47,8 +61,8 @@ const DeleteModal = ({
             Delete
           </button>
         </div>
-      </button>
-    </button>
+      </div>
+    </div>
   );
 };
 
@@ -129,8 +143,46 @@ const MessageMenu = ({
 };
 
 const ChatMessages: React.FC<Props> = ({ messages, onDelete }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLength = useRef(messages.length);
+
+  useLayoutEffect(() => {
+    if (messages.length > prevMessagesLength.current) {
+      const newMessages = Array.from(
+        containerRef.current?.children || []
+      ).slice(prevMessagesLength.current);
+
+      gsap.fromTo(
+        newMessages,
+        { opacity: 0, y: 20, scale: 0.95 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.5,
+          stagger: 0.1,
+          ease: "power2.out",
+        }
+      );
+    } else if (messages.length > 0 && prevMessagesLength.current === 0) {
+      // First load
+      gsap.fromTo(
+        containerRef.current?.children || [],
+        { opacity: 0, y: 20 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.05,
+          ease: "power2.out",
+        }
+      );
+    }
+    prevMessagesLength.current = messages.length;
+  }, [messages]);
+
   return (
-    <div className={styles.messagesContainer}>
+    <div className={styles.messagesContainer} ref={containerRef}>
       {messages.map((msg) => (
         <div
           key={msg.id + msg.sender}

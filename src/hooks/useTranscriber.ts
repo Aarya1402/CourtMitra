@@ -1,17 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { WS_URL } from "../components/AudioRecorder/AudioRecorder.logic";
- 
+
 const mergeTranscriptChunk = (previous: string, incoming: string) => {
   const prev = previous.trim();
   const next = incoming.trim();
   if (!next) return previous;
   if (!prev) return next;
- 
+
   // If backend sends full cumulative text, trust it and replace.
   if (next.startsWith(prev)) return next;
   // If backend repeats older content, keep the longest stable transcript.
   if (prev.startsWith(next)) return prev;
- 
+
   // For delta chunks, append with spacing.
   return `${prev} ${next}`.replace(/\s+/g, " ").trim();
 };
@@ -57,7 +57,7 @@ export function useTranscriber() {
       streamRef.current = null;
     }
   }, []);
- 
+
   const stop = useCallback(() => {
     stopResources();
     setIsRecording(false);
@@ -94,7 +94,7 @@ export function useTranscriber() {
               type: "start",
               sampleRate: audioCtx.sampleRate,
               language,
-            }),
+            })
           );
         };
 
@@ -113,7 +113,10 @@ export function useTranscriber() {
                 msg.data?.text ||
                 (typeof msg.data === "string" ? msg.data : null);
               if (text) {
-                const mergedText = mergeTranscriptChunk(transcriptRef.current, text);
+                const mergedText = mergeTranscriptChunk(
+                  transcriptRef.current,
+                  text
+                );
                 transcriptRef.current = mergedText;
                 setTranscript(mergedText);
               }
@@ -151,7 +154,7 @@ export function useTranscriber() {
         setError("Mic access denied");
       }
     },
-    [stop],
+    [stop]
   );
 
   useEffect(() => {

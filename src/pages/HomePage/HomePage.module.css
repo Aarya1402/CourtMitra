@@ -41,17 +41,25 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: transparent;
+  background: white;
   cursor: pointer;
   font-weight: 500;
   margin-bottom: 2rem;
-  transition: background 0.2s;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
 }
 
-.newChatBtn:hover {
+.newChatBtn:hover:not(:disabled) {
   background-color: var(--bg-tertiary);
+  border-color: var(--text-muted);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.newChatBtn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .navSection {
@@ -77,14 +85,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
-  border-radius: 10px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all var(--transition-base);
+  margin-bottom: 2px;
 }
 
 .navItemContainer:hover {
   background-color: var(--bg-tertiary);
+  transform: translateX(4px);
 }
 
 .navItem {
@@ -99,35 +109,42 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 400;
+  transition: color var(--transition-base);
+}
+
+.navItemContainer:hover .navItem {
+  color: var(--text-primary);
 }
 
 .deleteBtn {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   color: var(--text-muted);
-  display: none;
+  opacity: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
 }
 
 .navItemContainer:hover .deleteBtn {
-  display: flex;
+  opacity: 1;
 }
 
 .deleteBtn:hover {
   background-color: rgba(220, 38, 38, 0.1);
-  color: #dc2626;
+  color: var(--danger);
 }
 
 /* Active (selected thread) */
 .navItem.active {
-  background-color: #e5e5e5; /* light gray like image */
-  color: #000;
-  font-weight: 500;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .userProfile {
@@ -229,29 +246,34 @@
 
 .uploadCard {
   width: 100%;
-  max-width: 480px;
-  aspect-ratio: 16/9;
+  max-width: 540px;
+  aspect-ratio: 2/1;
   border: 2px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 1.25rem;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: border-color 0.2s;
-  margin-bottom: 2rem;
+  transition: all var(--transition-base);
+  margin-bottom: 2.5rem;
   background-color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .uploadCard:hover {
   border-color: var(--accent);
+  background-color: var(--bg-tertiary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .hasFile {
   border-color: var(--success);
-  background-color: var(--bg-tertiary);
+  border-style: solid;
+  background-color: #f0fdf4;
 }
 
 .spin {
@@ -334,11 +356,9 @@
 /* Modal Styles */
 .modalOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -347,71 +367,80 @@
 
 .modalContent {
   background: white;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   width: 90%;
-  max-width: 440px;
-  padding: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-xl);
 }
 
 .modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0.75rem;
 }
 
 .modalHeader h3 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: "Outfit", sans-serif;
 }
 
 .closeBtn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
   padding: 4px;
+  transition: color var(--transition-base);
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
 }
 
 .modalBody p {
-  color: #666;
-  font-size: 14px;
-  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem 0;
 }
 
 .modalFooter {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
 .cancelBtn {
-  padding: 8px 20px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
   background: white;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all var(--transition-base);
 }
 
 .cancelBtn:hover {
-  background: #f9f9f9;
+  background: var(--bg-tertiary);
 }
 
 .confirmDeleteBtn {
-  padding: 8px 20px;
-  border-radius: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
   border: none;
-  background: #ef4444;
+  background: var(--danger);
   color: white;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all var(--transition-base);
 }
 
 .confirmDeleteBtn:hover {
-  background: #dc2626;
+  background: #b91c1c;
 }

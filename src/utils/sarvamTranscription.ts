@@ -16,7 +16,7 @@ export async function transcribeAudio(blob: Blob): Promise<string> {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Server responded with ${response.status}`,
+        errorData.error || `Server responded with ${response.status}`
       );
     }
 

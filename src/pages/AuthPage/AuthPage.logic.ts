@@ -6,7 +6,7 @@ export async function SignUp(
   name: string,
   email: string,
   password: string,
-  organisation: string,
+  organisation: string
 ) {
   try {
     const response = await axios.post(
@@ -16,7 +16,7 @@ export async function SignUp(
         email,
         password,
         org_name: organisation,
-      },
+      }
     );
 
     console.log("SignUp Success:", response.data);
@@ -36,7 +36,7 @@ export async function SignIn(email: string, password: string) {
       {
         email,
         password,
-      },
+      }
     );
 
     console.log("SignIn Success:", response.data);
