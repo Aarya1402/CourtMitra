@@ -74,3 +74,13 @@ export const createEmptyThread = async (botId: string) => {
     throw error;
   }
 };
+
+export const isLoggedIn = async () => {
+  try {
+    const threadRes = await axios.get(`${API_BASE}/user`);
+    return threadRes.data.name;
+  } catch (error) {
+    console.error("User is not logged In:", error);
+    throw error;
+  }
+};

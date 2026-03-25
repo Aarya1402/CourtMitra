@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useRef, Activity } from "react";
 import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor";
 import FileManager from "../../components/FileManager/FileManager";
-import {
-  User,
-  MessageSquare,
-  Plus,
-  LogOut,
-  FileText,
-  Upload,
-  Mic,
-} from "lucide-react";
+import { User, MessageSquare, Plus, LogOut, Upload, Mic } from "lucide-react";
 import styles from "./ThreadPage.module.css";
 import { useParams, useNavigate } from "react-router-dom";
 import ChatMessages from "../../components/ChatMessages/ChatMessages";
@@ -104,7 +96,9 @@ const ThreadPage: React.FC = () => {
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
 
-  const [leftWidth, setLeftWidth] = useState(Math.floor(window.innerWidth * 0.7));
+  const [leftWidth, setLeftWidth] = useState(
+    Math.floor(window.innerWidth * 0.7),
+  );
   const [rightWidth, setRightWidth] = useState(320);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);

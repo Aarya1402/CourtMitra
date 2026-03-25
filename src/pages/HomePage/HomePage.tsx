@@ -12,6 +12,7 @@ import {
   uploadDocument,
   deleteThread,
   createEmptyThread,
+  isLoggedIn,
 } from "./HomePage.logic";
 import { API_BASE_URL } from "../../constants/api";
 import { useAlert } from "../../context/AlertContext";
@@ -81,6 +82,30 @@ const HomePage: React.FC = () => {
 
   const [showLogout, setShowLogout] = useState(false);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const name = await isLoggedIn();
+        console.log("User:", name);
+      } catch (error: any) {
+        console.log("User is not logged in");
+        console.log(error.response);
+
+        // ✅ handle both cases
+        if (
+          !error.response ||
+          error.response.status === 401 ||
+          error.response.status === 403 ||
+          error.response.status === 502
+        ) {
+          navigate("/auth", { replace: true });
+        }
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
   const handleLogout = async () => {
     try {
       await axios.post(`${API_BASE_URL}/api/talkument/auth/logout`);
@@ -137,7 +162,9 @@ const HomePage: React.FC = () => {
 
   const handleUpload = async (file: File) => {
     if (!botId) {
-      showAlert("Bot not initialized. Please wait or refresh.", { title: "Notice" });
+      showAlert("Bot not initialized. Please wait or refresh.", {
+        title: "Notice",
+      });
       return;
     }
 
@@ -335,10 +362,7 @@ const HomePage: React.FC = () => {
         </button>
 
         {!threadId && !isUploading && (
-          <button
-            className={styles.skipBtn}
-            onClick={handleCreateNewChat}
-          >
+          <button className={styles.skipBtn} onClick={handleCreateNewChat}>
             Or start a fresh chat without documents
           </button>
         )}
