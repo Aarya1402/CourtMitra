@@ -81,7 +81,10 @@ export const handleTalkumentProxy = async (
       isMultipart,
     );
 
-    if (endpoint === "/auth/signin" && req.method === "POST") {
+    if (
+      (endpoint === "/auth/signin" || endpoint === "/auth/callback") &&
+      req.method === "POST"
+    ) {
       const accessToken = responseData.access_token;
       if (accessToken) {
         res.cookie("token", accessToken, {
