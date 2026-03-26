@@ -437,11 +437,6 @@ const OrderForm: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className={styles.rawTextSection}>
-            <h5>{t.additional_text}:</h5>
-            {renderTextArea(formData.raw_text, ["raw_text"], "...")}
-          </div>
-
           <div className={styles.signatureSection}>
             <div className={styles.sigLeft}>
               <div className={styles.sigRow}>

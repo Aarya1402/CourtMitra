@@ -232,17 +232,9 @@
   letter-spacing: 0.1em;
 }
 
-.orderContent,
-.rawTextSection {
+.orderContent {
   margin-bottom: 45px;
   text-align: justify;
-}
-
-.rawTextSection h5 {
-  font-size: 13pt;
-  margin: 0 0 12px 0;
-  text-decoration: underline;
-  font-weight: bold;
 }
 
 .signatureSection {
