@@ -96,7 +96,7 @@ const ThreadPage: React.FC = () => {
     start: number;
     end: number;
   } | null>(null);
-  const [language, setLanguage] = useState("unknown"); // Defaulting to Gujarati as requested
+  const [language, setLanguage] = useState("gu-IN"); // Defaulting to Gujarati as requested
   const [isActuallyRecording, setIsActuallyRecording] = useState(false);
   const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
     useState("");
@@ -798,7 +798,7 @@ const ThreadPage: React.FC = () => {
                         <option value="bn-IN">Bengali</option>
                         <option value="pa-IN">Punjabi</option>
                         <option value="od-IN">Odia</option>
-                        <option value="unknown">Auto-detect</option>
+                        {/* <option value="unknown">Auto-detect</option> */}
                       </select>
                     </>
                   )}

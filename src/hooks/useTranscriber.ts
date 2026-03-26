@@ -65,7 +65,7 @@ export function useTranscriber() {
   }, [stopResources]);
 
   const start = useCallback(
-    async (language: string = "unknown") => {
+    async (language: string = "gu-IN") => {
       try {
         setError(null);
         setTranscript("");

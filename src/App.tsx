@@ -3,6 +3,8 @@ import "./App.css";
 import { Routes, Route } from "react-router";
 import AuthPage from "./pages/AuthPage/AuthPage";
 import ThreadPage from "./pages/ThreadPage/ThreadPage";
+import AuthCallback from "./pages/AuthPage/AuthCallback";
+import ResetPasswordPage from "./pages/AuthPage/ResetPasswordPage";
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
       />
       <Route path="/threads/:threadId" element={<ThreadPage />} />
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
     </Routes>
   );
 }
