@@ -374,14 +374,29 @@
   overflow: hidden;
 }
 
+.transcriptContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .recorderSection {
   display: flex;
+  justify-content: space-between;
   gap: 12px;
   align-items: center;
   width: 100%;
   background-color: white;
   padding: 1.25rem;
   border-top: 1px solid var(--border-strong);
+}
+
+.recorderLeftGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
 }
 
 .tabsWrapper {

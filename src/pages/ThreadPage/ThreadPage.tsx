@@ -737,7 +737,7 @@ const ThreadPage: React.FC = () => {
             )}
 
             <Activity mode={leftTab === "transcript" ? "visible" : "hidden"}>
-              <>
+              <div className={styles.transcriptContainer}>
                 <TranscriptEditor
                   transcript={transcript}
                   onChange={setTranscript}
@@ -748,6 +748,94 @@ const ThreadPage: React.FC = () => {
                 />
 
                 <div className={styles.recorderSection}>
+                  <div className={styles.recorderLeftGroup}>
+                    {!showRecorder && (
+                      <>
+                        <button
+                          className={styles.startRecordingBtn}
+                          onClick={() => setShowRecorder(true)}
+                          title="Recorder"
+                        >
+                          <Mic size={16} />
+                        </button>
+
+                        <button
+                          className={styles.uploadBtn}
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          title={isUploading ? "Uploading..." : "Upload Audio"}
+                        >
+                          <Upload size={16} />
+                        </button>
+
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleAudioUpload}
+                          accept=".mp3,.ogg,.wav,audio/mpeg,audio/ogg,audio/wav"
+                          style={{ display: "none" }}
+                        />
+
+                        <select
+                          className={styles.languageInline}
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                        >
+                          <option value="gu-IN">Gujarati</option>
+                          <option value="en-IN">English</option>
+                          <option value="hi-IN">Hindi</option>
+                          <option value="ta-IN">Tamil</option>
+                          <option value="te-IN">Telugu</option>
+                          <option value="kn-IN">Kannada</option>
+                          <option value="mr-IN">Marathi</option>
+                          <option value="bn-IN">Bengali</option>
+                          <option value="pa-IN">Punjabi</option>
+                          <option value="od-IN">Odia</option>
+                        </select>
+                      </>
+                    )}
+
+                    {showRecorder && (
+                      <AudioRecorder
+                        autoStart={true}
+                        fileName={threadTitle}
+                        language={language}
+                        transcript={transcript}
+                        onTranscriptionStart={() => {
+                          setIsProcessing(true);
+                          setErrorMessage(null);
+                        }}
+                        onClose={() => setShowRecorder(false)}
+                        onTranscriptionComplete={(text: string) => {
+                          if (modificationRange) {
+                            const { start, end } = modificationRange;
+                            const before =
+                              originalTranscriptBeforeModify.substring(0, start);
+                            const after =
+                              originalTranscriptBeforeModify.substring(end);
+                            setTranscript(before + text + after);
+                            setModificationRange(null);
+                          } else {
+                            setTranscript(text);
+                          }
+                          setIsProcessing(false);
+                        }}
+                        onRecordingStateChange={setIsActuallyRecording}
+                        onTranscriptionError={(msg: string) => {
+                          setErrorMessage(msg);
+                          setIsProcessing(false);
+                        }}
+                        onAudioBlobComplete={(blob: Blob) => {
+                          setAudioBlob(blob);
+                        }}
+                        resetTranscript={() => {
+                          setTranscript("");
+                          setAudioBlob(null);
+                        }}
+                      />
+                    )}
+                  </div>
+
                   <button
                     className={styles.generateOrderBtn}
                     onClick={() => extractDataFromChunk(transcript)}
@@ -755,97 +843,8 @@ const ThreadPage: React.FC = () => {
                   >
                     {isExtracting ? "Generating..." : "Generate Order"}
                   </button>
-
-                  {!showRecorder && (
-                    <>
-                      <button
-                        className={styles.startRecordingBtn}
-                        onClick={() => setShowRecorder(true)}
-                        title="Recorder"
-                      >
-                        <Mic size={16} />
-                      </button>
-
-                      <button
-                        className={styles.uploadBtn}
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        title={isUploading ? "Uploading..." : "Upload Audio"}
-                      >
-                        <Upload size={16} />
-                      </button>
-
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleAudioUpload}
-                        accept=".mp3,.ogg,.wav,audio/mpeg,audio/ogg,audio/wav"
-                        style={{ display: "none" }}
-                      />
-
-                      <select
-                        className={styles.languageInline}
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                      >
-                        <option value="gu-IN">Gujarati</option>
-                        <option value="en-IN">English</option>
-                        <option value="hi-IN">Hindi</option>
-                        <option value="ta-IN">Tamil</option>
-                        <option value="te-IN">Telugu</option>
-                        <option value="kn-IN">Kannada</option>
-                        <option value="mr-IN">Marathi</option>
-                        <option value="bn-IN">Bengali</option>
-                        <option value="pa-IN">Punjabi</option>
-                        <option value="od-IN">Odia</option>
-                        {/* <option value="unknown">Auto-detect</option> */}
-                      </select>
-                    </>
-                  )}
-
-                  {showRecorder && (
-                    <AudioRecorder
-                      autoStart={true} // 🔥 ADD THIS
-                      fileName={threadTitle}
-                      transcript={transcript}
-                      onTranscriptionStart={() => {
-                        setIsProcessing(true);
-                        setErrorMessage(null);
-                      }}
-                      onTranscriptionComplete={(text: string) => {
-                        if (modificationRange) {
-                          const { start, end } = modificationRange;
-                          const before =
-                            originalTranscriptBeforeModify.substring(0, start);
-                          const after =
-                            originalTranscriptBeforeModify.substring(end);
-                          setTranscript(before + text + after);
-                          setModificationRange(null);
-                        } else {
-                          setTranscript(text);
-                        }
-                        setIsProcessing(false);
-                      }}
-                      onRecordingStateChange={setIsActuallyRecording}
-                      onTranscriptionError={(msg: string) => {
-                        setErrorMessage(msg);
-                        setIsProcessing(false);
-                      }}
-                      onAudioBlobComplete={(blob: Blob) => {
-                        setAudioBlob(blob);
-                      }}
-                      resetTranscript={() => {
-                        setTranscript("");
-                        setAudioBlob(null);
-                      }}
-                      onClose={() => {
-                        setShowRecorder(false);
-                      }}
-                      language={language}
-                    />
-                  )}
                 </div>
-              </>
+              </div>
             </Activity>
 
             <Activity mode={leftTab === "order" ? "visible" : "hidden"}>
