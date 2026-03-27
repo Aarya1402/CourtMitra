@@ -15,9 +15,9 @@ export const extractOrderData = async (
   res: Response,
 ): Promise<any> => {
   try {
-    const { currentJsonString, chunk } = req.body;
+    const { currentJsonString, chunk, language = "English" } = req.body;
     
-    console.log(`[GeminiController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars)`);
+    console.log(`[GeminiController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars) in language: ${language}`);
 
     if (!chunk) {
       return res.status(400).json({ error: "chunk is required" });
@@ -37,26 +37,32 @@ export const extractOrderData = async (
 
     const promptText = `You are a legal document synthesis expert specializing in Indian court proceedings.
 
-Your task is to analyze the following FULL TRANSCRIPT of a court session and structure the information into a formal JSON order object according to the STRICT SCHEMA provided below.
+Your task is to analyze the FULL TRANSCRIPT of a court session and generate a COMPLETE and VALID JSON object strictly following the schema provided below.
 
-⚠️ JSON SCHEMA TO FOLLOW:
+🔒 LANGUAGE REQUIREMENT:
+- The output MUST be entirely in the following language: "${language}".
+- Do NOT translate content unnecessarily.
+- Preserve original legal phrasing, tone, and terminology from the transcript wherever possible.
+- If the transcript contains mixed languages, normalize the FINAL ORDER and narrative fields into "${language}" while preserving legal accuracy.
+
+⚠️ STRICT JSON SCHEMA:
 {
   "header": {
-    "court_name": "string",
-    "case_number": "string",
-    "case_type": "string",
-    "location": "string",
+    "court_name": "string | null",
+    "case_number": "string | null",
+    "case_type": "string | null",
+    "location": "string | null",
     "dates": {
-      "filing_date": "string",
-      "registration_date": "string",
-      "decision_date": "string",
+      "filing_date": "string | null",
+      "registration_date": "string | null",
+      "decision_date": "string | null",
       "other_dates": ["string"]
     }
   },
   "case_title": {
-    "petitioner": "string",
-    "respondent": "string",
-    "full_title_text": "string"
+    "petitioner": "string | null",
+    "respondent": "string | null",
+    "full_title_text": "string | null"
   },
   "parties": {
     "petitioners": ["string"],
@@ -71,44 +77,66 @@ Your task is to analyze the following FULL TRANSCRIPT of a court session and str
     "government_side": ["string"],
     "other": ["string"]
   },
-  "appearance_mode": "string",
+  "appearance_mode": "string | null",
   "case_details": {
-    "acts_sections": "string",
-    "case_category": "string",
-    "police_station": "string",
-    "property_details": "string",
-    "other_details": "string"
+    "acts_sections": "string | null",
+    "case_category": "string | null",
+    "police_station": "string | null",
+    "property_details": "string | null",
+    "other_details": "string | null"
   },
-  "procedural_history": "string",
-  "issues_framed": "string",
+  "procedural_history": "string | null",
+  "issues_framed": "string | null",
   "evidence": {
-    "oral_evidence": "string",
-    "documentary_evidence": "string"
+    "oral_evidence": "string | null",
+    "documentary_evidence": "string | null"
   },
-  "arguments": "string",
+  "arguments": "string | null",
   "reasoning_points": ["string"],
   "operative_order": {
-    "full_text": "string",
+    "full_text": "string | null",
     "directions": ["string"],
-    "final_outcome": "string"
+    "final_outcome": "string | null"
   },
-  "final_order": "string",
+  "final_order": "string | null",
   "signature": {
-    "judge_name": "string",
-    "designation": "string",
-    "court": "string",
-    "date": "string",
-    "place": "string"
+    "judge_name": "string | null",
+    "designation": "string | null",
+    "court": "string | null",
+    "date": "string | null",
+    "place": "string | null"
   }
 }
 
-⚠️ EXTRACTION PROTOCOL:
-1. POINT-BY-POINT SYNTHESIS: Extract the judge's reasoning as an array of strings in 'reasoning_points'.
-2. FINAL DIRECTIONS: Extract all numbered or bulleted conditions/directions in the final order as an array of strings in 'operative_order.directions'.
-3. DIALECT INTEGRITY: The transcript may contain a mix of Gujarati and English. DO NOT TRANSLATE. Preserve the exact legal phrasing as spoken.
-4. DRAFT REFINEMENT: The CURRENT EXTRACTED JSON provided below is a draft. Correct any errors and fill in all missing fields based on the COMPLETE TRANSCRIPT.
-5. FAITHFULNESS: If a specific detail (like a date, case number, or name) is not present in the transcript, set those fields to null. Never hallucinate data.
-6. CLEAN OUTPUT: Return ONLY the structured JSON object. DO NOT include markdown code blocks (\`\`\`json) or any other text.
+⚠️ EXTRACTION & SYNTHESIS RULES:
+
+1. STRICT SCHEMA COMPLIANCE  
+   - Output MUST match the schema EXACTLY.  
+   - Do NOT add, remove, or rename fields.  
+
+2. NO HALLUCINATION  
+   - If any information is missing from the transcript, set it to null.  
+   - Never infer or fabricate case details.  
+
+3. REASONING EXTRACTION  
+   - Extract judicial reasoning into "reasoning_points" as a clear array of concise points.  
+   - Each point should represent one logical step in the judge’s reasoning.  
+
+4. FINAL DIRECTIONS EXTRACTION  
+   - Extract all explicit directions/orders (numbered or implied) into "operative_order.directions" as separate items.  
+
+5. DRAFT CORRECTION PRIORITY  
+   - A draft JSON is provided below.  
+   - Use it as a base, but VERIFY and CORRECT it using the FULL TRANSCRIPT.  
+   - Fill missing fields and fix inconsistencies.  
+
+6. LEGAL FORMATTING  
+   - Ensure "final_order" and "operative_order.full_text" read like formal Indian court orders.  
+   - Maintain formal tone and structure consistent with judicial writing.  
+
+7. CLEAN OUTPUT  
+   - Return ONLY the JSON object.  
+   - Do NOT include explanations, markdown, or extra text.  
 
 ---
 CURRENT EXTRACTED JSON (DRAFT):
@@ -120,7 +148,7 @@ ${chunk}
 
 ---
 FINAL INSTRUCTION:
-Ensure the output matches the provided JSON SCHEMA exactly and capture all subpoints in the appropriate array fields. Use the structure inspired by typical Indian court orders as shown in standard forms.`;
+Generate a complete, accurate, and legally structured court order JSON in "${language}", strictly adhering to the schema and rules above.`;
 
     const model = getGeminiModel();
     const result = await model.generateContent(promptText);
