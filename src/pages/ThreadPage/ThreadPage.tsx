@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor";
 import FileManager from "../../components/FileManager/FileManager";
 import { User, MessageSquare, Plus, LogOut, Upload, Mic } from "lucide-react";
@@ -46,7 +46,7 @@ const normalizeOrderData = (data: any): OrderData => {
     header: { ...initialOrderData.header, ...data.header },
     operative_order: {
       ...initialOrderData.operative_order,
-      ...(data.operative_order || {}),
+      ...data.operative_order,
     },
   };
 
@@ -119,20 +119,20 @@ const ThreadPage: React.FC = () => {
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
 
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const isLoadingHistoryRef = useRef(false); // tracks history fetches without re-render
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const name = await isLoggedIn();
-
-      } catch (error: any) {
-
-
-        // ✅ handle both cases
+        await isLoggedIn();
+      } catch (error) {
         if (
-          !error.response ||
-          error.response.status === 401 ||
-          error.response.status === 403 ||
-          error.response.status === 502
+          axios.isAxiosError(error) &&
+          (!error.response ||
+            error.response.status === 401 ||
+            error.response.status === 403 ||
+            error.response.status === 502)
         ) {
           navigate("/auth", { replace: true });
         }
@@ -164,7 +164,9 @@ const ThreadPage: React.FC = () => {
   const [rightWidth, setRightWidth] = useState(30);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
-  const [mobileTab, setMobileTab] = useState<"transcript" | "order" | "chat" | "files">("transcript");
+  const [mobileTab, setMobileTab] = useState<
+    "transcript" | "order" | "chat" | "files"
+  >("transcript");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -225,10 +227,12 @@ const ThreadPage: React.FC = () => {
       if (response.data.transcript) {
         setTranscript(response.data.transcript);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Upload transcription failed:", error);
       const errorMsg =
-        error.response?.data?.error || "Failed to transcribe uploaded file";
+        axios.isAxiosError(error) && error.response?.data?.error
+          ? error.response.data.error
+          : "Failed to transcribe uploaded file";
       setErrorMessage(errorMsg);
     } finally {
       setIsUploading(false);
@@ -261,7 +265,6 @@ const ThreadPage: React.FC = () => {
         setRightWidth(newRight);
         setLeftWidth(100 - newRight);
       }
-
     };
 
     const handleMouseUp = () => {
@@ -282,70 +285,20 @@ const ThreadPage: React.FC = () => {
 
   const allMessages = useSelector((state: RootState) => state.chat.messages);
 
-  const filteredMessages = React.useMemo(() => {
-    return allMessages
-      .filter((m) => m.threadId === threadId)
-      .filter(
-        (m) =>
-          !m.text.includes("You are an expert legal document parser") &&
-          !m.text.includes("CURRENT EXTRACTED JSON:")
-      );
-  }, [allMessages, threadId]);
+  const filteredMessages = useMemo(
+    () =>
+      allMessages
+        .filter((m) => m.threadId === threadId)
+        .filter(
+          (m) =>
+            !m.text.includes("You are an expert legal document parser") &&
+            !m.text.includes("CURRENT EXTRACTED JSON:")
+        ),
+    [allMessages, threadId]
+  );
 
   const loading = useSelector((state: RootState) => state.chat.loading);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const prevLengthRef = useRef(0);
-  const scrollPositionRef = useRef(0);
-  const isRestoringRef = useRef(false);
-  const isFirstLoadRef = useRef(true);
-
-  useEffect(() => {
-    if (!scrollRef.current || filteredMessages.length === 0) return;
-
-    // ✅ FIRST LOAD → always go to bottom
-    if (isFirstLoadRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      isFirstLoadRef.current = false;
-      prevLengthRef.current = filteredMessages.length;
-      return;
-    }
-
-    // 🚫 Skip when restoring (tab switch)
-    if (isRestoringRef.current) {
-      isRestoringRef.current = false;
-      prevLengthRef.current = filteredMessages.length;
-      return;
-    }
-
-    const lastMessage = filteredMessages[filteredMessages.length - 1];
-
-    // ✅ Normal behavior (new messages)
-    if (
-      filteredMessages.length > prevLengthRef.current &&
-      lastMessage.sender === "bot"
-    ) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-
-    prevLengthRef.current = filteredMessages.length;
-  }, [filteredMessages]);
-
-  useEffect(() => {
-    if (centerTab === "chat" && scrollRef.current) {
-      isRestoringRef.current = true;
-
-      // wait for DOM render
-      requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollPositionRef.current;
-        }
-      });
-    }
-  }, [centerTab]);
 
   const handleScroll = () => {
     if (!scrollRef.current || !hasMore || isFetchingHistory) return;
@@ -405,7 +358,7 @@ const ThreadPage: React.FC = () => {
           : JSON.stringify(response.data.result);
       resultText = resultText
         .replaceAll(/```json/gi, "")
-        .replaceAll(/```/g, "")
+        .replaceAll("```", "")
         .trim();
 
       const newJson = JSON.parse(resultText);
@@ -460,6 +413,7 @@ const ThreadPage: React.FC = () => {
 
   const fetchChatHistory = async (pageNumber: number = 1) => {
     if (!threadId || isFetchingHistory) return;
+    isLoadingHistoryRef.current = true;
     setIsFetchingHistory(true);
     try {
       const chatHistory = await axios.get(
@@ -471,7 +425,16 @@ const ThreadPage: React.FC = () => {
         setHasMore(false);
       }
 
-      const formattedMessages = history.flatMap((item: any) => {
+      interface HistoryItem {
+        user?: string;
+        assistant?: string;
+        chat_id?: number | string;
+        id?: number | string;
+        message_id?: number | string;
+        assistant_chat_id?: number | string;
+      }
+
+      const formattedMessages = history.flatMap((item: HistoryItem) => {
         const arr: {
           id?: string;
           text: string;
@@ -513,10 +476,6 @@ const ThreadPage: React.FC = () => {
           })
         );
       } else {
-        // Prepend and Maintain scroll height
-        const scrollContainer = scrollRef.current;
-        const prevHeight = scrollContainer?.scrollHeight || 0;
-
         dispatch(
           prependMessagesForThread({
             threadId,
@@ -525,16 +484,11 @@ const ThreadPage: React.FC = () => {
         );
 
         // We use requestAnimationFrame to wait for the DOM render
-        requestAnimationFrame(() => {
-          if (scrollContainer) {
-            const newHeight = scrollContainer.scrollHeight;
-            scrollContainer.scrollTop = newHeight - prevHeight;
-          }
-        });
       }
     } catch (err) {
       console.error("Failed to fetch chat history:", err);
     } finally {
+      isLoadingHistoryRef.current = false;
       setIsFetchingHistory(false);
     }
   };
@@ -543,6 +497,30 @@ const ThreadPage: React.FC = () => {
     fetchChatHistory();
     fetchThreadTitle();
   }, [threadId, botId]);
+
+  const prevMessageCountRef = useRef(0);
+  const prevLastMessageTextRef = useRef("");
+
+  useEffect(() => {
+    if (isLoadingHistoryRef.current) return;
+
+    const count = filteredMessages.length;
+    const lastMsg = filteredMessages[count - 1];
+    const lastText = lastMsg?.text ?? "";
+
+    const isNewMessage = count > prevMessageCountRef.current;
+    const isStreaming =
+      count === prevMessageCountRef.current &&
+      lastMsg?.sender === "bot" &&
+      lastText !== prevLastMessageTextRef.current;
+
+    if (isNewMessage || isStreaming) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    prevMessageCountRef.current = count;
+    prevLastMessageTextRef.current = lastText;
+  }, [filteredMessages]);
 
   const handleSend = async (text: string) => {
     dispatch(addUserMessage({ text, threadId }));
@@ -612,7 +590,6 @@ const ThreadPage: React.FC = () => {
                 if (json.type === "TEXT_MESSAGE_CONTENT") {
                   botText += json.delta;
 
-                  // ✅ update message progressively
                   dispatch(
                     updateBotMessage({
                       id: botMessageId,
@@ -621,9 +598,7 @@ const ThreadPage: React.FC = () => {
                     })
                   );
                 }
-              } catch (err) {
-
-              }
+              } catch (err) {}
             }
           },
         }
@@ -740,7 +715,9 @@ const ThreadPage: React.FC = () => {
         <div className={styles.mobileTabWrapper}>
           <div className={styles.tabContainer}>
             <button
-              className={mobileTab === "transcript" ? styles.activeTab : styles.tab}
+              className={
+                mobileTab === "transcript" ? styles.activeTab : styles.tab
+              }
               onClick={() => setMobileTab("transcript")}
             >
               Transcript
@@ -789,13 +766,17 @@ const ThreadPage: React.FC = () => {
             {!isMobile && (
               <div className={styles.tabContainer}>
                 <button
-                  className={leftTab === "transcript" ? styles.activeTab : styles.tab}
+                  className={
+                    leftTab === "transcript" ? styles.activeTab : styles.tab
+                  }
                   onClick={() => setLeftTab("transcript")}
                 >
                   Transcript
                 </button>
                 <button
-                  className={leftTab === "order" ? styles.activeTab : styles.tab}
+                  className={
+                    leftTab === "order" ? styles.activeTab : styles.tab
+                  }
                   onClick={() => setLeftTab("order")}
                 >
                   Order
@@ -812,7 +793,11 @@ const ThreadPage: React.FC = () => {
 
             <Activity
               mode={
-                (isMobile ? mobileTab === "transcript" : leftTab === "transcript")
+                (
+                  isMobile
+                    ? mobileTab === "transcript"
+                    : leftTab === "transcript"
+                )
                   ? "visible"
                   : "hidden"
               }
@@ -926,7 +911,10 @@ const ThreadPage: React.FC = () => {
                           if (modificationRange) {
                             const { start, end } = modificationRange;
                             const before =
-                              originalTranscriptBeforeModify.substring(0, start);
+                              originalTranscriptBeforeModify.substring(
+                                0,
+                                start
+                              );
                             const after =
                               originalTranscriptBeforeModify.substring(end);
                             setTranscript(before + text + after);
@@ -1013,11 +1001,13 @@ const ThreadPage: React.FC = () => {
                 Chat
               </button>
               <button
-                className={centerTab === "files" ? styles.activeTab : styles.tab}
+                className={
+                  centerTab === "files" ? styles.activeTab : styles.tab
+                }
                 onClick={() => {
-                  if (centerTab === "chat" && scrollRef.current) {
-                    scrollPositionRef.current = scrollRef.current.scrollTop;
-                  }
+                  // if (centerTab === "chat" && scrollRef.current) {
+                  //   scrollPositionRef.current = scrollRef.current.scrollTop;
+                  // }
                   setCenterTab("files");
                 }}
               >
@@ -1051,14 +1041,15 @@ const ThreadPage: React.FC = () => {
                       </p>
                     </div>
                   ) : (
-                    <ChatMessages
-                      messages={filteredMessages}
-                      loading={loading}
-                      onDelete={handleDelete}
-                    />
+                    <>
+                      <ChatMessages
+                        messages={filteredMessages}
+                        onDelete={handleDelete}
+                      />
+                      <div ref={bottomRef} />
+                    </>
                   )}
                 </div>
-                <ChatInput onSend={handleSend} disabled={loading} />
               </>
             )}
 
@@ -1066,6 +1057,9 @@ const ThreadPage: React.FC = () => {
               <FileManager />
             )}
           </div>
+          {(isMobile ? mobileTab === "chat" : centerTab === "chat") && (
+            <ChatInput onSend={handleSend} disabled={loading} />
+          )}
         </main>
       </div>
     </div>

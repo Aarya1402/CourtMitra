@@ -11,7 +11,6 @@ interface Message {
 
 interface Props {
   readonly messages: Message[];
-  readonly loading: boolean;
   readonly onDelete?: (id: string) => void;
 }
 
