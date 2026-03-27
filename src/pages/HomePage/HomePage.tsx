@@ -12,7 +12,6 @@ import {
   uploadDocument,
   deleteThread,
   createEmptyThread,
-  isLoggedIn,
 } from "./HomePage.logic";
 import { API_BASE_URL } from "../../constants/api";
 import { useAlert } from "../../context/AlertContext";
@@ -107,28 +106,6 @@ const HomePage: React.FC = () => {
   const [showLogout, setShowLogout] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const name = await isLoggedIn();
-
-      } catch (error: any) {
-
-
-        // ✅ handle both cases
-        if (
-          !error.response ||
-          error.response.status === 401 ||
-          error.response.status === 403 ||
-          error.response.status === 502
-        ) {
-          navigate("/auth", { replace: true });
-        }
-      }
-    };
-
-    checkAuth();
-  }, [navigate]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
