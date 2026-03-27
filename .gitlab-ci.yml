@@ -6,10 +6,10 @@ variables:
 
 deploy:
   stage: deploy
-  when: manual   
+  when: manual
 
   image:
-    name: gcr.io/kaniko-project/executor:latest
+    name: gcr.io/kaniko-project/executor:debug   # 👈 FIX
     entrypoint: [""]
 
   script:
@@ -18,15 +18,17 @@ deploy:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
-    # 🏗 Build + Push (NO docker needed)
+    # 🏗 Build + Push
     - echo "🏗 Building & pushing image..."
     - /kaniko/executor \
         --context $CI_PROJECT_DIR \
         --dockerfile $CI_PROJECT_DIR/Dockerfile \
         --destination $IMAGE_NAME:latest
 
-    # 🔑 SSH setup
+    # 🔑 Install SSH (debug image uses busybox)
+    - echo "🔑 Installing SSH..."
     - apk add --no-cache openssh-client
+
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
 
