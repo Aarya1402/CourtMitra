@@ -18,9 +18,16 @@ deploy:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
+    - echo "📂 Listing files..."
+    - ls -la
+    - find . -name Dockerfile
+
     # 🏗 Build + Push
     - echo "🏗 Building & pushing image..."
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $IMAGE_NAME:latest
+    - /kaniko/executor \
+      --context $CI_PROJECT_DIR \
+      --dockerfile Dockerfile \
+      --destination $IMAGE_NAME:latest
 
     # 🔑 Install SSH
     - echo "🔑 Installing SSH..."
