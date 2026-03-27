@@ -1,40 +1,38 @@
 stages:
+  - build
   - deploy
 
 variables:
   IMAGE_NAME: $CI_REGISTRY_IMAGE/frontend
 
-deploy:
-  stage: deploy
-  when: manual
+# 🏗 BUILD IMAGE
+build:
+  stage: build
 
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
 
   script:
-    # 🔐 Setup registry auth
-    - echo "🔐 Setting up registry auth..."
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
-    - echo "📂 Listing files..."
-    - ls -la
-    - find . -name Dockerfile
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile Dockerfile --destination $IMAGE_NAME:latest
 
-    # 🏗 Build + Push
-    - echo "🏗 Building & pushing image..."
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile dockerfile --destination $IMAGE_NAME:latest
+# 🚀 DEPLOY
+deploy:
+  stage: deploy
+  when: manual
 
-    # 🔑 Install SSH
-    - echo "🔑 Installing SSH..."
+  image: alpine:latest
+
+  before_script:
     - apk add --no-cache openssh-client
 
+  script:
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
 
-    # 🚀 Deploy
-    - echo "🚀 Deploying..."
     - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
         docker pull $IMAGE_NAME:latest &&
         docker stop courtmitra_frontend || true &&
