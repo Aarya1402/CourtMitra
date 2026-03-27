@@ -9,7 +9,7 @@ deploy:
   when: manual
 
   image:
-    name: gcr.io/kaniko-project/executor:debug   # 👈 FIX
+    name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
 
   script:
@@ -20,9 +20,9 @@ deploy:
 
     # 🏗 Build + Push
     - echo "🏗 Building & pushing image..."
-- /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $IMAGE_NAME:latest
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $IMAGE_NAME:latest
 
-    # 🔑 Install SSH (debug image uses busybox)
+    # 🔑 Install SSH
     - echo "🔑 Installing SSH..."
     - apk add --no-cache openssh-client
 
