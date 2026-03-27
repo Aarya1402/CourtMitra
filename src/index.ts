@@ -1,5 +1,7 @@
+import "./instrument.js";
 import express, { Request, Response } from "express";
 import cors from "cors";
+import * as Sentry from "@sentry/node";
 import multer from "multer";
 import path from "node:path";
 import fs from "node:fs";
@@ -46,10 +48,6 @@ const aiLimiter = rateLimit({
     error: "Too many AI extraction requests, please try again later.",
   },
 });
-
-// Apply global rate limiting
-app.use(globalLimiter);
-
 // Talkument Proxy API (matches any route starting with /api/talkument)
 app.use("/api/talkument", talkumentRoutes);
 
@@ -184,7 +182,7 @@ wss.on("connection", (ws: WebSocket) => {
     if (sarvamSocket) {
       try {
         sarvamSocket.close();
-      } catch (e) {}
+      } catch (e) { }
     }
   });
 
@@ -219,6 +217,9 @@ app.post(
     }
   },
 );
+
+// The error handler must be registered before any other error middleware and after all controllers
+Sentry.setupExpressErrorHandler(app);
 
 /* =========================
    EXPRESS ERROR HANDLER
