@@ -198,7 +198,7 @@ export default function AuthPage() {
                   value={form.password}
                   onChange={handleChange}
                 />
-                {/* {isLogin && (
+                {isLogin && (
                   <button
                     type="button"
                     className={styles.forgotPassword}
@@ -210,7 +210,7 @@ export default function AuthPage() {
                   >
                     Forgot Password?
                   </button>
-                )} */}
+                )}
               </div>
 
               {!isLogin && (
@@ -259,9 +259,9 @@ export default function AuthPage() {
           </button>
         ) : (
           <>
-            {/* <div className={styles.divider}>or</div> */}
+            <div className={styles.divider}>or</div>
 
-            {/* <button
+            <button
               type="button"
               className={styles.googleButton}
               onClick={handleGoogleLogin}
@@ -272,7 +272,7 @@ export default function AuthPage() {
                 className={styles.googleLogo}
               />
               Continue with Google
-            </button> */}
+            </button>
 
             <p className={styles.toggleText}>
               {isLogin ? "Don't have an account?" : "Already have an account?"}

@@ -9,7 +9,7 @@ export async function SignUp(
   organisation: string
 ) {
   try {
-    const response = await axios.post(
+    await axios.post(
       `${API_BASE_URL}/api/talkument/auth/signup`,
       {
         name,
