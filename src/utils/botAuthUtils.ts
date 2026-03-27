@@ -22,17 +22,17 @@ export async function checkAndCreateBot() {
     const listResponse = await axios(listConfig);
 
     const bots = listResponse.data.bots || [];
-    console.log("listResponse", listResponse);
+
     if (bots.length > 0) {
       // Bot exists, store the first one
       const botId = bots[0].id.toString();
       store.dispatch(setBotId(botId));
       store.dispatch(setBotStatus("succeeded"));
-      console.log("Bot found:", botId);
+
       return botId;
     } else {
       // 2. No bot found, create one
-      console.log("No bot found, creating one...");
+
       const createData = {
         name: "Default AI Assistant",
         description: "Auto-created assistant for document interaction.",
@@ -57,7 +57,7 @@ export async function checkAndCreateBot() {
       const newBotId = createResponse.data.bot_id.toString();
       store.dispatch(setBotId(newBotId));
       store.dispatch(setBotStatus("succeeded"));
-      console.log("New bot created:", newBotId);
+
       return newBotId;
     }
   } catch (error) {

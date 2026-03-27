@@ -64,6 +64,10 @@
 
 .navSection {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .navTitle {
@@ -76,9 +80,21 @@
 }
 
 .navList {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.navList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.navList::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 10px;
 }
 
 .navItemContainer {
@@ -338,17 +354,145 @@
   color: var(--accent);
 }
 
+.sidebarContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closeSidebarBtn {
+  display: none;
+}
+.mobileHeader {
+  display: none;
+  height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  background-color: white;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+}
+
+.mobileLogo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.menuBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: var(--radius-md);
+}
+
+.sidebarOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1500;
+  transition: opacity var(--transition-base), visibility var(--transition-base);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sidebarOverlayVisible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .homeContainer {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .mobileHeader {
+    display: flex;
+  }
+
   .sidebar {
-    display: none;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    z-index: 2000;
+    background-color: white;
+    padding: 0;
+    transition: left var(--transition-slow);
+    border-right: none;
+    box-shadow: var(--shadow-xl);
+  }
+
+  .sidebarOpen {
+    left: 0;
+  }
+
+  .sidebarContent {
+    position: relative;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.25rem;
+    background-color: white;
+  }
+
+  .sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .closeSidebarBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: var(--radius-md);
   }
 
   .welcomeTitle {
     font-size: 1.5rem;
+    padding: 0 1rem;
+    margin-top: 2rem;
   }
 
   .uploadCard {
+    max-width: 100%;
+    aspect-ratio: 1.5/1;
+    margin-bottom: 1.5rem;
+  }
+
+  .mainContent {
+    padding: 1.5rem;
+    justify-content: flex-start;
+  }
+
+  .getStartedBtn {
     max-width: 100%;
   }
 }

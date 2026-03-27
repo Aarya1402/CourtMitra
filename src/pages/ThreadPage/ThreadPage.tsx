@@ -69,6 +69,19 @@ const normalizeOrderData = (data: any): OrderData => {
   return normalized;
 };
 
+const LANGUAGE_OPTIONS = [
+  { value: "gu-IN", label: "Gujarati" },
+  { value: "en-IN", label: "English" },
+  { value: "hi-IN", label: "Hindi" },
+  { value: "ta-IN", label: "Tamil" },
+  { value: "te-IN", label: "Telugu" },
+  { value: "kn-IN", label: "Kannada" },
+  { value: "mr-IN", label: "Marathi" },
+  { value: "bn-IN", label: "Bengali" },
+  { value: "pa-IN", label: "Punjabi" },
+  { value: "od-IN", label: "Odia" },
+] as const;
+
 const ThreadPage: React.FC = () => {
   const { showAlert } = useAlert();
   const { threadId } = useParams<{ threadId: string }>();
@@ -100,8 +113,8 @@ const ThreadPage: React.FC = () => {
   const [isActuallyRecording, setIsActuallyRecording] = useState(false);
   const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
     useState("");
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const userMenuRef = useRef<HTMLButtonElement>(null);
-  console.log(isProcessing);
 
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
@@ -110,10 +123,9 @@ const ThreadPage: React.FC = () => {
     const checkAuth = async () => {
       try {
         const name = await isLoggedIn();
-        console.log("User:", name);
+
       } catch (error: any) {
-        console.log("User is not logged in");
-        console.log(error.response);
+
 
         // ✅ handle both cases
         if (
@@ -152,12 +164,28 @@ const ThreadPage: React.FC = () => {
   const [rightWidth, setRightWidth] = useState(30);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"transcript" | "order" | "chat" | "files">("transcript");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setShowLanguageMenu(false);
+    }
+  }, [isMobile]);
 
   const handleAudioUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    console.log(file);
+
     if (!file) return;
 
     const validTypes = [
@@ -233,7 +261,7 @@ const ThreadPage: React.FC = () => {
         setRightWidth(newRight);
         setLeftWidth(100 - newRight);
       }
-      console.log(leftWidth, rightWidth);
+
     };
 
     const handleMouseUp = () => {
@@ -252,15 +280,17 @@ const ThreadPage: React.FC = () => {
     };
   }, [isDraggingLeft, isDraggingRight, leftWidth, rightWidth]);
 
-  const messages = useSelector((state: RootState) =>
-    state.chat.messages.filter((m) => m.threadId === threadId)
-  );
+  const allMessages = useSelector((state: RootState) => state.chat.messages);
 
-  const filteredMessages = messages.filter(
-    (m) =>
-      !m.text.includes("You are an expert legal document parser") &&
-      !m.text.includes("CURRENT EXTRACTED JSON:")
-  );
+  const filteredMessages = React.useMemo(() => {
+    return allMessages
+      .filter((m) => m.threadId === threadId)
+      .filter(
+        (m) =>
+          !m.text.includes("You are an expert legal document parser") &&
+          !m.text.includes("CURRENT EXTRACTED JSON:")
+      );
+  }, [allMessages, threadId]);
 
   const loading = useSelector((state: RootState) => state.chat.loading);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -271,28 +301,28 @@ const ThreadPage: React.FC = () => {
   const isFirstLoadRef = useRef(true);
 
   useEffect(() => {
-    if (!scrollRef.current || messages.length === 0) return;
+    if (!scrollRef.current || filteredMessages.length === 0) return;
 
     // ✅ FIRST LOAD → always go to bottom
     if (isFirstLoadRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       isFirstLoadRef.current = false;
-      prevLengthRef.current = messages.length;
+      prevLengthRef.current = filteredMessages.length;
       return;
     }
 
     // 🚫 Skip when restoring (tab switch)
     if (isRestoringRef.current) {
       isRestoringRef.current = false;
-      prevLengthRef.current = messages.length;
+      prevLengthRef.current = filteredMessages.length;
       return;
     }
 
-    const lastMessage = messages[messages.length - 1];
+    const lastMessage = filteredMessages[filteredMessages.length - 1];
 
     // ✅ Normal behavior (new messages)
     if (
-      messages.length > prevLengthRef.current &&
+      filteredMessages.length > prevLengthRef.current &&
       lastMessage.sender === "bot"
     ) {
       scrollRef.current.scrollTo({
@@ -301,8 +331,8 @@ const ThreadPage: React.FC = () => {
       });
     }
 
-    prevLengthRef.current = messages.length;
-  }, [messages]);
+    prevLengthRef.current = filteredMessages.length;
+  }, [filteredMessages]);
 
   useEffect(() => {
     if (centerTab === "chat" && scrollRef.current) {
@@ -550,58 +580,50 @@ const ThreadPage: React.FC = () => {
         })
       );
 
-      // 🚀 STREAM CALL (NO AXIOS)
-      const response = await fetch(
+      // 🚀 STREAM CALL (AXIOS)
+      let buffer = "";
+      let lastPosition = 0;
+
+      await axios.post(
         `${API_BASE_URL}/api/talkument/bots/agui/interact/${threadId}`,
+        data,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+          withCredentials: true,
+          onDownloadProgress: (progressEvent) => {
+            const xhr = progressEvent.event.target as XMLHttpRequest;
+            const raw = xhr.responseText;
+            const chunk = raw.substring(lastPosition);
+            lastPosition = raw.length;
+
+            buffer += chunk;
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (!line.startsWith("data:")) continue;
+
+              try {
+                const json = JSON.parse(line.replace("data:", "").trim());
+
+                if (json.type === "TEXT_MESSAGE_CONTENT") {
+                  botText += json.delta;
+
+                  // ✅ update message progressively
+                  dispatch(
+                    updateBotMessage({
+                      id: botMessageId,
+                      text: botText,
+                      threadId,
+                    })
+                  );
+                }
+              } catch (err) {
+
+              }
+            }
           },
-          credentials: "include",
-          body: JSON.stringify(data),
         }
       );
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader!.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
-        console.log("Received chunk:", chunk);
-
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || ""; // keep incomplete
-
-        for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
-
-          try {
-            const json = JSON.parse(line.replace("data:", "").trim());
-
-            if (json.type === "TEXT_MESSAGE_CONTENT") {
-              botText += json.delta;
-
-              // ✅ update message progressively
-              dispatch(
-                updateBotMessage({
-                  id: botMessageId,
-                  text: botText,
-                  threadId,
-                })
-              );
-            }
-          } catch (err) {
-            console.log("parse error", err);
-          }
-        }
-      }
 
       // ✅ optional: refresh history
       setTimeout(fetchChatHistory, 500);
@@ -629,6 +651,10 @@ const ThreadPage: React.FC = () => {
       // Maybe show a toast or alert
     }
   };
+
+  const selectedLanguageLabel =
+    LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ||
+    "Select Language";
 
   return (
     <div
@@ -682,10 +708,10 @@ const ThreadPage: React.FC = () => {
             <span>New Chat</span>
           </button>
 
-          <button
+          <div
             className={styles.userProfile}
             onClick={() => setShowLogout(!showLogout)}
-            ref={userMenuRef}
+            ref={userMenuRef as any}
           >
             <User size={18} />
             {showLogout && (
@@ -701,33 +727,77 @@ const ThreadPage: React.FC = () => {
                 </button>
               </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
+
+      {/* ✅ MOBILE TABS BAR (Visible only on mobile) */}
+      {isMobile && (
+        <div className={styles.mobileTabWrapper}>
+          <div className={styles.tabContainer}>
+            <button
+              className={mobileTab === "transcript" ? styles.activeTab : styles.tab}
+              onClick={() => setMobileTab("transcript")}
+            >
+              Transcript
+            </button>
+            <button
+              className={mobileTab === "order" ? styles.activeTab : styles.tab}
+              onClick={() => setMobileTab("order")}
+            >
+              Order
+            </button>
+            <button
+              className={mobileTab === "chat" ? styles.activeTab : styles.tab}
+              onClick={() => setMobileTab("chat")}
+            >
+              Chat
+            </button>
+            <button
+              className={mobileTab === "files" ? styles.activeTab : styles.tab}
+              onClick={() => setMobileTab("files")}
+            >
+              Files
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ✅ MAIN CONTENT */}
       <div className={styles.mainLayout}>
         {/* LEFT SIDE */}
-        <div className={styles.divisionLeft} style={{ width: `${leftWidth}%` }}>
-          <div className={styles.transcriptSection}>
-            {/* Tabs */}
-            <div className={styles.tabContainer}>
-              <button
-                className={
-                  leftTab === "transcript" ? styles.activeTab : styles.tab
+        <div
+          className={styles.divisionLeft}
+          style={
+            isMobile
+              ? {
+                  width: "100%",
+                  display:
+                    mobileTab === "transcript" || mobileTab === "order"
+                      ? "flex"
+                      : "none",
                 }
-                onClick={() => setLeftTab("transcript")}
-              >
-                Transcript
-              </button>
-
-              <button
-                className={leftTab === "order" ? styles.activeTab : styles.tab}
-                onClick={() => setLeftTab("order")}
-              >
-                Order
-              </button>
-            </div>
+              : { width: `${leftWidth}%` }
+          }
+        >
+          <div className={styles.transcriptSection}>
+            {/* Desktop Tabs */}
+            {!isMobile && (
+              <div className={styles.tabContainer}>
+                <button
+                  className={leftTab === "transcript" ? styles.activeTab : styles.tab}
+                  onClick={() => setLeftTab("transcript")}
+                >
+                  Transcript
+                </button>
+                <button
+                  className={leftTab === "order" ? styles.activeTab : styles.tab}
+                  onClick={() => setLeftTab("order")}
+                >
+                  Order
+                </button>
+              </div>
+            )}
 
             {errorMessage && (
               <div className={styles.errorBanner}>
@@ -736,7 +806,13 @@ const ThreadPage: React.FC = () => {
               </div>
             )}
 
-            <Activity mode={leftTab === "transcript" ? "visible" : "hidden"}>
+            <Activity
+              mode={
+                (isMobile ? mobileTab === "transcript" : leftTab === "transcript")
+                  ? "visible"
+                  : "hidden"
+              }
+            >
               <div className={styles.transcriptContainer}>
                 <TranscriptEditor
                   transcript={transcript}
@@ -776,22 +852,58 @@ const ThreadPage: React.FC = () => {
                           style={{ display: "none" }}
                         />
 
-                        <select
-                          className={styles.languageInline}
-                          value={language}
-                          onChange={(e) => setLanguage(e.target.value)}
-                        >
-                          <option value="gu-IN">Gujarati</option>
-                          <option value="en-IN">English</option>
-                          <option value="hi-IN">Hindi</option>
-                          <option value="ta-IN">Tamil</option>
-                          <option value="te-IN">Telugu</option>
-                          <option value="kn-IN">Kannada</option>
-                          <option value="mr-IN">Marathi</option>
-                          <option value="bn-IN">Bengali</option>
-                          <option value="pa-IN">Punjabi</option>
-                          <option value="od-IN">Odia</option>
-                        </select>
+                        {isMobile ? (
+                          <>
+                            <button
+                              type="button"
+                              className={styles.languageInline}
+                              onClick={() => setShowLanguageMenu(true)}
+                            >
+                              {selectedLanguageLabel}
+                            </button>
+                            {showLanguageMenu && (
+                              <>
+                                <button
+                                  type="button"
+                                  className={styles.languageMenuBackdrop}
+                                  onClick={() => setShowLanguageMenu(false)}
+                                  aria-label="Close language menu"
+                                />
+                                <div className={styles.languageMenuSheet}>
+                                  {LANGUAGE_OPTIONS.map((option) => (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      className={`${styles.languageMenuItem} ${
+                                        option.value === language
+                                          ? styles.languageMenuItemActive
+                                          : ""
+                                      }`}
+                                      onClick={() => {
+                                        setLanguage(option.value);
+                                        setShowLanguageMenu(false);
+                                      }}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <select
+                            className={styles.languageInline}
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                          >
+                            {LANGUAGE_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </>
                     )}
 
@@ -847,7 +959,13 @@ const ThreadPage: React.FC = () => {
               </div>
             </Activity>
 
-            <Activity mode={leftTab === "order" ? "visible" : "hidden"}>
+            <Activity
+              mode={
+                (isMobile ? mobileTab === "order" : leftTab === "order")
+                  ? "visible"
+                  : "hidden"
+              }
+            >
               <OrderForm
                 data={orderData}
                 onUpdate={setOrderData}
@@ -859,40 +977,57 @@ const ThreadPage: React.FC = () => {
         </div>
 
         {/* Divider */}
-        <button
-          className={styles.resizeHandle}
-          onMouseDown={() => setIsDraggingLeft(true)}
-          data-resize-handle-state={isDraggingLeft ? "drag" : "idle"}
-        />
+        {!isMobile && (
+          <button
+            className={styles.resizeHandle}
+            onMouseDown={() => setIsDraggingLeft(true)}
+            data-resize-handle-state={isDraggingLeft ? "drag" : "idle"}
+          />
+        )}
 
         {/* CENTER */}
-        <main className={styles.divisionCenter}>
-          <div className={styles.tabContainer}>
-            <button
-              className={centerTab === "chat" ? styles.activeTab : styles.tab}
-              onClick={() => setCenterTab("chat")}
-            >
-              Chat
-            </button>
-            <button
-              className={centerTab === "files" ? styles.activeTab : styles.tab}
-              onClick={() => {
-                if (centerTab === "chat" && scrollRef.current) {
-                  scrollPositionRef.current = scrollRef.current.scrollTop;
+        <main
+          className={styles.divisionCenter}
+          style={
+            isMobile
+              ? {
+                  width: "100%",
+                  display:
+                    mobileTab === "chat" || mobileTab === "files"
+                      ? "flex"
+                      : "none",
                 }
-                setCenterTab("files");
-              }}
-            >
-              Files
-            </button>
-          </div>
+              : {}
+          }
+        >
+          {!isMobile && (
+            <div className={styles.tabContainer}>
+              <button
+                className={centerTab === "chat" ? styles.activeTab : styles.tab}
+                onClick={() => setCenterTab("chat")}
+              >
+                Chat
+              </button>
+              <button
+                className={centerTab === "files" ? styles.activeTab : styles.tab}
+                onClick={() => {
+                  if (centerTab === "chat" && scrollRef.current) {
+                    scrollPositionRef.current = scrollRef.current.scrollTop;
+                  }
+                  setCenterTab("files");
+                }}
+              >
+                Files
+              </button>
+            </div>
+          )}
 
           <div
             className={styles.centerWorkspace}
             ref={scrollRef}
             onScroll={handleScroll}
           >
-            {centerTab === "chat" && (
+            {(isMobile ? mobileTab === "chat" : centerTab === "chat") && (
               <>
                 {isFetchingHistory && (
                   <div className={styles.topLoader}>
@@ -923,7 +1058,9 @@ const ThreadPage: React.FC = () => {
               </>
             )}
 
-            {centerTab === "files" && <FileManager />}
+            {(isMobile ? mobileTab === "files" : centerTab === "files") && (
+              <FileManager />
+            )}
           </div>
         </main>
       </div>

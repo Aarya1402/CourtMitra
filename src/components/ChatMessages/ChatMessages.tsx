@@ -201,7 +201,10 @@ const ChatMessages: React.FC<Props> = ({ messages, onDelete }) => {
                 canDelete={msg.sender === "user"}
               />
             )}
-            <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+            <div
+              className={styles.messageBody}
+              dangerouslySetInnerHTML={{ __html: msg.text }}
+            />
           </div>
         </div>
       ))}

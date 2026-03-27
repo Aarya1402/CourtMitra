@@ -153,3 +153,24 @@
   background: var(--bg-tertiary);
   color: var(--accent);
 }
+
+@media (max-width: 768px) {
+  .transcriptContainer {
+    margin: 0.75rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .transcriptEditor {
+    padding: 1.25rem;
+    font-size: 1rem;
+  }
+
+  .headerActions {
+    padding: 0.5rem 1rem;
+  }
+
+  .actionButton {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Upload, Loader2, Trash2, X, LogOut, Plus } from "lucide-react";
+import { Upload, Loader2, Trash2, X, LogOut, Plus, Menu } from "lucide-react";
 import styles from "./HomePage.module.css";
 import axios from "axios";
 import { checkAndCreateBot } from "../../utils/botAuthUtils";
@@ -105,15 +105,15 @@ const HomePage: React.FC = () => {
   const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   const [showLogout, setShowLogout] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const name = await isLoggedIn();
-        console.log("User:", name);
+
       } catch (error: any) {
-        console.log("User is not logged in");
-        console.log(error.response);
+
 
         // ✅ handle both cases
         if (
@@ -260,7 +260,7 @@ const HomePage: React.FC = () => {
     try {
       const newThreadId = await uploadDocument(file, botId);
       setThreadId(newThreadId);
-      console.log("Upload successful to thread:", newThreadId);
+
     } catch (error) {
       showAlert("Upload failed. Please try again.", { title: "Error" });
       console.error("Upload failed in HomePage:", error);
@@ -324,6 +324,20 @@ const HomePage: React.FC = () => {
 
   return (
     <div className={styles.homeContainer}>
+      {/* Mobile Header */}
+      <div className={styles.mobileHeader}>
+        <div className={styles.mobileLogo} onClick={() => navigate("/")}>
+          <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
+          <span className={styles.logoText}>CourtMitra</span>
+        </div>
+        <button
+          className={styles.menuBtn}
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <Menu size={24} />
+        </button>
+      </div>
+
       <input
         type="file"
         ref={fileInputRef}
@@ -332,88 +346,113 @@ const HomePage: React.FC = () => {
         accept=".pdf,.doc,.docx,.csv,.txt,.xlsx,.json,.md"
       />
       {/* Sidebar */}
-      <aside className={styles.sidebar} ref={sidebarRef}>
-        <div
-          className={styles.logoSection}
-          onClick={() => navigate("/")}
-          style={{ cursor: "pointer" }}
-          ref={logoRef}
-        >
-          <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
-          <span className={styles.logoText}>CourtMitra</span>
-        </div>
+      {/* Sidebar Overlay */}
+      <div
+        className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.sidebarOverlayVisible : ""}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
 
-        <button
-          className={styles.newChatBtn}
-          onClick={handleCreateNewChat}
-          disabled={isCreatingChat}
-          ref={newChatBtnRef}
-        >
-          {isCreatingChat ? (
-            <Loader2 size={18} className={styles.spin} />
-          ) : (
-            <Plus size={18} />
-          )}
-          <span>New Chat</span>
-        </button>
+      <aside
+        className={`${styles.sidebar} ${isSidebarOpen ? styles.sidebarOpen : ""}`}
+        ref={sidebarRef}
+      >
+        <div className={styles.sidebarContent}>
+          <div className={styles.sidebarHeader}>
+            <div
+              className={styles.logoSection}
+              onClick={() => navigate("/")}
+              style={{ cursor: "pointer" }}
+              ref={logoRef}
+            >
+              <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
+              <span className={styles.logoText}>CourtMitra</span>
+            </div>
+            <button
+              className={styles.closeSidebarBtn}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <X size={20} />
+            </button>
+          </div>
 
-        <div className={styles.navSection}>
-          <h3 className={styles.navTitle}>Document chats</h3>
-          <div className={styles.navList} ref={threadsRef}>
-            {threads.map((thread: { thread_uuid: string; title: string }) => (
-              <div
-                key={thread.thread_uuid}
-                className={styles.navItemContainer}
-                onClick={() => navigate(`/threads/${thread.thread_uuid}`)}
-              >
-                <button className={styles.navItem}>
-                  {thread.title || "Untitled Chat"}
-                </button>
-                <button
-                  className={styles.deleteBtn}
-                  onClick={(e) =>
-                    handleDeleteClick(e, thread.thread_uuid, thread.title)
-                  }
+          <button
+            className={styles.newChatBtn}
+            onClick={() => {
+              handleCreateNewChat();
+              setIsSidebarOpen(false);
+            }}
+            disabled={isCreatingChat}
+            ref={newChatBtnRef}
+          >
+            {isCreatingChat ? (
+              <Loader2 size={18} className={styles.spin} />
+            ) : (
+              <Plus size={18} />
+            )}
+            <span>New Chat</span>
+          </button>
+
+          <div className={styles.navSection}>
+            <h3 className={styles.navTitle}>Your chats</h3>
+            <div className={styles.navList} ref={threadsRef}>
+              {threads.map((thread: { thread_uuid: string; title: string }) => (
+                <div
+                  key={thread.thread_uuid}
+                  className={styles.navItemContainer}
+                  onClick={() => {
+                    navigate(`/threads/${thread.thread_uuid}`);
+                    setIsSidebarOpen(false);
+                  }}
                 >
-                  <Trash2 size={14} />
+                  <button className={styles.navItem}>
+                    {thread.title || "Untitled Chat"}
+                  </button>
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={(e) =>
+                      handleDeleteClick(e, thread.thread_uuid, thread.title)
+                    }
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className={styles.userProfile}
+            onClick={() => setShowLogout(!showLogout)}
+            style={{ cursor: "pointer", position: "relative" }}
+            ref={userMenuRef}
+          >
+            <div className={styles.avatar}>
+              {user?.name.charAt(0)?.toLocaleUpperCase() || "U"}
+            </div>
+            <div className={styles.userInfo}>
+              <span className={styles.userName}>{user?.name || "User"}</span>
+              <span className={styles.userEmail}>
+                {user?.email || "user@example.com"}
+              </span>
+            </div>
+            <div
+              style={{ marginLeft: "auto", display: "flex", gap: "4px" }}
+            ></div>
+
+            {showLogout && (
+              <div className={styles.logoutDropdown}>
+                <button
+                  className={styles.logoutBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
+                >
+                  <LogOut size={16} /> Logout
                 </button>
               </div>
-            ))}
+            )}
           </div>
-        </div>
-
-        <div
-          className={styles.userProfile}
-          onClick={() => setShowLogout(!showLogout)}
-          style={{ cursor: "pointer", position: "relative" }}
-          ref={userMenuRef}
-        >
-          <div className={styles.avatar}>
-            {user?.name.charAt(0)?.toLocaleUpperCase() || "U"}
-          </div>
-          <div className={styles.userInfo}>
-            <span className={styles.userName}>{user?.name || "User"}</span>
-            <span className={styles.userEmail}>
-              {user?.email || "user@example.com"}
-            </span>
-          </div>
-          <div
-            style={{ marginLeft: "auto", display: "flex", gap: "4px" }}
-          ></div>
-
-          {showLogout && (
-            <div className={styles.logoutDropdown}>
-              <button
-                className={styles.logoutBtn}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLogout();
-                }}
-              >
-                <LogOut size={16} /> Logout
-              </button>
-            </div>
-          )}
         </div>
       </aside>
 

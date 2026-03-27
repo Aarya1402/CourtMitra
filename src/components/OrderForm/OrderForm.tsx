@@ -121,7 +121,7 @@ const OrderForm: React.FC<Props> = ({
       const doc = (
         <OrderDocument data={formData} language={language || "en-IN"} />
       );
-      console.log(doc);
+
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

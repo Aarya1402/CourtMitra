@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import axios from "axios";
 import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
 import { Check, Download, RotateCcw, X } from "lucide-react";
@@ -139,7 +140,7 @@ export default function AudioRecorder({
       if (audioCtx.state === "suspended") {
         await audioCtx.resume();
       }
-      console.log("AudioContext created with sampleRate:", audioCtx.sampleRate);
+
       audioCtxRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
       sourceRef.current = source;
@@ -149,7 +150,7 @@ export default function AudioRecorder({
       source.connect(analyser);
 
       // Start streaming WebSocket
-      console.log("Connecting to WebSocket:", WS_URL);
+
       const ws = new WebSocket(WS_URL);
       wsRef.current = ws;
 
@@ -157,7 +158,7 @@ export default function AudioRecorder({
       if (onTranscriptionStart) onTranscriptionStart();
 
       ws.onopen = () => {
-        console.log("WebSocket connected to backend");
+
         ws.send(
           JSON.stringify({
             type: "start",
@@ -175,7 +176,7 @@ export default function AudioRecorder({
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          console.log("WS Message from backend:", JSON.stringify(msg));
+
           if (msg.type === "transcript") {
             // Handle both structured data and flat strings
             const text =
@@ -355,8 +356,8 @@ export default function AudioRecorder({
   const saveAsMP3 = async () => {
     if (!audioURL) return;
 
-    const response = await fetch(audioURL);
-    const blob = await response.blob();
+    const response = await axios.get(audioURL, { responseType: "blob" });
+    const blob = response.data;
     const arrayBuffer = await blob.arrayBuffer();
 
     const audioCtx = new AudioContext();

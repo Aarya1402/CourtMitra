@@ -97,6 +97,7 @@
 .documentPage {
   background: white;
   width: 210mm;
+  max-width: 100%;
   min-height: 297mm;
   padding: 30mm 25mm;
   box-shadow: var(--shadow-xl);
@@ -367,5 +368,68 @@
   .docTextarea,
   .docInlineTextarea {
     border-bottom: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .statusGroup {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .formContainer {
+    padding: 1rem 0.5rem;
+  }
+
+  .documentPage {
+    padding: 15mm 10mm;
+    font-size: 11pt;
+    min-height: auto;
+  }
+
+  .courtNameSection h2 {
+    font-size: 14pt;
+  }
+
+  .courtNameSection h3 {
+    font-size: 11pt;
+  }
+
+  .caseTypeSection {
+    font-size: 11pt;
+    margin-bottom: 20px;
+  }
+
+  .partyRole {
+    font-size: 10pt;
+  }
+
+  .orderBodyTitle {
+    font-size: 13pt;
+    margin: 30px 0 15px 0;
+  }
+
+  .signatureSection {
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .sigLeft,
+  .sigRight {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .sigRow {
+      justify-content: center;
   }
 }

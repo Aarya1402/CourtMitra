@@ -106,7 +106,7 @@
 .btnReset:active {
   transform: scale(0.95);
 }
-select {
+.nativeSelect {
   width: 100%;
   appearance: none;
   background: #0d0d0d;
@@ -120,7 +120,7 @@ select {
   outline: none;
   transition: border-color 0.2s;
 }
-select:focus {
+.nativeSelect:focus {
   border-color: #ff3c3c;
 }
 
@@ -307,14 +307,17 @@ audio {
 .inlineRecorder {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* Timer */
 .timerInline {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  min-width: 50px;
+  min-width: 40px;
 }
 
 /* Status */
@@ -329,6 +332,14 @@ audio {
   align-items: center;
   gap: 2px;
   height: 24px;
+  flex: 1;
+  justify-content: center;
+  overflow: hidden;
+}
+@media (max-width: 480px) {
+  .waveformInline {
+      display: none; /* Hide waveform on very small screens to save space */
+  }
 }
 
 .barInline {

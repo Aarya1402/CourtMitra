@@ -19,8 +19,6 @@ export async function SignUp(
       }
     );
 
-    console.log("SignUp Success:", response.data);
-
     // Auto login after signup
     return await SignIn(email, password);
   } catch (error) {
@@ -38,8 +36,6 @@ export async function SignIn(email: string, password: string) {
         password,
       }
     );
-
-    console.log("SignIn Success:", response.data);
 
     // ✅ Create/check bot after login
     await checkAndCreateBot();
@@ -78,7 +74,7 @@ export async function GoogleCallback(code: string, redirectUrl: string) {
         redirect_url: redirectUrl,
       }
     );
-    console.log("GoogleCallback Success:", response.data);
+
     await checkAndCreateBot();
     return response.data;
   } catch (error) {

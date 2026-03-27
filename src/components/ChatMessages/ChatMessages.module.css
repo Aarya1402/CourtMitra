@@ -10,6 +10,7 @@
 .botMessage {
   padding: 1rem 1.25rem;
   max-width: 80%;
+  min-width: 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -45,6 +46,7 @@
 .rowRight {
   display: flex;
   width: 100%;
+  min-width: 0;
 }
 
 .rowLeft {
@@ -52,6 +54,28 @@
 }
 .rowRight {
   justify-content: flex-end;
+}
+
+.messageBody {
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.messageBody a,
+.messageBody p,
+.messageBody li,
+.messageBody span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.messageBody pre,
+.messageBody code {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .menuContainer {
@@ -281,5 +305,19 @@
   40% {
     transform: scale(1.1);
     opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .userMessage,
+  .botMessage {
+    max-width: 90%;
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .messagesContainer {
+    gap: 1rem;
+    padding-bottom: 1.5rem;
   }
 }

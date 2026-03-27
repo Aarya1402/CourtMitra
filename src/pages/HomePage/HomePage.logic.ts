@@ -46,7 +46,7 @@ export const fetchThreads = async (botId: string) => {
 export const fetchUser = async () => {
   try {
     const res = await axios.get(`${API_BASE}/user`);
-    console.log("Fetched user data:", res.data);
+
     return res.data;
   } catch (error) {
     console.error("Failed to fetch user:", error);

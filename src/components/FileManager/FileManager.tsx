@@ -99,7 +99,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       try {
         const response = await axios.get(`${API_BASE}/bots/thread/${threadId}`);
         const fileData = response.data.files || [];
-        console.log("Fetched files:", fileData);
+
         setFiles(fileData);
       } catch (error) {
         console.error("Failed to fetch files:", error);
@@ -180,7 +180,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log("File uploaded successfully to thread:", threadId);
+
       await fetchFiles(); // Refresh list
     } catch (error) {
       console.error("Upload failed:", error);
@@ -205,17 +205,17 @@ const FileManager: React.FC<FileManagerProps> = () => {
         showAlert("Preview URL not found.", { title: "Error" });
         return;
       }
-      console.log(fileUrl);
 
-      const fileResponse = await fetch(fileUrl);
-      const arrayBuffer = await fileResponse.arrayBuffer();
+      const fileResponse = await axios.get(fileUrl, { responseType: "blob" });
+      const receivedBlob = fileResponse.data;
+      const arrayBuffer = await receivedBlob.arrayBuffer();
       const fileType = file.name.split(".").pop()?.toLowerCase() || "";
 
       // 🔥 Force correct MIME type
       const blob = new Blob([arrayBuffer], {
         type: mimeTypes[fileType],
       });
-      console.log("Blob created with type:", blob);
+
       const blobUrl = URL.createObjectURL(blob);
       setPreviewUrl(blobUrl);
       setPreviewFileName(file.name);

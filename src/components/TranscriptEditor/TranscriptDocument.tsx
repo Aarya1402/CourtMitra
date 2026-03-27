@@ -83,7 +83,7 @@ const getFontFamily = (language: string) => {
  * 🔥 Paragraph splitter (same logic as OrderDocument)
  */
 const renderParagraphs = (styles: any, text: string = "") => {
-  console.log(text);
+
   const sentences = text
     .replaceAll(/([.?!।])/g, "$1|")
     .split("|")
@@ -153,7 +153,6 @@ const TranscriptDocument: React.FC<TranscriptDocumentProps> = ({
       textIndent: 30,
     },
   });
-  console.log(transcript);
 
   return (
     <Document title={t.transcript_title}>
