@@ -24,10 +24,7 @@ deploy:
 
     # 🏗 Build + Push
     - echo "🏗 Building & pushing image..."
-    - /kaniko/executor \
-      --context $CI_PROJECT_DIR \
-      --dockerfile Dockerfile \
-      --destination $IMAGE_NAME:latest
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile Dockerfile --destination $IMAGE_NAME:latest
 
     # 🔑 Install SSH
     - echo "🔑 Installing SSH..."
