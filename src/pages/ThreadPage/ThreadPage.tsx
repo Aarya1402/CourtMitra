@@ -384,10 +384,14 @@ const ThreadPage: React.FC = () => {
     setIsExtracting(true);
     const currentJsonString = JSON.stringify(orderData);
 
+    const selectedLanguageLabel =
+      LANGUAGE_OPTIONS.find((option) => option.value === language)?.label || "English";
+
     try {
       const data = {
         currentJsonString,
         chunk: fullTranscript,
+        language: selectedLanguageLabel,
       };
 
       const response = await axios.post(
