@@ -16,6 +16,8 @@ export const extractOrderData = async (
 ): Promise<any> => {
   try {
     const { currentJsonString, chunk } = req.body;
+    
+    console.log(`[GeminiController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars)`);
 
     if (!chunk) {
       return res.status(400).json({ error: "chunk is required" });
@@ -123,18 +125,21 @@ Ensure the output matches the provided JSON SCHEMA exactly and capture all subpo
     const model = getGeminiModel();
     const result = await model.generateContent(promptText);
     const responseText = result.response.text();
+    console.log(`[GeminiController] AI response received (length: ${responseText.length} chars)`);
 
     const rawResult = responseText; // whatever you get
 
     const cleanedJSON = extractJSON(rawResult);
 
     if (!cleanedJSON) {
+      console.error("[GeminiController] Failed to clean AI response into JSON:", responseText.substring(0, 500));
       return res.status(500).json({
         error: "Failed to parse JSON from AI response",
-        raw: rawResult, // for debugging
+        raw: responseText, // for debugging
       });
     }
 
+    console.log("[GeminiController] Synthesis successful, sending refined JSON");
     return res.json({
       result: cleanedJSON,
     });
