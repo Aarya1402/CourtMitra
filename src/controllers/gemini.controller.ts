@@ -16,23 +16,13 @@ export const extractOrderData = async (
 ): Promise<any> => {
   try {
     const { currentJsonString, chunk, language = "English" } = req.body;
-    
-    console.log(`[GeminiController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars) in language: ${language}`);
+
+    console.log(
+      `[GeminiController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars) in language: ${language}`,
+    );
 
     if (!chunk) {
       return res.status(400).json({ error: "chunk is required" });
-    }
-
-    let parsedCurrentJson = {};
-
-    try {
-      parsedCurrentJson =
-        typeof currentJsonString === "string"
-          ? JSON.parse(currentJsonString)
-          : currentJsonString || {};
-    } catch (parseError) {
-      console.error("Error parsing currentJsonString:", parseError);
-      parsedCurrentJson = {};
     }
 
     const promptText = `You are a legal document synthesis expert specializing in Indian court proceedings.
@@ -139,10 +129,6 @@ Your task is to analyze the FULL TRANSCRIPT of a court session and generate a CO
    - Do NOT include explanations, markdown, or extra text.  
 
 ---
-CURRENT EXTRACTED JSON (DRAFT):
-${JSON.stringify(parsedCurrentJson, null, 2)}
-
----
 FULL TRANSCRIPT:
 ${chunk}
 
@@ -153,21 +139,28 @@ Generate a complete, accurate, and legally structured court order JSON in "${lan
     const model = getGeminiModel();
     const result = await model.generateContent(promptText);
     const responseText = result.response.text();
-    console.log(`[GeminiController] AI response received (length: ${responseText.length} chars)`);
+    console.log(
+      `[GeminiController] AI response received (length: ${responseText.length} chars)`,
+    );
 
     const rawResult = responseText; // whatever you get
 
     const cleanedJSON = extractJSON(rawResult);
 
     if (!cleanedJSON) {
-      console.error("[GeminiController] Failed to clean AI response into JSON:", responseText.substring(0, 500));
+      console.error(
+        "[GeminiController] Failed to clean AI response into JSON:",
+        responseText.substring(0, 500),
+      );
       return res.status(500).json({
         error: "Failed to parse JSON from AI response",
         raw: responseText, // for debugging
       });
     }
 
-    console.log("[GeminiController] Synthesis successful, sending refined JSON");
+    console.log(
+      "[GeminiController] Synthesis successful, sending refined JSON",
+    );
     return res.json({
       result: cleanedJSON,
     });
