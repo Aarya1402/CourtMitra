@@ -25,7 +25,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   isRecording,
   language,
 }) => {
-  const t = getTranslation(language || "en-IN");
+  const t = getTranslation(language || "gu-IN");
   const { showAlert, showConfirm } = useAlert();
   const [copied, setCopied] = useState(false);
   const [contextMenu, setContextMenu] = useState<{

@@ -301,7 +301,6 @@
 }
 
 .addBtn {
-  margin-top: 15px;
   background: var(--bg-tertiary);
   border: 1px dashed var(--accent);
   color: var(--accent);
@@ -311,11 +310,88 @@
   font-size: 0.85rem;
   font-weight: 600;
   transition: all var(--transition-base);
+  height: 36px;
+  display: flex;
+  align-items: center;
 }
 
 .addBtn:hover {
   background: var(--accent);
   color: white;
+}
+
+.addActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.micBtn {
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+}
+
+.micBtn:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.micBtn.recording {
+  background: #fef2f2;
+  color: var(--danger);
+  border-color: #fee2e2;
+  animation: pulseMic 1.5s infinite;
+}
+
+.recordingText {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.recorderWrapper {
+  margin-top: 15px;
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  width: fit-content;
+}
+
+.liveTranscript {
+  padding: 8px;
+  background: #fef2f2;
+  border-radius: var(--radius-sm);
+  font-style: italic;
+  color: var(--danger);
+  font-size: 11pt;
+  margin-bottom: 4px;
+}
+
+.liveTranscriptNew {
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: var(--radius-md);
+  margin-top: 8px;
+  font-style: italic;
+  color: var(--danger);
+  font-size: 11pt;
+  border: 1px dashed var(--danger);
 }
 
 .directionsList {
@@ -336,6 +412,33 @@
 .removeBtn:hover {
   transform: scale(1.2);
   color: #b91c1c;
+}
+
+.pointActions {
+  display: flex;
+  gap: 4px;
+}
+
+.micBtnSmall {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+  padding: 0 4px;
+}
+
+.micBtnSmall:hover {
+  transform: scale(1.2);
+  color: var(--accent-hover);
+}
+
+.micBtnSmall.recording {
+  color: var(--danger);
+  animation: pulseMic 1.5s infinite;
 }
 
 @media print {

@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
 import styles from "./OrderForm.module.css";
-import { Download } from "lucide-react";
+import { Download, Mic, Square } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
 import OrderDocument from "./OrderDocument";
 import { initialOrderData } from "./OrderForm.logic";
 import { getTranslation } from "../../constants/translations";
+import { useTranscriber } from "../../hooks/useTranscriber";
 
 export type OrderData = {
   header: {
@@ -110,17 +111,79 @@ const OrderForm: React.FC<Props> = ({
   isProcessing,
   language,
 }) => {
-  const t = getTranslation(language || "en-IN");
+  const t = getTranslation(language || "gu-IN");
   const containerRef = useRef<HTMLDivElement>(null);
   const formData = data || initialOrderData;
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [recordingField, setRecordingField] = useState<{
+    path: string[];
+    isNew: boolean;
+  } | null>(null);
+
+  const { isRecording, transcript, start, stop } = useTranscriber();
+
+  const handleToggleVoice = async (path: string[], isNew: boolean) => {
+    if (isRecording) {
+      if (
+        recordingField?.path.join(",") === path.join(",") &&
+        recordingField?.isNew === isNew
+      ) {
+        // Stopping same field
+        stop();
+        finalizeTranscription();
+      } else {
+        // Stopping old, starting new
+        stop();
+        finalizeTranscription();
+        setRecordingField({ path, isNew });
+        await start(language || "gu-IN");
+      }
+    } else {
+      setRecordingField({ path, isNew });
+      await start(language || "gu-IN");
+    }
+  };
+
+  const finalizeTranscription = () => {
+    if (!recordingField) return;
+    const { path, isNew } = recordingField;
+
+    if (transcript.trim()) {
+      if (isNew) {
+        // Append to the array
+        const newData = JSON.parse(JSON.stringify(formData));
+        let current = newData;
+        for (let i = 0; i < path.length; i++) {
+          const key = path[i];
+          if (i === path.length - 1) {
+            if (!Array.isArray(current[key])) current[key] = [];
+            current[key].push(transcript);
+          } else {
+            if (!current[key]) current[key] = {};
+            current = current[key];
+          }
+        }
+        onUpdate(newData);
+      } else {
+        // Replace existing
+        handleChange(path, transcript);
+      }
+    }
+    setRecordingField(null);
+  };
+
+  useEffect(() => {
+    if (!isRecording && recordingField) {
+      finalizeTranscription();
+    }
+  }, [isRecording]);
 
   const handleGeneratePDF = async () => {
     setIsGeneratingPdf(true);
     try {
       console.log(formData);
       const doc = (
-        <OrderDocument data={formData} language={language || "en-IN"} />
+        <OrderDocument data={formData} language={language || "gu-IN"} />
       );
 
       const blob = await pdf(doc).toBlob();
@@ -344,37 +407,71 @@ const OrderForm: React.FC<Props> = ({
                       `Point ${idx + 1}`
                     )}
                   </div>
-                  <button
-                    className={styles.removeBtn}
-                    onClick={() => {
-                      const next = [...formData.reasoning_points];
-                      next.splice(idx, 1);
-                      onUpdate({ ...formData, reasoning_points: next });
-                    }}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: "red",
-                      cursor: "pointer",
-                      fontSize: "1.2rem",
-                    }}
-                    title="Remove Point"
-                  >
-                    ×
-                  </button>
+                  <div className={styles.pointActions}>
+                    <button
+                      className={styles.removeBtn}
+                      onClick={() => {
+                        const next = [...formData.reasoning_points];
+                        next.splice(idx, 1);
+                        onUpdate({ ...formData, reasoning_points: next });
+                      }}
+                      title="Remove Point"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
-            <button
-              className={styles.addBtn}
-              onClick={() =>
-                onUpdate({
-                  ...formData,
-                  reasoning_points: [...(formData.reasoning_points || []), ""],
-                })
-              }
-            >
-              {t.add_point}
-            </button>
+            <div className={styles.addActions}>
+              <button
+                className={styles.addBtn}
+                onClick={() =>
+                  onUpdate({
+                    ...formData,
+                    reasoning_points: [
+                      ...(formData.reasoning_points || []),
+                      "",
+                    ],
+                  })
+                }
+              >
+                {t.add_point}
+              </button>
+              <button
+                className={`${styles.micBtn} ${
+                  isRecording &&
+                  recordingField?.path[0] === "reasoning_points" &&
+                  recordingField?.isNew
+                    ? styles.recording
+                    : ""
+                }`}
+                onClick={() => handleToggleVoice(["reasoning_points"], true)}
+                title="Add Point via Audio"
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyItems: "center",
+                  }}
+                >
+                  {isRecording &&
+                  recordingField?.path[0] === "reasoning_points" &&
+                  recordingField?.isNew ? (
+                    <Square size={16} fill="currentColor" />
+                  ) : (
+                    <Mic size={16} />
+                  )}
+                </div>
+              </button>
+            </div>
+            {isRecording &&
+              recordingField?.path[0] === "reasoning_points" &&
+              recordingField?.isNew && (
+                <div className={styles.liveTranscriptNew}>
+                  {transcript || "Listening..."}
+                </div>
+              )}
           </div>
 
           <div className={styles.orderBodyTitle}>
@@ -401,40 +498,74 @@ const OrderForm: React.FC<Props> = ({
                         `Direction ${idx + 1}`
                       )}
                     </div>
-                    <button
-                      className={styles.removeBtn}
-                      onClick={() => {
-                        const next = [...formData.operative_order.directions];
-                        next.splice(idx, 1);
-                        onUpdate({
-                          ...formData,
-                          operative_order: {
-                            ...formData.operative_order,
-                            directions: next,
-                          },
-                        });
-                      }}
-                      title="Remove Direction"
-                    >
-                      ×
-                    </button>
+                    <div className={styles.pointActions}>
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => {
+                          const next = [...formData.operative_order.directions];
+                          next.splice(idx, 1);
+                          onUpdate({
+                            ...formData,
+                            operative_order: {
+                              ...formData.operative_order,
+                              directions: next,
+                            },
+                          });
+                        }}
+                        title="Remove Direction"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
                 ))}
-              <button
-                className={styles.addBtn}
-                onClick={() => {
-                  const current = formData.operative_order.directions || [];
-                  onUpdate({
-                    ...formData,
-                    operative_order: {
-                      ...formData.operative_order,
-                      directions: [...current, ""],
-                    },
-                  });
-                }}
-              >
-                {t.add_direction}
+              <div className={styles.addActions}>
+                <button
+                  className={styles.addBtn}
+                  onClick={() => {
+                    const current = formData.operative_order.directions || [];
+                    onUpdate({
+                      ...formData,
+                      operative_order: {
+                        ...formData.operative_order,
+                        directions: [...current, ""],
+                      },
+                    });
+                  }}
+                >
+                  {t.add_direction}
+                </button>
+                <button
+                  className={`${styles.micBtn} ${
+                    isRecording &&
+                    recordingField?.path[0] === "operative_order" &&
+                    recordingField?.isNew
+                      ? styles.recording
+                      : ""
+                  }`}
+                  onClick={() =>
+                    handleToggleVoice(["operative_order", "directions"], true)
+                  }
+                  title="Add Direction via Audio"
+                >
+                <div style={{ display: "flex", alignItems: "center", justifyItems: "center" }}>
+                  {isRecording &&
+                  recordingField?.path[0] === "operative_order" &&
+                  recordingField?.isNew ? (
+                    <Square size={16} fill="currentColor" />
+                  ) : (
+                    <Mic size={16} />
+                  )}
+                </div>
               </button>
+              </div>
+              {isRecording &&
+                recordingField?.path[0] === "operative_order" &&
+                recordingField?.isNew && (
+                  <div className={styles.liveTranscriptNew}>
+                    {transcript || "Listening..."}
+                  </div>
+                )}
             </div>
           </div>
 

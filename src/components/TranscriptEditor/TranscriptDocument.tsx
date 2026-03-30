@@ -119,7 +119,7 @@ const TranscriptDocument: React.FC<TranscriptDocumentProps> = ({
   transcript,
   language,
 }) => {
-  const lang = language || "en-IN";
+  const lang = language || "gu-IN";
   const t = getTranslation(lang);
   const fontFamily = getFontFamily(lang);
 

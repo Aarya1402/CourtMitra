@@ -409,5 +409,5 @@ export const translations: Record<string, any> = {
 };
 
 export const getTranslation = (lang: string) => {
-  return translations[lang] || translations["en-IN"];
+  return translations[lang] || translations["gu-IN"];
 };
