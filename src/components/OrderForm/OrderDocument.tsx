@@ -197,6 +197,27 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
       borderBottomWidth: 1,
       paddingVertical: 10,
     },
+    signatureSection: {
+      marginTop: 40,
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    signatureLeft: {
+      fontSize: 11,
+    },
+    signatureRight: {
+      textAlign: "right",
+    },
+    judgeName: {
+      marginTop: 20,
+      fontWeight: "bold",
+    },
+    designation: {
+      fontSize: 11,
+    },
+    smallCourtName: {
+      fontSize: 11,
+    },
   });
 
   const safeArray = (arr: any) => (Array.isArray(arr) ? arr : []);
@@ -262,6 +283,21 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
                 <Text style={styles.listContent}>{dir.trim()}</Text>
               </View>
             ))}
+        </View>
+        <View style={styles.signatureRight}>
+          <Text>{t.signature_placeholder}</Text>
+
+          {data.signature?.judge_name && (
+            <Text style={styles.judgeName}>{data.signature.judge_name}</Text>
+          )}
+
+          {data.signature?.designation && (
+            <Text style={styles.designation}>{data.signature.designation}</Text>
+          )}
+
+          {data.signature?.court && (
+            <Text style={styles.smallCourtName}>{data.signature.court}</Text>
+          )}
         </View>
       </Page>
     </Document>
