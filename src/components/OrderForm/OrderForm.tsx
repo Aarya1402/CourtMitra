@@ -4,7 +4,7 @@ import { Download, Mic, Square } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
 import OrderDocument from "./OrderDocument";
 import { initialOrderData } from "./OrderForm.logic";
-import { getTranslation } from "../../constants/translations";
+import { getTranslation, LANGUAGE_OPTIONS } from "../../constants/translations";
 import { useTranscriber } from "../../hooks/useTranscriber";
 
 export type OrderData = {
@@ -75,6 +75,7 @@ interface Props {
   onUpdate: (data: OrderData) => void;
   isProcessing?: boolean;
   language?: string;
+  onLanguageChange: (lang: string) => void;
 }
 
 // Custom text area that auto-resizes its height
@@ -110,6 +111,7 @@ const OrderForm: React.FC<Props> = ({
   onUpdate,
   isProcessing,
   language,
+  onLanguageChange,
 }) => {
   const t = getTranslation(language || "gu-IN");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -267,6 +269,18 @@ const OrderForm: React.FC<Props> = ({
       <div className={styles.toolbar}>
         <h3>{t.order_title}</h3>
         <div className={styles.statusGroup}>
+          <select
+            className={styles.languageSelect}
+            value={language || "gu-IN"}
+            onChange={(e) => onLanguageChange(e.target.value)}
+          >
+            {LANGUAGE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
           {isProcessing && (
             <span className={styles.processingBadge}>{t.filling_order}</span>
           )}
@@ -293,6 +307,12 @@ const OrderForm: React.FC<Props> = ({
       </div>
 
       <div className={styles.formContainer}>
+        {isProcessing && (
+          <div className={styles.loaderOverlay}>
+            <div className={styles.spinner}></div>
+            <span>{t.filling_order}</span>
+          </div>
+        )}
         {/* Printable Page Layout */}
         <div className={styles.documentPage} ref={containerRef}>
           <div className={styles.pageHeader}>

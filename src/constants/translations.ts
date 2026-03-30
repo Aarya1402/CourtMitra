@@ -411,3 +411,16 @@ export const translations: Record<string, any> = {
 export const getTranslation = (lang: string) => {
   return translations[lang] || translations["gu-IN"];
 };
+
+export const LANGUAGE_OPTIONS = [
+  { value: "gu-IN", label: "Gujarati" },
+  { value: "en-IN", label: "English" },
+  { value: "hi-IN", label: "Hindi" },
+  { value: "ta-IN", label: "Tamil" },
+  { value: "te-IN", label: "Telugu" },
+  { value: "kn-IN", label: "Kannada" },
+  { value: "mr-IN", label: "Marathi" },
+  { value: "bn-IN", label: "Bengali" },
+  { value: "pa-IN", label: "Punjabi" },
+  { value: "od-IN", label: "Odia" },
+] as const;
