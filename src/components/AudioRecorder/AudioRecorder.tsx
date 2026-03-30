@@ -1,5 +1,4 @@
-import { useRef, useState, useEffect, useImperativeHandle, forwardRef } from "react";
-import axios from "axios";
+import { useRef, useState, useEffect } from "react";
 import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
 
@@ -33,23 +32,18 @@ const mergeTranscriptChunk = (previous: string, incoming: string) => {
   return `${prev} ${next}`.replaceAll(/\s+/g, " ").trim();
 };
 
-const AudioRecorder = forwardRef<any, AudioRecorderProps>(
-  (
-    {
-      autoStart,
-      transcript = "",
-      onTranscriptionStart,
-      onTranscriptionComplete,
-      onTranscriptionError,
-      onAudioBlobComplete,
-      resetTranscript,
-      onClose,
-      onRecordingStateChange,
-      fileName,
-      language,
-    },
-    ref
-  ) => {
+export default function AudioRecorder({
+  autoStart,
+  transcript = "",
+  onTranscriptionStart,
+  onTranscriptionComplete,
+  onTranscriptionError,
+  onAudioBlobComplete,
+  onRecordingStateChange,
+  setShowRecorder,
+  setAudioURL,
+  language,
+}: AudioRecorderProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const animFrameRef = useRef<number | null>(null);
@@ -324,53 +318,6 @@ const AudioRecorder = forwardRef<any, AudioRecorderProps>(
     }, 200);
   };
 
-  useImperativeHandle(ref, () => ({
-    startRecording,
-    stopRecording,
-    resetRecording,
-  }));
-
-  const saveAsMP3 = async () => {
-    if (!audioURL) return;
-
-    const response = await axios.get(audioURL, { responseType: "blob" });
-    const blob = response.data;
-    const arrayBuffer = await blob.arrayBuffer();
-
-    const audioCtx = new AudioContext();
-    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
-    const samples = audioBuffer.getChannelData(0);
-    const sampleRate = audioBuffer.sampleRate;
-
-    const mp3encoder = new (globalThis as any).lamejs.Mp3Encoder(
-      1,
-      sampleRate,
-      128
-    );
-
-    const sampleBlockSize = 1152;
-    const mp3Data = [];
-
-    for (let i = 0; i < samples.length; i += sampleBlockSize) {
-      const sampleChunk = samples.subarray(i, i + sampleBlockSize);
-      const mp3buf = mp3encoder.encodeBuffer(
-        Int16Array.from(sampleChunk.map((n) => n * 32767))
-      );
-      if (mp3buf.length > 0) mp3Data.push(mp3buf);
-    }
-
-    const mp3buf = mp3encoder.flush();
-    if (mp3buf.length > 0) mp3Data.push(mp3buf);
-
-    const mp3Blob = new Blob(mp3Data, { type: "audio/mp3" });
-
-    const url = URL.createObjectURL(mp3Blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileName || "recording"}.mp3`;
-    a.click();
-  };
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60)
       .toString()
@@ -421,6 +368,4 @@ const AudioRecorder = forwardRef<any, AudioRecorderProps>(
       {/* Save (ALWAYS visible) */}
     </div>
   );
-});
-
-export default AudioRecorder;
+}

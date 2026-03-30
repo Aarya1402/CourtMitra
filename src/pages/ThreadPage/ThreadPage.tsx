@@ -37,7 +37,6 @@ import { useAlert } from "../../context/AlertContext";
 import { updateThreadTitle } from "./ThreadPage.logic";
 import AudioRecorder from "../../components/AudioRecorder/AudioRecorder";
 import { isLoggedIn } from "../HomePage/HomePage.logic";
-import { LANGUAGE_OPTIONS } from "../../constants/translations";
 
 const Activity: React.FC<{
   children: React.ReactNode;
@@ -78,7 +77,18 @@ const normalizeOrderData = (data: any): OrderData => {
   return normalized;
 };
 
-// Shared language options moved to translations.ts
+const LANGUAGE_OPTIONS = [
+  { value: "gu-IN", label: "Gujarati" },
+  { value: "en-IN", label: "English" },
+  { value: "hi-IN", label: "Hindi" },
+  { value: "ta-IN", label: "Tamil" },
+  { value: "te-IN", label: "Telugu" },
+  { value: "kn-IN", label: "Kannada" },
+  { value: "mr-IN", label: "Marathi" },
+  { value: "bn-IN", label: "Bengali" },
+  { value: "pa-IN", label: "Punjabi" },
+  { value: "od-IN", label: "Odia" },
+] as const;
 
 const ThreadPage: React.FC = () => {
   const { showAlert } = useAlert();
@@ -101,7 +111,6 @@ const ThreadPage: React.FC = () => {
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const lastProcessedTranscriptRef = useRef("");
-  const recorderRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [modificationRange, setModificationRange] = useState<{
@@ -112,37 +121,6 @@ const ThreadPage: React.FC = () => {
   const [isActuallyRecording, setIsActuallyRecording] = useState(false);
   const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
     useState("");
-
-  const handleLanguageChange = async (newLang: string) => {
-    setLanguage(newLang);
-
-    // Only translate if form has non-initial data
-    const isFormEmpty =
-      JSON.stringify(orderData) === JSON.stringify(initialOrderData);
-
-    if (!isFormEmpty) {
-      setIsExtracting(true);
-      try {
-        const langLabel =
-          LANGUAGE_OPTIONS.find((opt) => opt.value === newLang)?.label ||
-          newLang;
-        const res = await axios.post(`${API_BASE_URL}/api/gemini/translate`, {
-          orderData,
-          language: langLabel,
-        });
-
-        if (res.data.result) {
-          setOrderData(normalizeOrderData(res.data.result));
-        }
-      } catch (error) {
-        console.error("Failed to translate form data:", error);
-        showAlert("Failed to translate form data. Labels updated only.");
-      } finally {
-        setIsExtracting(false);
-      }
-    }
-  };
-
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const userMenuRef = useRef<HTMLButtonElement>(null);
 
@@ -446,16 +424,6 @@ const ThreadPage: React.FC = () => {
     a.href = url;
     a.download = `${threadTitle || "recording"}.mp3`;
     a.click();
-  };
-
-  const handleModify = (start: number, end: number) => {
-    setModificationRange({ start, end });
-    setOriginalTranscriptBeforeModify(transcript);
-    setShowRecorder(true);
-  };
-
-  const handleStopRecording = () => {
-    recorderRef.current?.stopRecording?.();
   };
 
   const fetchThreadTitle = async () => {
@@ -984,7 +952,6 @@ const ThreadPage: React.FC = () => {
 
                     {showRecorder && (
                       <AudioRecorder
-                        ref={recorderRef}
                         autoStart={true}
                         language={language}
                         transcript={transcript}
@@ -1008,6 +975,9 @@ const ThreadPage: React.FC = () => {
                               originalTranscriptBeforeModify.substring(end);
                             setTranscript(before + text + after);
                             setModificationRange(null);
+                            setOriginalTranscriptBeforeModify(
+                              before + text + after
+                            );
                           } else {
                             setTranscript(transcript + text);
                           }
@@ -1059,7 +1029,7 @@ const ThreadPage: React.FC = () => {
                 onUpdate={setOrderData}
                 isProcessing={isExtracting}
                 language={language}
-                onLanguageChange={handleLanguageChange}
+                onLanguageChange={setLanguage}
               />
             </Activity>
           </div>

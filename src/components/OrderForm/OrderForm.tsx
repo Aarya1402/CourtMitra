@@ -568,16 +568,22 @@ const OrderForm: React.FC<Props> = ({
                   }
                   title="Add Direction via Audio"
                 >
-                <div style={{ display: "flex", alignItems: "center", justifyItems: "center" }}>
-                  {isRecording &&
-                  recordingField?.path[0] === "operative_order" &&
-                  recordingField?.isNew ? (
-                    <Square size={16} fill="currentColor" />
-                  ) : (
-                    <Mic size={16} />
-                  )}
-                </div>
-              </button>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyItems: "center",
+                    }}
+                  >
+                    {isRecording &&
+                    recordingField?.path[0] === "operative_order" &&
+                    recordingField?.isNew ? (
+                      <Square size={16} fill="currentColor" />
+                    ) : (
+                      <Mic size={16} />
+                    )}
+                  </div>
+                </button>
               </div>
               {isRecording &&
                 recordingField?.path[0] === "operative_order" &&
