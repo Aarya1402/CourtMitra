@@ -34,9 +34,13 @@ deploy:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
 
     - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+        echo \"$CI_REGISTRY_PASSWORD\" | docker login $CI_REGISTRY -u \"$CI_REGISTRY_USER\" --password-stdin &&
+
         docker pull $IMAGE_NAME:latest &&
+
         docker stop courtmitra_frontend || true &&
         docker rm courtmitra_frontend || true &&
+
         docker run -d \
           --add-host=host.docker.internal:host-gateway \
           --name courtmitra_frontend \
