@@ -1030,6 +1030,7 @@ const ThreadPage: React.FC = () => {
                 isProcessing={isExtracting}
                 language={language}
                 onLanguageChange={setLanguage}
+                isMobile={isMobile}
               />
             </Activity>
           </div>

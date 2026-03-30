@@ -76,6 +76,7 @@ interface Props {
   isProcessing?: boolean;
   language?: string;
   onLanguageChange: (lang: string) => void;
+  isMobile?: boolean; // added
 }
 
 // Custom text area that auto-resizes its height
@@ -112,7 +113,9 @@ const OrderForm: React.FC<Props> = ({
   isProcessing,
   language,
   onLanguageChange,
+  isMobile,
 }) => {
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const t = getTranslation(language || "gu-IN");
   const containerRef = useRef<HTMLDivElement>(null);
   const formData = data || initialOrderData;
@@ -269,17 +272,59 @@ const OrderForm: React.FC<Props> = ({
       <div className={styles.toolbar}>
         <h3>{t.order_title}</h3>
         <div className={styles.statusGroup}>
-          <select
-            className={styles.languageSelect}
-            value={language || "gu-IN"}
-            onChange={(e) => onLanguageChange(e.target.value)}
-          >
-            {LANGUAGE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          {isMobile ? (
+            <>
+              <button
+                type="button"
+                className={styles.languageInline}
+                onClick={() => setShowLanguageMenu(true)}
+              >
+                {LANGUAGE_OPTIONS.find((opt) => opt.value === language)?.label ||
+                  "English"}
+              </button>
+              {showLanguageMenu && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.languageMenuBackdrop}
+                    onClick={() => setShowLanguageMenu(false)}
+                    aria-label="Close language menu"
+                  />
+                  <div className={styles.languageMenuSheet}>
+                    {LANGUAGE_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`${styles.languageMenuItem} ${
+                          option.value === language
+                            ? styles.languageMenuItemActive
+                            : ""
+                        }`}
+                        onClick={() => {
+                          onLanguageChange(option.value);
+                          setShowLanguageMenu(false);
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <select
+              className={styles.languageSelect}
+              value={language || "gu-IN"}
+              onChange={(e) => onLanguageChange(e.target.value)}
+            >
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
 
           {isProcessing && (
             <span className={styles.processingBadge}>{t.filling_order}</span>
