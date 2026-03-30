@@ -172,6 +172,62 @@ Generate a complete, accurate, and legally structured court order JSON in "${lan
   }
 };
 
+export const translateOrderData = async (
+  req: Request,
+  res: Response,
+): Promise<any> => {
+  try {
+    const { orderData, language = "English" } = req.body;
+
+    if (!orderData) {
+      return res.status(400).json({ error: "orderData is required" });
+    }
+
+    console.log(
+      `[GeminiController] Starting translation of orderData to language: ${language}`,
+    );
+
+    const promptText = `You are a legal translation expert. 
+Translate the following JSON object representing a court order into the language: "${language}".
+
+🔒 RULES:
+1. STRICT SCHEMA COMPLIANCE: Do NOT add, remove, or rename any keys. The structure must remain EXACTLY as provided.
+2. LEGAL ACCURACY: Use proper legal terminology and formal tone appropriate for an Indian court document in "${language}".
+3. TRANSLATE ALL VALUES: Translate every string value within the JSON object to "${language}".
+4. DO NOT CHANGE STRUCTURE: Return ONLY a valid JSON object. Do NOT add any preamble, markdown formatting, or explanations.
+
+---
+JSON TO TRANSLATE:
+${JSON.stringify(orderData, null, 2)}
+
+---
+FINAL INSTRUCTION:
+Return the translated JSON object in "${language}" now.`;
+
+    const model = getGeminiModel();
+    const result = await model.generateContent(promptText);
+    const responseText = result.response.text();
+
+    const cleanedJSON = extractJSON(responseText);
+
+    if (!cleanedJSON) {
+      return res.status(500).json({
+        error: "Failed to parse translated JSON from AI response",
+        raw: responseText,
+      });
+    }
+
+    return res.json({
+      result: cleanedJSON,
+    });
+  } catch (error: any) {
+    console.error("Gemini Translation Error:", error);
+    return res
+      .status(500)
+      .json({ error: error.message || "Error translating with Gemini" });
+  }
+};
+
 function extractJSON(text: string) {
   if (!text) return null;
 
