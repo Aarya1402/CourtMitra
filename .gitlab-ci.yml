@@ -49,10 +49,7 @@ build:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
-    - /kaniko/executor \
-        --context $CI_PROJECT_DIR \
-        --dockerfile dockerfile \
-        --destination $IMAGE_NAME:latest
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile dockerfile --destination $IMAGE_NAME:latest
 
 # 🚀 DEPLOY
 deploy:
@@ -65,22 +62,14 @@ deploy:
     - apk add --no-cache openssh-client
 
   script:
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - echo "IMAGE_NAME=$IMAGE_NAME"
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - echo "IMAGE_NAME=$IMAGE_NAME"
 
-    - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
-        echo \"$CI_REGISTRY_PASSWORD\" | docker login $CI_REGISTRY -u \"$CI_REGISTRY_USER\" --password-stdin &&
-        docker pull $IMAGE_NAME:latest &&
-        docker stop courtmitra_backend || true &&
-        docker rm courtmitra_backend || true &&
-        docker run -d \
-          --add-host=host.docker.internal:host-gateway \
-          --name courtmitra_backend \
-          -p 5003:5000 \
-          -e SARVAM_API_KEY=\"$SARVAM_API_KEY\" \
-          -e PORT=\"$PORT\" \
-          -e GEMINI_API_KEY=\"$GEMINI_API_KEY\" \
-          -e TALKUMENT_API_BASE=\"$TALKUMENT_API_BASE\" \
-          $IMAGE_NAME:latest
-      "
+  - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+      echo \"$CI_REGISTRY_PASSWORD\" | docker login $CI_REGISTRY -u \"$CI_REGISTRY_USER\" --password-stdin &&
+      docker pull $IMAGE_NAME:latest &&
+      docker stop courtmitra_backend || true &&
+      docker rm courtmitra_backend || true &&
+      docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_backend -p 5003:5000 -e SARVAM_API_KEY="$SARVAM_API_KEY" -e PORT="$PORT" -e GEMINI_API_KEY="$GEMINI_API_KEY" -e TALKUMENT_API_BASE="$TALKUMENT_API_BASE" $IMAGE_NAME:latest    
+
