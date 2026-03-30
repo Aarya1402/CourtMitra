@@ -12,7 +12,7 @@ import GlobalErrorBoundary from "./components/shared/GlobalErrorBoundary.tsx";
 import { API_BASE_URL } from "./constants/api.ts";
 
 Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
+  dsn: import.meta.env.VITE_SENTRY_DSN || "https://f4c4097ad3eff7098446c7186987e203@sentry.drcsystems.com/64",
   environment: import.meta.env.MODE,
   integrations: [
     Sentry.browserTracingIntegration(),
