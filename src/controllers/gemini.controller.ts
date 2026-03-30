@@ -7,7 +7,7 @@ const getGeminiModel = () => {
     throw new Error("GEMINI_API_KEY is not set in environment variables");
   }
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  return genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 };
 
 export const extractOrderData = async (
@@ -240,14 +240,14 @@ function extractJSON(text: string) {
   // Try direct parse first
   try {
     return JSON.parse(text);
-  } catch {}
+  } catch { }
 
   // Extract first valid JSON object using regex
   const match = text.match(/\{[\s\S]*\}/);
   if (match) {
     try {
       return JSON.parse(match[0]);
-    } catch {}
+    } catch { }
   }
 
   return null;
