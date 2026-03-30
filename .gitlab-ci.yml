@@ -75,5 +75,5 @@ deploy:
         docker stop courtmitra_frontend || true &&
         docker rm courtmitra_frontend || true &&
 
-        docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_frontend -p 3002:80 $IMAGE_NAME:latest
+        docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_frontend -p 3002:80 -e VITE_TALKUMENT_API_BASE="$VITE_TALKUMENT_API_BASE" -e VITE_WS_URL="$VITE_WS_URL" -e VITE_API_BASE="$VITE_API_BASE" -e API_BASE_URL="$API_BASE_URL" -e VITE_SENTRY_DSN="$VITE_SENTRY_DSN" $IMAGE_NAME:latest
      "
