@@ -71,5 +71,6 @@ deploy:
       docker pull $IMAGE_NAME:latest &&
       docker stop courtmitra_backend || true &&
       docker rm courtmitra_backend || true &&
-      docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_backend -p 5003:5000 -e SARVAM_API_KEY="$SARVAM_API_KEY" -e PORT="$PORT" -e GEMINI_API_KEY="$GEMINI_API_KEY" -e TALKUMENT_API_BASE="$TALKUMENT_API_BASE" $IMAGE_NAME:latest    
+      docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_backend -p 5003:5000 -e SARVAM_API_KEY="$SARVAM_API_KEY" -e PORT="$PORT" -e GEMINI_API_KEY="$GEMINI_API_KEY" -e TALKUMENT_API_BASE="$TALKUMENT_API_BASE" -e SENTRY_DSN="$SENTRY_DSN" $IMAGE_NAME:latest
+    "
 
