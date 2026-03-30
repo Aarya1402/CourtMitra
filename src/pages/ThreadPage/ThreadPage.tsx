@@ -131,6 +131,36 @@ const ThreadPage: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const isLoadingHistoryRef = useRef(false); // tracks history fetches without re-render
 
+  const handleLanguageChange = async (newLang: string) => {
+    setLanguage(newLang);
+
+    // Only translate if form has non-initial data
+    const isFormEmpty =
+      JSON.stringify(orderData) === JSON.stringify(initialOrderData);
+
+    if (!isFormEmpty) {
+      setIsExtracting(true);
+      try {
+        const langLabel =
+          LANGUAGE_OPTIONS.find((opt) => opt.value === newLang)?.label ||
+          newLang;
+        const res = await axios.post(`${API_BASE_URL}/api/gemini/translate`, {
+          orderData,
+          language: langLabel,
+        });
+
+        if (res.data.result) {
+          setOrderData(normalizeOrderData(res.data.result));
+        }
+      } catch (error) {
+        console.error("Failed to translate form data:", error);
+        showAlert("Failed to translate form data. Labels updated only.");
+      } finally {
+        setIsExtracting(false);
+      }
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -375,6 +405,7 @@ const ThreadPage: React.FC = () => {
         if (parsedObj.header || parsedObj.case_title) {
           setOrderData(normalizeOrderData(parsedObj));
           setLeftTab("order");
+          setMobileTab("order");
         }
       }
     } catch (err) {
@@ -923,7 +954,7 @@ const ThreadPage: React.FC = () => {
                                           : ""
                                       }`}
                                       onClick={() => {
-                                        setLanguage(option.value);
+                                        handleLanguageChange(option.value);
                                         setShowLanguageMenu(false);
                                       }}
                                     >
@@ -1029,7 +1060,7 @@ const ThreadPage: React.FC = () => {
                 onUpdate={setOrderData}
                 isProcessing={isExtracting}
                 language={language}
-                onLanguageChange={setLanguage}
+                onLanguageChange={handleLanguageChange}
                 isMobile={isMobile}
               />
             </Activity>
