@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Download, Copy, Check, Trash2 } from "lucide-react";
+import { Download, Copy, Check, Trash2, Mic as MicIcon, Square } from "lucide-react";
 import Button from "../shared/Button";
 import styles from "./TranscriptEditor.module.css";
 import { DEFAULT_PLACEHOLDER } from "./TranscriptEditor.logic";
@@ -7,12 +7,12 @@ import { pdf } from "@react-pdf/renderer";
 import TranscriptDocument from "./TranscriptDocument";
 import { getTranslation } from "../../constants/translations";
 import { useAlert } from "../../context/AlertContext";
+import { useTranscriber } from "../../hooks/useTranscriber";
 
 interface TranscriptEditorProps {
   transcript: string;
   onChange: (text: string) => void;
   isLoading?: boolean;
-  onModify?: (start: number, end: number) => void;
   isRecording?: boolean;
   language?: string;
 }
@@ -21,12 +21,23 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   transcript,
   onChange,
   isLoading,
-  onModify,
   isRecording,
   language,
 }) => {
+  const {
+    isRecording: isLocalRecording,
+    transcript: localTranscript,
+    start: startLocal,
+    stop: stopLocal,
+  } = useTranscriber();
+
+  const [selectionRange, setSelectionRange] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
+
   const t = getTranslation(language || "gu-IN");
-  const { showAlert, showConfirm } = useAlert();
+  const { showConfirm } = useAlert();
   const [copied, setCopied] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -35,41 +46,60 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
+  const handleSelection = (e: React.MouseEvent) => {
+    if (isLocalRecording) return; // Don't allow changing selection while recording locally
 
-    if (selectedText && textareaRef.current) {
-      setContextMenu({
-        x: e.clientX,
-        y: e.clientY,
-        show: true,
-      });
-    } else {
-      setContextMenu(null);
-    }
+    // Small timeout to allow the browser to finalize selection
+    setTimeout(() => {
+      if (!textareaRef.current) return;
+      const start = textareaRef.current.selectionStart;
+      const end = textareaRef.current.selectionEnd;
+      const selectedText = textareaRef.current.value.substring(start, end).trim();
+
+      if (selectedText) {
+        setContextMenu({
+          x: e.clientX,
+          y: e.clientY + 10,
+          show: true,
+        });
+      } else {
+        setContextMenu(null);
+      }
+    }, 10);
   };
 
-  const handleModifyClick = async () => {
-    if (isRecording) {
-      await showAlert("Please complete the recording first");
+  const handleModifyClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isLocalRecording) {
+      stopLocal();
+      const finalValue =
+        transcript.substring(0, selectionRange!.start) +
+        localTranscript +
+        transcript.substring(selectionRange!.end);
+      onChange(finalValue);
+      setSelectionRange(null);
       setContextMenu(null);
       return;
     }
-    if (textareaRef.current && onModify) {
+
+    if (textareaRef.current) {
       const start = textareaRef.current.selectionStart;
       const end = textareaRef.current.selectionEnd;
-      onModify(start, end);
+      setSelectionRange({ start, end });
+      await startLocal(language);
     }
-    setContextMenu(null);
   };
 
   useEffect(() => {
-    const handleClick = () => setContextMenu(null);
+    const handleClick = () => {
+      if (!isLocalRecording) {
+        setContextMenu(null);
+      }
+    };
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
-  }, []);
+  }, [isLocalRecording]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(transcript);
@@ -134,25 +164,31 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
           <textarea
             ref={textareaRef}
             className={styles.transcriptEditor}
-            value={transcript}
+            value={
+              isLocalRecording && selectionRange
+                ? transcript.substring(0, selectionRange.start) +
+                  localTranscript +
+                  transcript.substring(selectionRange.end)
+                : transcript
+            }
             onChange={(e) => onChange(e.target.value)}
-            onContextMenu={handleContextMenu}
+            onMouseUp={handleSelection}
             placeholder={DEFAULT_PLACEHOLDER}
-            readOnly={isRecording}
+            readOnly={isRecording || isLocalRecording}
           />
         )}
         {contextMenu && (
           <div
-            className={styles.contextMenu}
+            className={`${styles.floatingMic} ${isLocalRecording ? styles.recording : ""}`}
             style={{ top: contextMenu.y, left: contextMenu.x }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleModifyClick}
+            title={isLocalRecording ? "Stop Recording" : "Modify via Voice"}
           >
-            <button
-              className={styles.contextMenuItem}
-              onClick={handleModifyClick}
-            >
-              Modify Selection
-            </button>
+            {isLocalRecording ? (
+              <Square size={18} fill="currentColor" />
+            ) : (
+              <MicIcon size={18} />
+            )}
           </div>
         )}
       </div>

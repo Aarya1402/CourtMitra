@@ -101,6 +101,7 @@ const ThreadPage: React.FC = () => {
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const lastProcessedTranscriptRef = useRef("");
+  const recorderRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [modificationRange, setModificationRange] = useState<{
@@ -451,6 +452,10 @@ const ThreadPage: React.FC = () => {
     setModificationRange({ start, end });
     setOriginalTranscriptBeforeModify(transcript);
     setShowRecorder(true);
+  };
+
+  const handleStopRecording = () => {
+    recorderRef.current?.stopRecording?.();
   };
 
   const fetchThreadTitle = async () => {
@@ -878,7 +883,6 @@ const ThreadPage: React.FC = () => {
                   transcript={transcript}
                   onChange={setTranscript}
                   isLoading={isProcessing}
-                  onModify={handleModify}
                   isRecording={isActuallyRecording}
                   language={language}
                 />
@@ -980,6 +984,7 @@ const ThreadPage: React.FC = () => {
 
                     {showRecorder && (
                       <AudioRecorder
+                        ref={recorderRef}
                         autoStart={true}
                         language={language}
                         transcript={transcript}
