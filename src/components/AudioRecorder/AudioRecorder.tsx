@@ -1,8 +1,6 @@
 import { useRef, useState, useEffect } from "react";
-import axios from "axios";
 import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
-import { Check, Download, RotateCcw, X } from "lucide-react";
 
 export type AudioRecorderProps = Readonly<{
   autoStart: boolean;
@@ -12,11 +10,10 @@ export type AudioRecorderProps = Readonly<{
   onTranscriptionComplete?: (text: string) => void;
   onTranscriptionError?: (error: string) => void;
   onAudioBlobComplete?: (blob: Blob) => void;
-  resetTranscript?: () => void;
-  onClose?: () => void;
   onRecordingStateChange?: (isRecording: boolean) => void;
+  setShowRecorder?: (show: boolean) => void;
+  setAudioURL?: (url: string) => void;
   title?: string;
-  fileName: string | null;
   language: string;
 }>;
 
@@ -42,10 +39,9 @@ export default function AudioRecorder({
   onTranscriptionComplete,
   onTranscriptionError,
   onAudioBlobComplete,
-  resetTranscript,
-  onClose,
   onRecordingStateChange,
-  fileName,
+  setShowRecorder,
+  setAudioURL,
   language,
 }: AudioRecorderProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -58,7 +54,7 @@ export default function AudioRecorder({
 
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [audioURL, setAudioURL] = useState("");
+
   const [duration, setDuration] = useState(0);
   const [barHeights, setBarHeights] = useState(new Array(40).fill(2));
 
@@ -158,7 +154,6 @@ export default function AudioRecorder({
       if (onTranscriptionStart) onTranscriptionStart();
 
       ws.onopen = () => {
-
         ws.send(
           JSON.stringify({
             type: "start",
@@ -295,37 +290,6 @@ export default function AudioRecorder({
     }
   };
 
-  const resetRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.onstop = null; // Skip transcription
-      mediaRecorderRef.current.stop();
-    }
-    streamRef.current?.getTracks().forEach((t: MediaStreamTrack) => t.stop());
-
-    stopResources();
-
-    if (timerRef.current !== null) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (animFrameRef.current !== null) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-
-    setIsRecording(false);
-    if (onRecordingStateChange) onRecordingStateChange(false);
-    isRecordingRef.current = false;
-    setIsPaused(false);
-    isPausedRef.current = false;
-    setAudioURL("");
-    setDuration(0);
-    setBarHeights(new Array(40).fill(2));
-    chunksRef.current = [];
-
-    resetTranscript?.();
-  };
-
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
     streamRef.current?.getTracks().forEach((t: MediaStreamTrack) => t.stop());
@@ -345,6 +309,7 @@ export default function AudioRecorder({
     isRecordingRef.current = false;
     setIsPaused(false);
     isPausedRef.current = false;
+    setShowRecorder?.(false);
 
     setTimeout(() => {
       if (!transcriptRef.current.trim()) {
@@ -353,47 +318,6 @@ export default function AudioRecorder({
     }, 200);
   };
 
-  const saveAsMP3 = async () => {
-    if (!audioURL) return;
-
-    const response = await axios.get(audioURL, { responseType: "blob" });
-    const blob = response.data;
-    const arrayBuffer = await blob.arrayBuffer();
-
-    const audioCtx = new AudioContext();
-    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
-    const samples = audioBuffer.getChannelData(0);
-    const sampleRate = audioBuffer.sampleRate;
-
-    const mp3encoder = new (globalThis as any).lamejs.Mp3Encoder(
-      1,
-      sampleRate,
-      128
-    );
-
-    const sampleBlockSize = 1152;
-    const mp3Data = [];
-
-    for (let i = 0; i < samples.length; i += sampleBlockSize) {
-      const sampleChunk = samples.subarray(i, i + sampleBlockSize);
-      const mp3buf = mp3encoder.encodeBuffer(
-        Int16Array.from(sampleChunk.map((n) => n * 32767))
-      );
-      if (mp3buf.length > 0) mp3Data.push(mp3buf);
-    }
-
-    const mp3buf = mp3encoder.flush();
-    if (mp3buf.length > 0) mp3Data.push(mp3buf);
-
-    const mp3Blob = new Blob(mp3Data, { type: "audio/mp3" });
-
-    const url = URL.createObjectURL(mp3Blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileName || "recording"}.mp3`;
-    a.click();
-  };
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60)
       .toString()
@@ -441,48 +365,7 @@ export default function AudioRecorder({
         {isPaused ? "▶" : "⏸"}
       </button>
 
-      {/* Save */}
-      {audioURL && (
-        <button
-          className={`${styles.btn} ${styles.btnSave}`}
-          onClick={saveAsMP3}
-          title="Save As MP3"
-        >
-          <Download size={16} />
-        </button>
-      )}
-
-      {/* Done */}
-      {audioURL && (
-        <button
-          className={`${styles.btn} ${styles.btnDone}`}
-          onClick={() => onClose?.()}
-          title="Done Recording"
-        >
-          <Check size={16} />
-        </button>
-      )}
-
-      {/* Cancel */}
-      {!audioURL && (
-        <button
-          className={`${styles.btn} ${styles.btnResetInline}`}
-          onClick={() => {
-            onClose?.();
-            onTranscriptionComplete?.("");
-          }}
-          title="Cancel Recording"
-        >
-          <X size={16} />
-        </button>
-      )}
-      <button
-        className={`${styles.btn} ${styles.btnResetInline}`}
-        onClick={resetRecording}
-        title="Reset"
-      >
-        <RotateCcw size={16} />
-      </button>
+      {/* Save (ALWAYS visible) */}
     </div>
   );
 }

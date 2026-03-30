@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import TranscriptEditor from "../../components/TranscriptEditor/TranscriptEditor";
 import FileManager from "../../components/FileManager/FileManager";
-import { User, MessageSquare, Plus, LogOut, Upload, Mic } from "lucide-react";
+import {
+  User,
+  MessageSquare,
+  Plus,
+  LogOut,
+  Upload,
+  Mic,
+  Download,
+} from "lucide-react";
 import styles from "./ThreadPage.module.css";
 import { useParams, useNavigate } from "react-router-dom";
 import ChatMessages from "../../components/ChatMessages/ChatMessages";
@@ -118,6 +126,7 @@ const ThreadPage: React.FC = () => {
 
   const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
+  const [audioURL, setAudioURL] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const isLoadingHistoryRef = useRef(false); // tracks history fetches without re-render
@@ -373,6 +382,48 @@ const ThreadPage: React.FC = () => {
     } finally {
       setIsExtracting(false);
     }
+  };
+
+  const saveAsMP3 = async () => {
+    if (!audioURL) return;
+
+    const response = await axios.get(audioURL, { responseType: "blob" });
+    const blob = response.data;
+    const arrayBuffer = await blob.arrayBuffer();
+
+    const audioCtx = new AudioContext();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+    const samples = audioBuffer.getChannelData(0);
+    const sampleRate = audioBuffer.sampleRate;
+
+    const mp3encoder = new (globalThis as any).lamejs.Mp3Encoder(
+      1,
+      sampleRate,
+      128
+    );
+
+    const sampleBlockSize = 1152;
+    const mp3Data = [];
+
+    for (let i = 0; i < samples.length; i += sampleBlockSize) {
+      const sampleChunk = samples.subarray(i, i + sampleBlockSize);
+      const mp3buf = mp3encoder.encodeBuffer(
+        Int16Array.from(sampleChunk.map((n) => n * 32767))
+      );
+      if (mp3buf.length > 0) mp3Data.push(mp3buf);
+    }
+
+    const mp3buf = mp3encoder.flush();
+    if (mp3buf.length > 0) mp3Data.push(mp3buf);
+
+    const mp3Blob = new Blob(mp3Data, { type: "audio/mp3" });
+
+    const url = URL.createObjectURL(mp3Blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${threadTitle || "recording"}.mp3`;
+    a.click();
   };
 
   const handleModify = (start: number, end: number) => {
@@ -840,6 +891,17 @@ const ThreadPage: React.FC = () => {
                           style={{ display: "none" }}
                         />
 
+                        {isMobile && (
+                          <button
+                            className={`${styles.btn} ${styles.btnSave}`}
+                            onClick={saveAsMP3}
+                            disabled={!audioURL}
+                            title="Save As MP3"
+                          >
+                            <Download size={16} />
+                          </button>
+                        )}
+
                         {isMobile ? (
                           <>
                             <button
@@ -898,14 +960,16 @@ const ThreadPage: React.FC = () => {
                     {showRecorder && (
                       <AudioRecorder
                         autoStart={true}
-                        fileName={threadTitle}
                         language={language}
                         transcript={transcript}
                         onTranscriptionStart={() => {
-                          setIsProcessing(true);
+                          if (!transcript) {
+                            setIsProcessing(true);
+                          }
+
                           setErrorMessage(null);
                         }}
-                        onClose={() => setShowRecorder(false)}
+                        setShowRecorder={setShowRecorder}
                         onTranscriptionComplete={(text: string) => {
                           if (modificationRange) {
                             const { start, end } = modificationRange;
@@ -919,7 +983,7 @@ const ThreadPage: React.FC = () => {
                             setTranscript(before + text + after);
                             setModificationRange(null);
                           } else {
-                            setTranscript(text);
+                            setTranscript(transcript + text);
                           }
                           setIsProcessing(false);
                         }}
@@ -931,18 +995,25 @@ const ThreadPage: React.FC = () => {
                         onAudioBlobComplete={(blob: Blob) => {
                           setAudioBlob(blob);
                         }}
-                        resetTranscript={() => {
-                          setTranscript("");
-                          setAudioBlob(null);
-                        }}
+                        setAudioURL={setAudioURL}
                       />
+                    )}
+                    {!isMobile && (
+                      <button
+                        className={`${styles.btn} ${styles.btnSave}`}
+                        onClick={saveAsMP3}
+                        disabled={!audioURL}
+                        title="Save As MP3"
+                      >
+                        <Download size={16} />
+                      </button>
                     )}
                   </div>
 
                   <button
                     className={styles.generateOrderBtn}
                     onClick={() => extractDataFromChunk(transcript)}
-                    disabled={isExtracting || !transcript || !transcript.trim()}
+                    disabled={isExtracting || !transcript?.trim()}
                   >
                     {isExtracting ? "Generating..." : "Generate Order"}
                   </button>
