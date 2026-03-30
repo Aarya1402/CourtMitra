@@ -32,6 +32,7 @@ deploy:
   script:
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "IMAGE_NAME=$IMAGE_NAME"
 
     - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
         echo \"$CI_REGISTRY_PASSWORD\" | docker login $CI_REGISTRY -u \"$CI_REGISTRY_USER\" --password-stdin &&
@@ -41,9 +42,5 @@ deploy:
         docker stop courtmitra_frontend || true &&
         docker rm courtmitra_frontend || true &&
 
-        docker run -d \
-          --add-host=host.docker.internal:host-gateway \
-          --name courtmitra_frontend \
-          -p 3002:80 \
-          $IMAGE_NAME:latest
-      "
+        docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_frontend -p 3002:80 $IMAGE_NAME:latest
+     "
