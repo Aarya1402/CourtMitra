@@ -1,0 +1,50 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  IMAGE_NAME: $CI_REGISTRY_IMAGE/backend
+
+# 🏗 BUILD IMAGE
+build:
+  stage: build
+
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile dockerfile --destination $IMAGE_NAME:latest
+
+# 🚀 DEPLOY
+deploy:
+  stage: deploy
+  when: manual
+
+  image: alpine:latest
+
+  before_script:
+    - apk add --no-cache openssh-client
+
+  script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "IMAGE_NAME=$IMAGE_NAME"
+
+    - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+        echo \"$CI_REGISTRY_PASSWORD\" | docker login $CI_REGISTRY -u \"$CI_REGISTRY_USER\" --password-stdin &&
+
+        docker pull $IMAGE_NAME:latest &&
+
+        docker stop courtmitra_backend || true &&
+        docker rm courtmitra_backend || true &&
+
+        docker run -d \
+          --add-host=host.docker.internal:host-gateway \
+          --name courtmitra_backend \
+          -p 5003:5003 \
+          $IMAGE_NAME:latest
+      "
