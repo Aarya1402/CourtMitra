@@ -12,7 +12,7 @@ export type AudioRecorderProps = Readonly<{
   onAudioBlobComplete?: (blob: Blob) => void;
   onRecordingStateChange?: (isRecording: boolean) => void;
   setShowRecorder?: (show: boolean) => void;
-  setAudioURL?: (url: string) => void;
+  setAudioURL: (url: string) => void;
   title?: string;
   language: string;
 }>;
