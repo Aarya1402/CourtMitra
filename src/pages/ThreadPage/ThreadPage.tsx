@@ -335,14 +335,13 @@ const ThreadPage: React.FC = () => {
 
   const extractDataFromChunk = async (fullTranscript: string) => {
     setIsExtracting(true);
-    const currentJsonString = JSON.stringify(orderData);
 
     const selectedLanguageLabel =
-      LANGUAGE_OPTIONS.find((option) => option.value === language)?.label || "English";
+      LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ||
+      "English";
 
     try {
       const data = {
-        currentJsonString,
         chunk: fullTranscript,
         language: selectedLanguageLabel,
       };
