@@ -76,10 +76,9 @@ interface Props {
   isProcessing?: boolean;
   language?: string;
   onLanguageChange: (lang: string) => void;
-  isMobile?: boolean; // added
+  isMobile?: boolean;
 }
 
-// Custom text area that auto-resizes its height
 const AutoResizeTextarea: React.FC<{
   value: string;
   onChange: (val: string) => void;
@@ -133,11 +132,9 @@ const OrderForm: React.FC<Props> = ({
         recordingField?.path.join(",") === path.join(",") &&
         recordingField?.isNew === isNew
       ) {
-        // Stopping same field
         stop();
         finalizeTranscription();
       } else {
-        // Stopping old, starting new
         stop();
         finalizeTranscription();
         setRecordingField({ path, isNew });
@@ -149,9 +146,6 @@ const OrderForm: React.FC<Props> = ({
     }
   };
 
-  /**
-   * Helper to append a value to an array at a nested path within the form data
-   */
   const appendToArrayAtPath = (path: string[], value: string) => {
     const newData = JSON.parse(JSON.stringify(formData));
     let current = newData;
@@ -244,8 +238,6 @@ const OrderForm: React.FC<Props> = ({
       .join(", ");
   };
 
-  // Inputs do not word-wrap reliably (especially when exporting to PDF via canvas).
-  // Use an auto-resizing textarea so long values wrap instead of getting clipped.
   const renderInline = (
     value: string | undefined,
     path: string[],
@@ -288,8 +280,8 @@ const OrderForm: React.FC<Props> = ({
                 className={styles.languageInline}
                 onClick={() => setShowLanguageMenu(true)}
               >
-                {LANGUAGE_OPTIONS.find((opt) => opt.value === language)?.label ||
-                  "English"}
+                {LANGUAGE_OPTIONS.find((opt) => opt.value === language)
+                  ?.label || "English"}
               </button>
               {showLanguageMenu && (
                 <>
@@ -408,6 +400,36 @@ const OrderForm: React.FC<Props> = ({
             </h4>
           </div>
 
+          {/* Dates Section */}
+          <div className={styles.datesSection}>
+            <div className={styles.dateRow}>
+              <span>{t.filing_date}:</span>
+
+              {renderInline(
+                formData.header?.dates?.filing_date,
+                ["header", "dates", "filing_date"],
+                "DD/MM/YYYY"
+              )}
+            </div>
+            <div className={styles.dateRow}>
+              <span>{t.registration_date}:</span>
+
+              {renderInline(
+                formData.header?.dates?.registration_date,
+                ["header", "dates", "registration_date"],
+                "DD/MM/YYYY"
+              )}
+            </div>
+            <div className={styles.dateRow}>
+              <span>{t.decision_date}:</span>
+              {renderInline(
+                formData.header?.dates?.decision_date,
+                ["header", "dates", "decision_date"],
+                "DD/MM/YYYY"
+              )}
+            </div>
+          </div>
+
           <div className={styles.partiesSection}>
             <div className={styles.partyRow}>
               <div className={styles.partyDetails}>
@@ -436,6 +458,56 @@ const OrderForm: React.FC<Props> = ({
 
           <hr className={styles.divider} />
 
+          {/* Parties Detail Section */}
+          {(formData.parties?.complainant?.length > 0 ||
+            formData.parties?.accused?.length > 0 ||
+            formData.parties?.other_parties?.length > 0) && (
+            <div className={styles.partiesDetailSection}>
+              {formData.parties?.complainant?.length > 0 && (
+                <div className={styles.partyDetailRow}>
+                  <span className={styles.partyDetailLabel}>
+                    {t.complainant}:
+                  </span>
+
+                  <div style={{ flex: 1 }}>
+                    {renderTextArea(
+                      safeJoinArray(formData.parties?.complainant),
+                      ["parties", "complainant"],
+                      "Complainant name(s)"
+                    )}
+                  </div>
+                </div>
+              )}
+              {formData.parties?.accused?.length > 0 && (
+                <div className={styles.partyDetailRow}>
+                  <span className={styles.partyDetailLabel}>{t.accused}:</span>
+
+                  <div style={{ flex: 1 }}>
+                    {renderTextArea(
+                      safeJoinArray(formData.parties?.accused),
+                      ["parties", "accused"],
+                      "Accused name(s)"
+                    )}
+                  </div>
+                </div>
+              )}
+              {formData.parties?.other_parties?.length > 0 && (
+                <div className={styles.partyDetailRow}>
+                  <span className={styles.partyDetailLabel}>
+                    {t.other_parties}:
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    {renderTextArea(
+                      safeJoinArray(formData.parties?.other_parties),
+                      ["parties", "other_parties"],
+                      "Other party name(s)"
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className={styles.advocatesSection}>
             <div className={styles.advocateRow}>
               <span>{t.advocate_petitioner}:</span>
@@ -443,7 +515,7 @@ const OrderForm: React.FC<Props> = ({
                 {renderTextArea(
                   safeJoinArray(formData.advocates?.petitioner_side),
                   ["advocates", "petitioner_side"],
-                  t.judge // Placeholder misuse? Let's use a generic one
+                  t.judge
                 )}
               </div>
             </div>
@@ -457,7 +529,187 @@ const OrderForm: React.FC<Props> = ({
                 )}
               </div>
             </div>
+            {/* NEW: government_side advocates */}
+            {formData.advocates?.government_side?.length > 0 && (
+              <div className={styles.advocateRow}>
+                <span>{t.government_advocate}:</span>
+
+                <div style={{ flex: 1 }}>
+                  {renderTextArea(
+                    safeJoinArray(formData.advocates?.government_side),
+                    ["advocates", "government_side"],
+                    "Government advocate name(s)"
+                  )}
+                </div>
+              </div>
+            )}
+            {/* NEW: other advocates */}
+            {formData.advocates?.other?.length > 0 && (
+              <div className={styles.advocateRow}>
+                <span>{t.other_advocate}:</span>
+                <div style={{ flex: 1 }}>
+                  {renderTextArea(
+                    safeJoinArray(formData.advocates?.other),
+                    ["advocates", "other"],
+                    "Other advocate name(s)"
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* NEW: Appearance Mode */}
+          {formData.appearance_mode && (
+            <div className={styles.appearanceRow}>
+              <span>{t.appearance_mode}:</span>
+              {renderInline(
+                formData.appearance_mode,
+                ["appearance_mode"],
+                "e.g. In Person / Video Conference"
+              )}
+            </div>
+          )}
+
+          <hr className={styles.divider} />
+
+          {/* NEW: Case Details */}
+          <div className={styles.caseDetailsSection}>
+            <h5 className={styles.sectionHeading}>{t.case_details}:</h5>
+
+            {formData.case_details?.acts_sections && (
+              <div className={styles.caseDetailRow}>
+                <span>{t.acts_sections}:</span>
+                <div style={{ flex: 1 }}>
+                  {renderTextArea(
+                    formData.case_details?.acts_sections,
+                    ["case_details", "acts_sections"],
+                    "Relevant acts and sections"
+                  )}
+                </div>
+              </div>
+            )}
+            {formData.case_details?.case_category && (
+              <div className={styles.caseDetailRow}>
+                <span>{t.case_category}:</span>
+                <div style={{ flex: 1 }}>
+                  {renderInline(
+                    formData.case_details?.case_category,
+                    ["case_details", "case_category"],
+                    "Case category"
+                  )}
+                </div>
+              </div>
+            )}
+            {formData.case_details?.police_station && (
+              <div className={styles.caseDetailRow}>
+                <span>{t.police_station}:</span>
+
+                <div style={{ flex: 1 }}>
+                  {renderInline(
+                    formData.case_details?.police_station,
+                    ["case_details", "police_station"],
+                    "Police station name"
+                  )}
+                </div>
+              </div>
+            )}
+            {formData.case_details?.property_details && (
+              <div className={styles.caseDetailRow}>
+                <span>{t.property_details}:</span>
+
+                <div style={{ flex: 1 }}>
+                  {renderTextArea(
+                    formData.case_details?.property_details,
+                    ["case_details", "property_details"],
+                    "Property or seized item details"
+                  )}
+                </div>
+              </div>
+            )}
+            {formData.case_details?.other_details && (
+              <div className={styles.caseDetailRow}>
+                <span>{t.other_details}:</span>
+                <div style={{ flex: 1 }}>
+                  {renderTextArea(
+                    formData.case_details?.other_details,
+                    ["case_details", "other_details"],
+                    "Other case details"
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* NEW: Procedural History */}
+          {formData.procedural_history && (
+            <div className={styles.narrativeSection}>
+              <h5 className={styles.sectionHeading}>{t.procedural_history}</h5>
+              {renderTextArea(
+                formData.procedural_history,
+                ["procedural_history"],
+                "Procedural history of the case"
+              )}
+            </div>
+          )}
+
+          {/* NEW: Issues Framed */}
+          {formData.issues_framed && (
+            <div className={styles.narrativeSection}>
+              <h5>{t.issues_framed}:</h5>
+
+              {renderTextArea(
+                formData.issues_framed,
+                ["issues_framed"],
+                "Issues framed by the court"
+              )}
+            </div>
+          )}
+
+          {/* NEW: Evidence */}
+          {(formData.evidence?.oral_evidence ||
+            formData.evidence?.documentary_evidence) && (
+            <div className={styles.narrativeSection}>
+              <h5>{t.evidence}:</h5>
+
+              {formData.evidence?.oral_evidence && (
+                <div className={styles.caseDetailRow}>
+                  <span>{t.oral_evidence}:</span>
+                  <div style={{ flex: 1 }}>
+                    {renderTextArea(
+                      formData.evidence?.oral_evidence,
+                      ["evidence", "oral_evidence"],
+                      "Oral evidence details"
+                    )}
+                  </div>
+                </div>
+              )}
+              {formData.evidence?.documentary_evidence && (
+                <div className={styles.caseDetailRow}>
+                  <span>{t.documentary_evidence}:</span>
+                  <div style={{ flex: 1 }}>
+                    {renderTextArea(
+                      formData.evidence?.documentary_evidence,
+                      ["evidence", "documentary_evidence"],
+                      "Documentary evidence details"
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* NEW: Arguments */}
+          {formData.arguments && (
+            <div className={styles.narrativeSection}>
+              <h5 className={styles.sectionHeading}>{t.arguments}</h5>
+              {renderTextArea(
+                formData.arguments,
+                ["arguments"],
+                "Arguments presented by both sides"
+              )}
+            </div>
+          )}
+
           <div className={styles.reasoningSection}>
             <h5
               style={{
@@ -548,9 +800,7 @@ const OrderForm: React.FC<Props> = ({
               )}
           </div>
 
-          <div className={styles.orderBodyTitle}>
-            ---- {t.final_order} (ORDER) ----
-          </div>
+          <div className={styles.orderBodyTitle}>---- {t.final_order} ----</div>
 
           <div className={styles.orderContent}>
             {renderTextArea(
@@ -647,7 +897,31 @@ const OrderForm: React.FC<Props> = ({
                   </div>
                 )}
             </div>
+
+            {/* NEW: Final Outcome */}
+            {formData.operative_order?.final_outcome && (
+              <div className={styles.narrativeSection}>
+                <h5>{t.final_outcome}:</h5>
+                {renderTextArea(
+                  formData.operative_order?.final_outcome,
+                  ["operative_order", "final_outcome"],
+                  "Final outcome of the case"
+                )}
+              </div>
+            )}
           </div>
+
+          {/* NEW: Final Order (standalone field) */}
+          {formData.final_order && (
+            <div className={styles.narrativeSection}>
+              <h5 className={styles.sectionHeading}>{t.final_order}:</h5>
+              {renderTextArea(
+                formData.final_order,
+                ["final_order"],
+                "Final order text"
+              )}
+            </div>
+          )}
 
           <div className={styles.signatureSection}>
             <div className={styles.sigLeft}>

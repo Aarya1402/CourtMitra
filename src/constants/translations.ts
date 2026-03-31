@@ -35,6 +35,36 @@ export const translations: Record<string, { [key: string]: string }> = {
     download_pdf: "Download as PDF",
     clear_transcript: "Clear Transcript",
     clear_confirm: "Are you sure you want to clear the transcript?",
+    filing_date: "Filing Date",
+    registration_date: "Registration Date",
+    decision_date: "Decision Date",
+
+    complainant: "Complainant",
+    accused: "Accused",
+    other_parties: "Other Parties",
+
+    government_advocate: "Government Advocate",
+    other_advocate: "Other Advocate",
+
+    appearance_mode: "Appearance Mode",
+
+    case_details: "Case Details",
+    acts_sections: "Acts / Sections",
+    case_category: "Case Category",
+    police_station: "Police Station",
+    property_details: "Property / Seized Items",
+    other_details: "Other Details",
+
+    issues_framed: "Issues Framed",
+    evidence: "Evidence",
+    oral_evidence: "Oral Evidence",
+    documentary_evidence: "Documentary Evidence",
+
+    final_outcome: "Final Outcome",
+
+    listening: "Listening...",
+    add_point_audio: "Add Point via Audio",
+    add_direction_audio: "Add Direction via Audio",
   },
   "hi-IN": {
     court_name: "न्यायालय",
@@ -72,6 +102,36 @@ export const translations: Record<string, { [key: string]: string }> = {
     download_pdf: "पीडीएफ के रूप में डाउनलोड करें",
     clear_transcript: "प्रतिलिपि साफ़ करें",
     clear_confirm: "क्या आप वाकई प्रतिलिपि साफ़ करना चाहते हैं?",
+    filing_date: "दाखिल करने की तारीख",
+    registration_date: "पंजीकरण तिथि",
+    decision_date: "निर्णय की तिथि",
+
+    complainant: "शिकायतकर्ता",
+    accused: "आरोपी",
+    other_parties: "अन्य पक्ष",
+
+    government_advocate: "सरकारी वकील",
+    other_advocate: "अन्य वकील",
+
+    appearance_mode: "उपस्थिति का प्रकार",
+
+    case_details: "मामले का विवरण",
+    acts_sections: "धाराएं / अधिनियम",
+    case_category: "मामले की श्रेणी",
+    police_station: "थाना",
+    property_details: "जब्त संपत्ति / सामग्री",
+    other_details: "अन्य विवरण",
+
+    issues_framed: "निर्धारित मुद्दे",
+    evidence: "साक्ष्य",
+    oral_evidence: "मौखिक साक्ष्य",
+    documentary_evidence: "दस्तावेजी साक्ष्य",
+
+    final_outcome: "अंतिम परिणाम",
+
+    listening: "सुन रहे हैं...",
+    add_point_audio: "आवाज़ से बिंदु जोड़ें",
+    add_direction_audio: "आवाज़ से निर्देश जोड़ें",
   },
   "gu-IN": {
     court_name: "કોર્ટનું નામ",
@@ -109,6 +169,36 @@ export const translations: Record<string, { [key: string]: string }> = {
     download_pdf: "પીડીએફ ડાઉનલોડ કરો",
     clear_transcript: "ટ્રાન્સક્રિપ્ટ સાફ કરો",
     clear_confirm: "શું તમે ખરેખર ટ્રાન્સક્રિપ્ટ સાફ કરવા માંગો છો?",
+    filing_date: "ફાઇલિંગ તારીખ",
+    registration_date: "નોંધણી તારીખ",
+    decision_date: "ફૈસલાની તારીખ",
+
+    complainant: "ફરિયાદી",
+    accused: "આરોપી",
+    other_parties: "અન્ય પક્ષો",
+
+    government_advocate: "સરકારી વકીલ",
+    other_advocate: "અન્ય વકીલ",
+
+    appearance_mode: "હાજરીનો પ્રકાર",
+
+    case_details: "કેસની વિગતો",
+    acts_sections: "ધારા / કલમો",
+    case_category: "કેસની શ્રેણી",
+    police_station: "પોલીસ સ્ટેશન",
+    property_details: "જપ્ત માલમસાલા / સંપત્તિ",
+    other_details: "અન્ય વિગતો",
+
+    issues_framed: "નક્કી કરાયેલા મુદ્દાઓ",
+    evidence: "પુરાવા",
+    oral_evidence: "મૌખિક પુરાવા",
+    documentary_evidence: "દસ્તાવેજી પુરાવા",
+
+    final_outcome: "અંતિમ પરિણામ",
+
+    listening: "સાંભળવામાં આવી રહ્યું છે...",
+    add_point_audio: "આવાજથી મુદ્દો ઉમેરો",
+    add_direction_audio: "આવાજથી સૂચના ઉમેરો",
   },
   "ta-IN": {
     court_name: "நீதிமன்றம்",
