@@ -90,6 +90,518 @@ const LANGUAGE_OPTIONS = [
   // { value: "od-IN", label: "Odia" },
 ] as const;
 
+/** ✅ GLOBAL HEADER COMPONENT */
+const GlobalHeader: React.FC<{
+  threadTitle: string | null;
+  isEditingTitle: boolean;
+  setIsEditingTitle: (v: boolean) => void;
+  setThreadTitle: (v: string) => void;
+  handleTitleUpdate: (v: string) => void;
+  showLogout: boolean;
+  setShowLogout: (v: boolean) => void;
+  handleLogout: () => void;
+  userMenuRef: React.RefObject<any>;
+  navigate: (path: string) => void;
+}> = ({
+  threadTitle,
+  isEditingTitle,
+  setIsEditingTitle,
+  setThreadTitle,
+  handleTitleUpdate,
+  showLogout,
+  setShowLogout,
+  handleLogout,
+  userMenuRef,
+  navigate,
+}) => (
+  <div className={styles.globalHeader}>
+    <div className={styles.headerLeftSection}>
+      <div className={styles.logoSection} onClick={() => navigate("/")}>
+        <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
+        <span className={styles.logoText}>CourtMitra</span>
+      </div>
+    </div>
+    <div className={styles.headerCenterSection}>
+      {isEditingTitle ? (
+        <input
+          autoFocus
+          className={styles.threadTitleInput}
+          value={threadTitle || ""}
+          onChange={(e) => setThreadTitle(e.target.value)}
+          onBlur={() => setIsEditingTitle(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleTitleUpdate(threadTitle || "");
+              setIsEditingTitle(false);
+            }
+            if (e.key === "Escape") setIsEditingTitle(false);
+          }}
+        />
+      ) : (
+        <h2
+          className={styles.threadTitle}
+          onClick={() => setIsEditingTitle(true)}
+          title="Click to edit"
+        >
+          {threadTitle || "Untitled Chat"}
+        </h2>
+      )}
+    </div>
+    <div className={styles.headerRightSection}>
+      <button className={styles.newChatBtn} onClick={() => navigate("/")}>
+        <Plus size={18} />
+        <span>New Chat</span>
+      </button>
+      <div
+        className={styles.userProfile}
+        onClick={() => setShowLogout(!showLogout)}
+        ref={userMenuRef as any}
+      >
+        <User size={18} />
+        {showLogout && (
+          <div className={styles.logoutDropdown}>
+            <button
+              className={styles.logoutBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLogout();
+              }}
+            >
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+/** ✅ MOBILE TABS COMPONENT */
+const MobileTabs: React.FC<{
+  mobileTab: string;
+  onTabChange: (tab: "transcript" | "order" | "chat" | "files") => void;
+}> = ({ mobileTab, onTabChange }) => (
+  <div className={styles.mobileTabWrapper}>
+    <div className={styles.tabContainer}>
+      {(["transcript", "order", "chat", "files"] as const).map((tab) => (
+        <button
+          key={tab}
+          className={mobileTab === tab ? styles.activeTab : styles.tab}
+          onClick={() => onTabChange(tab)}
+        >
+          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+/** ✅ TRANSCRIPT WORKSPACE COMPONENT */
+const TranscriptWorkspace: React.FC<{
+  transcript: string;
+  setTranscript: (v: string) => void;
+  isProcessing: boolean;
+  isActuallyRecording: boolean;
+  language: string;
+  showRecorder: boolean;
+  setShowRecorder: (v: boolean) => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleAudioUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isUploading: boolean;
+  isMobile: boolean;
+  saveAsMP3: () => void;
+  audioURL: string;
+  selectedLanguageLabel: string;
+  showLanguageMenu: boolean;
+  setShowLanguageMenu: (v: boolean) => void;
+  handleLanguageChange: (v: string) => void;
+  threadId: string | undefined;
+  setLanguage: (v: string) => void;
+  modificationRange: any;
+  setModificationRange: (v: any) => void;
+  originalTranscriptBeforeModify: string;
+  setOriginalTranscriptBeforeModify: (v: string) => void;
+  setIsProcessing: (v: boolean) => void;
+  setErrorMessage: (v: string | null) => void;
+  setIsActuallyRecording: (v: boolean) => void;
+  setAudioBlob: (v: Blob | null) => void;
+  setAudioURL: (v: string) => void;
+  extractDataFromChunk: (v: string) => void;
+  isExtracting: boolean;
+}> = ({
+  transcript,
+  setTranscript,
+  isProcessing,
+  isActuallyRecording,
+  language,
+  showRecorder,
+  setShowRecorder,
+  fileInputRef,
+  handleAudioUpload,
+  isUploading,
+  isMobile,
+  saveAsMP3,
+  audioURL,
+  selectedLanguageLabel,
+  showLanguageMenu,
+  setShowLanguageMenu,
+  handleLanguageChange,
+  threadId,
+  setLanguage,
+  modificationRange,
+  setModificationRange,
+  originalTranscriptBeforeModify,
+  setOriginalTranscriptBeforeModify,
+  setIsProcessing,
+  setErrorMessage,
+  setIsActuallyRecording,
+  setAudioBlob,
+  setAudioURL,
+  extractDataFromChunk,
+  isExtracting,
+}) => (
+  <div className={styles.transcriptContainer}>
+    <TranscriptEditor
+      transcript={transcript}
+      onChange={setTranscript}
+      isLoading={isProcessing}
+      isRecording={isActuallyRecording}
+      language={language}
+    />
+    <div className={styles.recorderSection}>
+      <div className={styles.recorderLeftGroup}>
+        {!showRecorder && (
+          <>
+            <button
+              className={styles.startRecordingBtn}
+              onClick={() => setShowRecorder(true)}
+              title="Recorder"
+            >
+              <Mic size={16} />
+              <span>Mic</span>
+            </button>
+            <button
+              className={styles.uploadBtn}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              title={isUploading ? "Uploading..." : "Upload Audio"}
+            >
+              <Upload size={16} />
+              <span>Upload</span>
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleAudioUpload}
+              accept=".mp3,.ogg,.wav,audio/mpeg,audio/ogg,audio/wav"
+              style={{ display: "none" }}
+            />
+            {isMobile && (
+              <button
+                className={`${styles.btn} ${styles.btnSave}`}
+                onClick={saveAsMP3}
+                disabled={!audioURL}
+                title="Save As MP3"
+              >
+                <Download size={16} />
+                <span>Save</span>
+              </button>
+            )}
+            {isMobile ? (
+              <>
+                <button
+                  type="button"
+                  className={styles.languageInline}
+                  onClick={() => setShowLanguageMenu(true)}
+                >
+                  {selectedLanguageLabel}
+                </button>
+                {showLanguageMenu && (
+                  <>
+                    <button
+                      type="button"
+                      className={styles.languageMenuBackdrop}
+                      onClick={() => setShowLanguageMenu(false)}
+                      aria-label="Close language menu"
+                    />
+                    <div className={styles.languageMenuSheet}>
+                      {LANGUAGE_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`${styles.languageMenuItem} ${
+                            option.value === language
+                              ? styles.languageMenuItemActive
+                              : ""
+                          }`}
+                          onClick={() => {
+                            handleLanguageChange(option.value);
+                            setShowLanguageMenu(false);
+                          }}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <select
+                className={styles.languageInline}
+                value={language}
+                onChange={(e) => {
+                  localStorage.setItem(
+                    threadId + "selectedLanguage",
+                    e.target.value
+                  );
+                  setLanguage(e.target.value);
+                }}
+              >
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </>
+        )}
+        {showRecorder && (
+          <AudioRecorder
+            autoStart={true}
+            language={language}
+            transcript={transcript}
+            onTranscriptionStart={() => {
+              if (!transcript) setIsProcessing(true);
+              setErrorMessage(null);
+            }}
+            setShowRecorder={setShowRecorder}
+            onTranscriptionComplete={(text: string) => {
+              if (modificationRange) {
+                const { start, end } = modificationRange;
+                const before = originalTranscriptBeforeModify.substring(
+                  0,
+                  start
+                );
+                const after = originalTranscriptBeforeModify.substring(end);
+                setTranscript(before + text + after);
+                setModificationRange(null);
+                setOriginalTranscriptBeforeModify(before + text + after);
+              } else {
+                setTranscript(transcript + text);
+              }
+              setIsProcessing(false);
+            }}
+            onRecordingStateChange={setIsActuallyRecording}
+            onTranscriptionError={(msg: string) => {
+              setErrorMessage(msg);
+              setIsProcessing(false);
+            }}
+            onAudioBlobComplete={(blob: Blob) => setAudioBlob(blob)}
+            setAudioURL={setAudioURL}
+          />
+        )}
+        {!isMobile && (
+          <button
+            className={`${styles.btn} ${styles.btnSave}`}
+            onClick={saveAsMP3}
+            disabled={!audioURL}
+            title="Save As MP3"
+          >
+            <Download size={16} />
+            <span>Save</span>
+          </button>
+        )}
+      </div>
+      <button
+        className={styles.generateOrderBtn}
+        onClick={() => extractDataFromChunk(transcript)}
+        disabled={isExtracting || !transcript?.trim()}
+      >
+        {isExtracting ? "Generating..." : "Generate Order"}
+      </button>
+    </div>
+  </div>
+);
+
+/** ✅ CHAT WORKSPACE COMPONENT */
+const ChatWorkspace: React.FC<{
+  isFetchingHistory: boolean;
+  filteredMessages: any[];
+  handleDelete: (id: string) => void;
+  handleSend: (text: string) => void;
+  loading: boolean;
+  bottomRef: React.RefObject<HTMLDivElement | null>;
+}> = ({
+  isFetchingHistory,
+  filteredMessages,
+  handleDelete,
+  handleSend,
+  loading,
+  bottomRef,
+}) => (
+  <>
+    {isFetchingHistory && (
+      <div className={styles.topLoader}>
+        <div className={styles.spinner}></div>
+        <span>Loading previous messages...</span>
+      </div>
+    )}
+    <div className={styles.contentArea}>
+      {filteredMessages.length === 0 ? (
+        <div className={styles.emptyState}>
+          <div className={styles.iconCircle}>
+            <MessageSquare size={32} />
+          </div>
+          <h2>Universal Workspace</h2>
+          <p>Select a document or start a new conversation to begin.</p>
+        </div>
+      ) : (
+        <>
+          <ChatMessages messages={filteredMessages} onDelete={handleDelete} />
+          <div ref={bottomRef} />
+        </>
+      )}
+    </div>
+    <ChatInput onSend={handleSend} disabled={loading} />
+  </>
+);
+
+/** ✅ DIVISION LEFT COMPONENT */
+const DivisionLeft: React.FC<{
+  isMobile: boolean;
+  mobileTab: string;
+  leftTab: string;
+  setLeftTab: (v: "transcript" | "order") => void;
+  leftWidth: number;
+  errorMessage: string | null;
+  setErrorMessage: (v: string | null) => void;
+  transcriptWorkspaceProps: any;
+  orderFormProps: any;
+}> = ({
+  isMobile,
+  mobileTab,
+  leftTab,
+  setLeftTab,
+  leftWidth,
+  errorMessage,
+  setErrorMessage,
+  transcriptWorkspaceProps,
+  orderFormProps,
+}) => {
+  const isVisible = isMobile
+    ? mobileTab === "transcript" || mobileTab === "order"
+    : true;
+
+  if (!isVisible) return null;
+
+  return (
+    <div
+      className={styles.divisionLeft}
+      style={isMobile ? { width: "100%" } : { width: `${leftWidth}%` }}
+    >
+      <div className={styles.transcriptSection}>
+        {!isMobile && (
+          <div className={styles.tabContainer}>
+            <button
+              className={leftTab === "transcript" ? styles.activeTab : styles.tab}
+              onClick={() => setLeftTab("transcript")}
+            >
+              Transcript
+            </button>
+            <button
+              className={leftTab === "order" ? styles.activeTab : styles.tab}
+              onClick={() => setLeftTab("order")}
+            >
+              Order
+            </button>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className={styles.errorBanner}>
+            {errorMessage}
+            <button onClick={() => setErrorMessage(null)}>Dismiss</button>
+          </div>
+        )}
+
+        <Activity
+          mode={
+            (isMobile ? mobileTab === "transcript" : leftTab === "transcript")
+              ? "visible"
+              : "hidden"
+          }
+        >
+          <TranscriptWorkspace {...transcriptWorkspaceProps} />
+        </Activity>
+
+        <Activity
+          mode={
+            (isMobile ? mobileTab === "order" : leftTab === "order")
+              ? "visible"
+              : "hidden"
+          }
+        >
+          <OrderForm {...orderFormProps} />
+        </Activity>
+      </div>
+    </div>
+  );
+};
+
+/** ✅ DIVISION CENTER COMPONENT */
+const DivisionCenter: React.FC<{
+  isMobile: boolean;
+  mobileTab: string;
+  centerTab: string;
+  setCenterTab: (v: "chat" | "files") => void;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  handleScroll: () => void;
+  chatWorkspaceProps: any;
+}> = ({
+  isMobile,
+  mobileTab,
+  centerTab,
+  setCenterTab,
+  scrollRef,
+  handleScroll,
+  chatWorkspaceProps,
+}) => {
+  const isVisible = isMobile ? mobileTab === "chat" || mobileTab === "files" : true;
+
+  if (!isVisible) return null;
+
+  return (
+    <main className={styles.divisionCenter} style={isMobile ? { width: "100%" } : {}}>
+      {!isMobile && (
+        <div className={styles.tabContainer}>
+          <button
+            className={centerTab === "chat" ? styles.activeTab : styles.tab}
+            onClick={() => setCenterTab("chat")}
+          >
+            Chat
+          </button>
+          <button
+            className={centerTab === "files" ? styles.activeTab : styles.tab}
+            onClick={() => setCenterTab("files")}
+          >
+            Files
+          </button>
+        </div>
+      )}
+
+      <div className={styles.centerWorkspace} ref={scrollRef} onScroll={handleScroll}>
+        {(isMobile ? mobileTab === "chat" : centerTab === "chat") && (
+          <ChatWorkspace {...chatWorkspaceProps} />
+        )}
+
+        {(isMobile ? mobileTab === "files" : centerTab === "files") && <FileManager />}
+      </div>
+    </main>
+  );
+};
+
 const ThreadPage: React.FC = () => {
   const { showAlert } = useAlert();
   const { threadId } = useParams<{ threadId: string }>();
@@ -728,367 +1240,72 @@ const ThreadPage: React.FC = () => {
         userSelect: isDraggingLeft || isDraggingRight ? "none" : "auto",
       }}
     >
-      {/* ✅ GLOBAL HEADER */}
-      <div className={styles.globalHeader}>
-        {/* LEFT */}
-        <div className={styles.headerLeftSection}>
-          <div className={styles.logoSection} onClick={() => navigate("/")}>
-            <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
-            <span className={styles.logoText}>CourtMitra</span>
-          </div>
-        </div>
+      <GlobalHeader
+        threadTitle={threadTitle}
+        isEditingTitle={isEditingTitle}
+        setIsEditingTitle={setIsEditingTitle}
+        setThreadTitle={setThreadTitle}
+        handleTitleUpdate={handleTitleUpdate}
+        showLogout={showLogout}
+        setShowLogout={setShowLogout}
+        handleLogout={handleLogout}
+        userMenuRef={userMenuRef as any}
+        navigate={navigate}
+      />
 
-        {/* CENTER */}
-        <div className={styles.headerCenterSection}>
-          {isEditingTitle ? (
-            <input
-              autoFocus
-              className={styles.threadTitleInput}
-              value={threadTitle || ""}
-              onChange={(e) => setThreadTitle(e.target.value)}
-              onBlur={() => setIsEditingTitle(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleTitleUpdate(threadTitle || "");
-                  setIsEditingTitle(false);
-                }
-                if (e.key === "Escape") setIsEditingTitle(false);
-              }}
-            />
-          ) : (
-            <h2
-              className={styles.threadTitle}
-              onClick={() => setIsEditingTitle(true)}
-              title="Click to edit"
-            >
-              {threadTitle || "Untitled Chat"}
-            </h2>
-          )}
-        </div>
+      {isMobile && <MobileTabs mobileTab={mobileTab} onTabChange={setMobileTab} />}
 
-        {/* RIGHT */}
-        <div className={styles.headerRightSection}>
-          <button className={styles.newChatBtn} onClick={() => navigate("/")}>
-            <Plus size={18} />
-            <span>New Chat</span>
-          </button>
-
-          <div
-            className={styles.userProfile}
-            onClick={() => setShowLogout(!showLogout)}
-            ref={userMenuRef as any}
-          >
-            <User size={18} />
-            {showLogout && (
-              <div className={styles.logoutDropdown}>
-                <button
-                  className={styles.logoutBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLogout();
-                  }}
-                >
-                  <LogOut size={16} /> Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ✅ MOBILE TABS BAR (Visible only on mobile) */}
-      {isMobile && (
-        <div className={styles.mobileTabWrapper}>
-          <div className={styles.tabContainer}>
-            <button
-              className={
-                mobileTab === "transcript" ? styles.activeTab : styles.tab
-              }
-              onClick={() => setMobileTab("transcript")}
-            >
-              Transcript
-            </button>
-            <button
-              className={mobileTab === "order" ? styles.activeTab : styles.tab}
-              onClick={() => setMobileTab("order")}
-            >
-              Order
-            </button>
-            <button
-              className={mobileTab === "chat" ? styles.activeTab : styles.tab}
-              onClick={() => setMobileTab("chat")}
-            >
-              Chat
-            </button>
-            <button
-              className={mobileTab === "files" ? styles.activeTab : styles.tab}
-              onClick={() => setMobileTab("files")}
-            >
-              Files
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ✅ MAIN CONTENT */}
       <div className={styles.mainLayout}>
-        {/* LEFT SIDE */}
-        <div
-          className={styles.divisionLeft}
-          style={
-            isMobile
-              ? {
-                  width: "100%",
-                  display:
-                    mobileTab === "transcript" || mobileTab === "order"
-                      ? "flex"
-                      : "none",
-                }
-              : { width: `${leftWidth}%` }
-          }
-        >
-          <div className={styles.transcriptSection}>
-            {/* Desktop Tabs */}
-            {!isMobile && (
-              <div className={styles.tabContainer}>
-                <button
-                  className={
-                    leftTab === "transcript" ? styles.activeTab : styles.tab
-                  }
-                  onClick={() => setLeftTab("transcript")}
-                >
-                  Transcript
-                </button>
-                <button
-                  className={
-                    leftTab === "order" ? styles.activeTab : styles.tab
-                  }
-                  onClick={() => setLeftTab("order")}
-                >
-                  Order
-                </button>
-              </div>
-            )}
+        <DivisionLeft
+          isMobile={isMobile}
+          mobileTab={mobileTab}
+          leftTab={leftTab}
+          setLeftTab={setLeftTab}
+          leftWidth={leftWidth}
+          errorMessage={errorMessage}
+          setErrorMessage={setErrorMessage}
+          orderFormProps={{
+            data: orderData,
+            onUpdate: setOrderData,
+            isProcessing: isExtracting,
+            language: language,
+            onLanguageChange: handleLanguageChange,
+            isMobile: isMobile,
+          }}
+          transcriptWorkspaceProps={{
+            transcript,
+            setTranscript,
+            isProcessing,
+            isActuallyRecording,
+            language,
+            showRecorder,
+            setShowRecorder,
+            fileInputRef,
+            handleAudioUpload,
+            isUploading,
+            isMobile,
+            saveAsMP3,
+            audioURL,
+            selectedLanguageLabel,
+            showLanguageMenu,
+            setShowLanguageMenu,
+            handleLanguageChange,
+            threadId,
+            setLanguage,
+            modificationRange,
+            setModificationRange,
+            originalTranscriptBeforeModify,
+            setOriginalTranscriptBeforeModify,
+            setIsProcessing,
+            setErrorMessage,
+            setIsActuallyRecording,
+            setAudioBlob,
+            setAudioURL,
+            extractDataFromChunk,
+            isExtracting,
+          }}
+        />
 
-            {errorMessage && (
-              <div className={styles.errorBanner}>
-                {errorMessage}
-                <button onClick={() => setErrorMessage(null)}>Dismiss</button>
-              </div>
-            )}
-
-            <Activity
-              mode={
-                (
-                  isMobile
-                    ? mobileTab === "transcript"
-                    : leftTab === "transcript"
-                )
-                  ? "visible"
-                  : "hidden"
-              }
-            >
-              <div className={styles.transcriptContainer}>
-                <TranscriptEditor
-                  transcript={transcript}
-                  onChange={setTranscript}
-                  isLoading={isProcessing}
-                  isRecording={isActuallyRecording}
-                  language={language}
-                />
-
-                <div className={styles.recorderSection}>
-                  <div className={styles.recorderLeftGroup}>
-                    {!showRecorder && (
-                      <>
-                        <button
-                          className={styles.startRecordingBtn}
-                          onClick={() => setShowRecorder(true)}
-                          title="Recorder"
-                        >
-                          <Mic size={16} />
-                          <span>Mic</span>
-                        </button>
-
-                        <button
-                          className={styles.uploadBtn}
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                          title={isUploading ? "Uploading..." : "Upload Audio"}
-                        >
-                          <Upload size={16} />
-                          <span>Upload</span>
-                        </button>
-
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleAudioUpload}
-                          accept=".mp3,.ogg,.wav,audio/mpeg,audio/ogg,audio/wav"
-                          style={{ display: "none" }}
-                        />
-
-                        {isMobile && (
-                          <button
-                            className={`${styles.btn} ${styles.btnSave}`}
-                            onClick={saveAsMP3}
-                            disabled={!audioURL}
-                            title="Save As MP3"
-                          >
-                            <Download size={16} />
-                            <span>Save</span>
-                          </button>
-                        )}
-
-                        {isMobile ? (
-                          <>
-                            <button
-                              type="button"
-                              className={styles.languageInline}
-                              onClick={() => setShowLanguageMenu(true)}
-                            >
-                              {selectedLanguageLabel}
-                            </button>
-                            {showLanguageMenu && (
-                              <>
-                                <button
-                                  type="button"
-                                  className={styles.languageMenuBackdrop}
-                                  onClick={() => setShowLanguageMenu(false)}
-                                  aria-label="Close language menu"
-                                />
-                                <div className={styles.languageMenuSheet}>
-                                  {LANGUAGE_OPTIONS.map((option) => (
-                                    <button
-                                      key={option.value}
-                                      type="button"
-                                      className={`${styles.languageMenuItem} ${
-                                        option.value === language
-                                          ? styles.languageMenuItemActive
-                                          : ""
-                                      }`}
-                                      onClick={() => {
-                                        handleLanguageChange(option.value);
-                                        setShowLanguageMenu(false);
-                                      }}
-                                    >
-                                      {option.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </>
-                            )}
-                          </>
-                        ) : (
-                          <select
-                            className={styles.languageInline}
-                            value={language}
-                            onChange={(e) => {
-                              localStorage.setItem(
-                                threadId + "selectedLanguage",
-                                e.target.value
-                              );
-                              setLanguage(e.target.value);
-                            }}
-                          >
-                            {LANGUAGE_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </>
-                    )}
-
-                    {showRecorder && (
-                      <AudioRecorder
-                        autoStart={true}
-                        language={language}
-                        transcript={transcript}
-                        onTranscriptionStart={() => {
-                          if (!transcript) {
-                            setIsProcessing(true);
-                          }
-
-                          setErrorMessage(null);
-                        }}
-                        setShowRecorder={setShowRecorder}
-                        onTranscriptionComplete={(text: string) => {
-                          if (modificationRange) {
-                            const { start, end } = modificationRange;
-                            const before =
-                              originalTranscriptBeforeModify.substring(
-                                0,
-                                start
-                              );
-                            const after =
-                              originalTranscriptBeforeModify.substring(end);
-                            setTranscript(before + text + after);
-                            setModificationRange(null);
-                            setOriginalTranscriptBeforeModify(
-                              before + text + after
-                            );
-                          } else {
-                            setTranscript(transcript + text);
-                          }
-                          setIsProcessing(false);
-                        }}
-                        onRecordingStateChange={setIsActuallyRecording}
-                        onTranscriptionError={(msg: string) => {
-                          setErrorMessage(msg);
-                          setIsProcessing(false);
-                        }}
-                        onAudioBlobComplete={(blob: Blob) => {
-                          setAudioBlob(blob);
-                        }}
-                        setAudioURL={setAudioURL}
-                      />
-                    )}
-                    {!isMobile && (
-                      <button
-                        className={`${styles.btn} ${styles.btnSave}`}
-                        onClick={saveAsMP3}
-                        disabled={!audioURL}
-                        title="Save As MP3"
-                      >
-                        <Download size={16} />
-                        <span>Save</span>
-                      </button>
-                    )}
-                  </div>
-
-                  <button
-                    className={styles.generateOrderBtn}
-                    onClick={() => extractDataFromChunk(transcript)}
-                    disabled={isExtracting || !transcript?.trim()}
-                  >
-                    {isExtracting ? "Generating..." : "Generate Order"}
-                  </button>
-                </div>
-              </div>
-            </Activity>
-
-            <Activity
-              mode={
-                (isMobile ? mobileTab === "order" : leftTab === "order")
-                  ? "visible"
-                  : "hidden"
-              }
-            >
-              <OrderForm
-                data={orderData}
-                onUpdate={setOrderData}
-                isProcessing={isExtracting}
-                language={language}
-                onLanguageChange={handleLanguageChange}
-                isMobile={isMobile}
-              />
-            </Activity>
-          </div>
-        </div>
-
-        {/* Divider */}
         {!isMobile && (
           <button
             className={styles.resizeHandle}
@@ -1097,90 +1314,22 @@ const ThreadPage: React.FC = () => {
           />
         )}
 
-        {/* CENTER */}
-        <main
-          className={styles.divisionCenter}
-          style={
-            isMobile
-              ? {
-                  width: "100%",
-                  display:
-                    mobileTab === "chat" || mobileTab === "files"
-                      ? "flex"
-                      : "none",
-                }
-              : {}
-          }
-        >
-          {!isMobile && (
-            <div className={styles.tabContainer}>
-              <button
-                className={centerTab === "chat" ? styles.activeTab : styles.tab}
-                onClick={() => setCenterTab("chat")}
-              >
-                Chat
-              </button>
-              <button
-                className={
-                  centerTab === "files" ? styles.activeTab : styles.tab
-                }
-                onClick={() => {
-                  // if (centerTab === "chat" && scrollRef.current) {
-                  //   scrollPositionRef.current = scrollRef.current.scrollTop;
-                  // }
-                  setCenterTab("files");
-                }}
-              >
-                Files
-              </button>
-            </div>
-          )}
-
-          <div
-            className={styles.centerWorkspace}
-            ref={scrollRef}
-            onScroll={handleScroll}
-          >
-            {(isMobile ? mobileTab === "chat" : centerTab === "chat") && (
-              <>
-                {isFetchingHistory && (
-                  <div className={styles.topLoader}>
-                    <div className={styles.spinner}></div>
-                    <span>Loading previous messages...</span>
-                  </div>
-                )}
-                <div className={styles.contentArea}>
-                  {filteredMessages.length === 0 ? (
-                    <div className={styles.emptyState}>
-                      <div className={styles.iconCircle}>
-                        <MessageSquare size={32} />
-                      </div>
-                      <h2>Universal Workspace</h2>
-                      <p>
-                        Select a document or start a new conversation to begin.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <ChatMessages
-                        messages={filteredMessages}
-                        onDelete={handleDelete}
-                      />
-                      <div ref={bottomRef} />
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-
-            {(isMobile ? mobileTab === "files" : centerTab === "files") && (
-              <FileManager />
-            )}
-          </div>
-          {(isMobile ? mobileTab === "chat" : centerTab === "chat") && (
-            <ChatInput onSend={handleSend} disabled={loading} />
-          )}
-        </main>
+        <DivisionCenter
+          isMobile={isMobile}
+          mobileTab={mobileTab}
+          centerTab={centerTab}
+          setCenterTab={setCenterTab}
+          scrollRef={scrollRef}
+          handleScroll={handleScroll}
+          chatWorkspaceProps={{
+            isFetchingHistory,
+            filteredMessages,
+            handleDelete,
+            handleSend,
+            loading,
+            bottomRef,
+          }}
+        />
       </div>
     </div>
   );

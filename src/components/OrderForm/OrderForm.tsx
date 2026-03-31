@@ -149,31 +149,40 @@ const OrderForm: React.FC<Props> = ({
     }
   };
 
+  /**
+   * Helper to append a value to an array at a nested path within the form data
+   */
+  const appendToArrayAtPath = (path: string[], value: string) => {
+    const newData = JSON.parse(JSON.stringify(formData));
+    let current = newData;
+
+    path.forEach((key, i) => {
+      if (i === path.length - 1) {
+        if (!Array.isArray(current[key])) current[key] = [];
+        current[key].push(value);
+      } else {
+        if (!current[key]) current[key] = {};
+        current = current[key];
+      }
+    });
+
+    return newData;
+  };
+
   const finalizeTranscription = () => {
     if (!recordingField) return;
-    const { path, isNew } = recordingField;
 
-    if (transcript.trim()) {
+    const { path, isNew } = recordingField;
+    const text = transcript.trim();
+
+    if (text) {
       if (isNew) {
-        // Append to the array
-        const newData = JSON.parse(JSON.stringify(formData));
-        let current = newData;
-        for (let i = 0; i < path.length; i++) {
-          const key = path[i];
-          if (i === path.length - 1) {
-            if (!Array.isArray(current[key])) current[key] = [];
-            current[key].push(transcript);
-          } else {
-            if (!current[key]) current[key] = {};
-            current = current[key];
-          }
-        }
-        onUpdate(newData);
+        onUpdate(appendToArrayAtPath(path, text));
       } else {
-        // Replace existing
-        handleChange(path, transcript);
+        handleChange(path, text);
       }
     }
+
     setRecordingField(null);
   };
 
