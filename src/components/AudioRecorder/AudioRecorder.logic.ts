@@ -4,8 +4,13 @@ const isHttps =
 const host = globalThis?.location.host ?? "";
 const protocol = isHttps ? "wss" : "ws";
 
-export const WS_URL = import.meta.env.VITE_WS_URL || `${protocol}://${host}/ws`;
-export const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.API_BASE_URL ||
-  `${globalThis.location.protocol}//${host}/api`;
+// Use VITE_WS_URL only if it exists and is NOT pointlessly pointing to localhost when we are on a remote host
+const defaultWS = `${protocol}://${host}/ws`;
+const envWS = import.meta.env.VITE_WS_URL || import.meta.env.WS_URL;
+
+export const WS_URL = (envWS && !envWS.includes("localhost") && host !== "localhost") 
+  ? envWS 
+  : (host === "localhost" ? (envWS || defaultWS) : defaultWS);
+
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.API_BASE_URL || `${window.location.protocol}//${host}/api`;
+

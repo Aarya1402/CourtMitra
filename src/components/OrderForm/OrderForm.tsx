@@ -162,9 +162,13 @@ const OrderForm: React.FC<Props> = ({
         for (let i = 0; i < path.length; i++) {
           const key = path[i];
           if (i === path.length - 1) {
-            if (!Array.isArray(current[key])) current[key] = [];
-            current[key].push(transcript);
+            // Last part of path - it should be an array target
+            if (!Array.isArray(current[key])) {
+                current[key] = [];
+            }
+            current[key].push(transcript.trim());
           } else {
+            // Intermediate parts
             if (!current[key]) current[key] = {};
             current = current[key];
           }
@@ -623,6 +627,7 @@ const OrderForm: React.FC<Props> = ({
                   >
                     {isRecording &&
                     recordingField?.path[0] === "operative_order" &&
+                    recordingField?.path[1] === "directions" &&
                     recordingField?.isNew ? (
                       <Square size={16} fill="currentColor" />
                     ) : (
@@ -633,11 +638,13 @@ const OrderForm: React.FC<Props> = ({
               </div>
               {isRecording &&
                 recordingField?.path[0] === "operative_order" &&
+                recordingField?.path[1] === "directions" &&
                 recordingField?.isNew && (
                   <div className={styles.liveTranscriptNew}>
                     {transcript || "Listening..."}
                   </div>
                 )}
+
             </div>
           </div>
 
