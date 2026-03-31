@@ -13,7 +13,7 @@ import cookieParser from "cookie-parser";
 import { getTranscript } from "./processAudio.js";
 import { rateLimit } from "express-rate-limit";
 import talkumentRoutes from "./routes/talkument.route.js";
-import geminiRoutes from "./routes/gemini.route.js";
+import orderRoutes from "./routes/order.route.js";
 
 dotenv.config();
 
@@ -51,8 +51,8 @@ const aiLimiter = rateLimit({
 // Talkument Proxy API (matches any route starting with /api/talkument)
 app.use("/api/talkument", talkumentRoutes);
 
-// Gemini extraction API
-app.use("/api/gemini", aiLimiter, geminiRoutes);
+// Order extraction API
+app.use("/api/order", aiLimiter, orderRoutes);
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
