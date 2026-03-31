@@ -234,31 +234,26 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
           </Text>
         </View>
 
-        {/* ── DATES ── */}
-        {(data.header?.dates?.filing_date ||
-          data.header?.dates?.registration_date ||
-          data.header?.dates?.decision_date) && (
-          <View style={styles.datesRow}>
-            {data.header.dates.filing_date && (
-              <View style={styles.dateItem}>
-                <Text style={styles.dateLabel}>{t.filing_date}</Text>
-                <Text>{data.header.dates.filing_date}</Text>
-              </View>
-            )}
-            {data.header.dates.registration_date && (
-              <View style={styles.dateItem}>
-                <Text style={styles.dateLabel}>{t.registration_date}:</Text>
-                <Text>{data.header.dates.registration_date}</Text>
-              </View>
-            )}
-            {data.header.dates.decision_date && (
-              <View style={styles.dateItem}>
-                <Text style={styles.dateLabel}>{t.decision_date}:</Text>
-                <Text>{data.header.dates.decision_date}</Text>
-              </View>
-            )}
-          </View>
-        )}
+        <View style={styles.datesRow}>
+          {data.header.dates.filing_date && (
+            <View style={styles.dateItem}>
+              <Text style={styles.dateLabel}>{t.filing_date}</Text>
+              <Text>{data.header.dates.filing_date}</Text>
+            </View>
+          )}
+          {data.header.dates.registration_date && (
+            <View style={styles.dateItem}>
+              <Text style={styles.dateLabel}>{t.registration_date}:</Text>
+              <Text>{data.header.dates.registration_date}</Text>
+            </View>
+          )}
+          {data.header.dates.decision_date && (
+            <View style={styles.dateItem}>
+              <Text style={styles.dateLabel}>{t.decision_date}:</Text>
+              <Text>{data.header.dates.decision_date}</Text>
+            </View>
+          )}
+        </View>
 
         {/* ── PETITIONER vs RESPONDENT ── */}
         <View style={styles.partiesSection}>
@@ -275,134 +270,110 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
 
         <View style={styles.divider} />
 
-        {/* ── PARTIES DETAIL (complainant / accused / other) ── */}
-        {(safeArray(data.parties?.complainant).length > 0 ||
-          safeArray(data.parties?.accused).length > 0 ||
-          safeArray(data.parties?.other_parties).length > 0) && (
-          <View style={styles.section}>
-            {safeArray(data.parties?.complainant).length > 0 && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.complainant}:</Text>
-                <Text style={styles.labelValue}>
-                  {safeJoin(data.parties.complainant)}
-                </Text>
-              </View>
-            )}
-            {safeArray(data.parties?.accused).length > 0 && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.accused}:</Text>
-                <Text style={styles.labelValue}>
-                  {safeJoin(data.parties.accused)}
-                </Text>
-              </View>
-            )}
-            {safeArray(data.parties?.other_parties).length > 0 && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.other_parties}:</Text>
-                <Text style={styles.labelValue}>
-                  {safeJoin(data.parties.other_parties)}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* ── ADVOCATES ── */}
         <View style={styles.section}>
-          {safeArray(data.advocates?.petitioner_side).length > 0 && (
+          {safeArray(data.parties?.complainant).length > 0 && (
             <View style={styles.labelRow}>
-              <Text style={styles.labelBold}>{t.advocate_petitioner}:</Text>
+              <Text style={styles.labelBold}>{t.complainant}:</Text>
               <Text style={styles.labelValue}>
-                {safeJoin(data.advocates.petitioner_side)}
+                {safeJoin(data.parties.complainant)}
               </Text>
             </View>
           )}
-          {safeArray(data.advocates?.respondent_side).length > 0 && (
+          {safeArray(data.parties?.accused).length > 0 && (
             <View style={styles.labelRow}>
-              <Text style={styles.labelBold}>{t.advocate_respondent}:</Text>
+              <Text style={styles.labelBold}>{t.accused}:</Text>
               <Text style={styles.labelValue}>
-                {safeJoin(data.advocates.respondent_side)}
+                {safeJoin(data.parties.accused)}
               </Text>
             </View>
           )}
-          {safeArray(data.advocates?.government_side).length > 0 && (
+          {safeArray(data.parties?.other_parties).length > 0 && (
             <View style={styles.labelRow}>
-              <Text style={styles.labelBold}>{t.government_advocate}:</Text>
+              <Text style={styles.labelBold}>{t.other_parties}:</Text>
               <Text style={styles.labelValue}>
-                {safeJoin(data.advocates.government_side)}
-              </Text>
-            </View>
-          )}
-          {safeArray(data.advocates?.other).length > 0 && (
-            <View style={styles.labelRow}>
-              <Text style={styles.labelBold}>{t.other_advocate}:</Text>
-              <Text style={styles.labelValue}>
-                {safeJoin(data.advocates.other)}
+                {safeJoin(data.parties.other_parties)}
               </Text>
             </View>
           )}
         </View>
 
-        {/* ── APPEARANCE MODE ── */}
-        {data.appearance_mode && (
-          <View style={styles.appearanceRow}>
-            <Text style={styles.dateLabel}>{t.appearance_mode}:</Text>
-            <Text>{data.appearance_mode}</Text>
+        {/* ── ADVOCATES ── */}
+        <View style={styles.section}>
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.advocate_petitioner}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.petitioner_side)}
+            </Text>
           </View>
-        )}
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.advocate_respondent}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.respondent_side)}
+            </Text>
+          </View>
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.government_advocate}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.government_side)}
+            </Text>
+          </View>
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.other_advocate}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.other)}
+            </Text>
+          </View>
+        </View>
 
+        <View style={styles.appearanceRow}>
+          <Text style={styles.dateLabel}>{t.appearance_mode}:</Text>
+          <Text>{data.appearance_mode}</Text>
+        </View>
         <View style={styles.divider} />
 
-        {/* ── CASE DETAILS ── */}
-        {(data.case_details?.acts_sections ||
-          data.case_details?.case_category ||
-          data.case_details?.police_station ||
-          data.case_details?.property_details ||
-          data.case_details?.other_details) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.case_details}</Text>
-            {data.case_details?.acts_sections && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.acts_sections}:</Text>
-                <Text style={styles.labelValue}>
-                  {data.case_details.acts_sections}
-                </Text>
-              </View>
-            )}
-            {data.case_details?.case_category && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.case_category}:</Text>
-                <Text style={styles.labelValue}>
-                  {data.case_details.case_category}
-                </Text>
-              </View>
-            )}
-            {data.case_details?.police_station && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.police_station}:</Text>
-                <Text style={styles.labelValue}>
-                  {data.case_details.police_station}
-                </Text>
-              </View>
-            )}
-            {data.case_details?.property_details && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.property_details}:</Text>
-                <Text style={styles.labelValue}>
-                  {data.case_details.property_details}
-                </Text>
-              </View>
-            )}
-            {data.case_details?.other_details && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.other_details}:</Text>
-                <Text style={styles.labelValue}>
-                  {data.case_details.other_details}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.case_details}</Text>
+          {data.case_details?.acts_sections && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.acts_sections}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.acts_sections}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.case_category && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.case_category}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.case_category}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.police_station && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.police_station}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.police_station}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.property_details && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.property_details}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.property_details}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.other_details && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.other_details}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.other_details}
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* ── PROCEDURAL HISTORY ── */}
         {data.procedural_history && (
@@ -420,37 +391,30 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
           </View>
         )}
 
-        {/* ── EVIDENCE ── */}
-        {(data.evidence?.oral_evidence ||
-          data.evidence?.documentary_evidence) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.evidence}:</Text>
-            {data.evidence?.oral_evidence && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.oral_evidence}:</Text>
-                <Text style={styles.labelValue}>
-                  {data.evidence.oral_evidence}
-                </Text>
-              </View>
-            )}
-            {data.evidence?.documentary_evidence && (
-              <View style={styles.labelRow}>
-                <Text style={styles.labelBold}>{t.documentary_evidence}:</Text>
-                <Text style={styles.labelValue}>
-                  {data.evidence.documentary_evidence}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.evidence}:</Text>
+          {data.evidence?.oral_evidence && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.oral_evidence}:</Text>
+              <Text style={styles.labelValue}>
+                {data.evidence.oral_evidence}
+              </Text>
+            </View>
+          )}
+          {data.evidence?.documentary_evidence && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.documentary_evidence}:</Text>
+              <Text style={styles.labelValue}>
+                {data.evidence.documentary_evidence}
+              </Text>
+            </View>
+          )}
+        </View>
 
-        {/* ── ARGUMENTS ── */}
-        {data.arguments && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.arguments}</Text>
-            {renderParagraphs(styles, data.arguments)}
-          </View>
-        )}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.arguments}</Text>
+          {renderParagraphs(styles, data.arguments)}
+        </View>
 
         {/* ── REASONING ── */}
         <View style={styles.section}>
@@ -481,50 +445,42 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
               </View>
             ))}
 
-          {/* Final Outcome */}
-          {data.operative_order?.final_outcome && (
-            <View style={{ marginTop: 12 }}>
-              <Text style={styles.sectionTitle}>{t.final_outcome}:</Text>
-              {renderParagraphs(styles, data.operative_order.final_outcome)}
-            </View>
-          )}
+          <View style={{ marginTop: 12 }}>
+            <Text style={styles.sectionTitle}>{t.final_outcome}:</Text>
+            {renderParagraphs(styles, data.operative_order.final_outcome)}
+          </View>
         </View>
 
-        {/* ── FINAL ORDER (standalone) ── */}
-        {data.final_order && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.final_order}:</Text>
-            {renderParagraphs(styles, data.final_order)}
-          </View>
-        )}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.final_order}:</Text>
+          {renderParagraphs(styles, data.final_order)}
+        </View>
 
         {/* ── SIGNATURE ── */}
         <View style={styles.signatureSection}>
           <View style={styles.signatureLeft}>
-            {data.signature?.date && (
-              <Text>
-                {t.date}: {data.signature.date}
-              </Text>
-            )}
-            {data.signature?.place && (
-              <Text>
-                {t.place}: {data.signature.place}
-              </Text>
-            )}
+            <Text>
+              {t.date}: {data.signature?.date && data.signature.date}
+            </Text>
+
+            <Text>
+              {t.place}: {data.signature?.place && data.signature.place}
+            </Text>
           </View>
           <View style={styles.signatureRight}>
             <Text>{t.signature_placeholder}</Text>
-            {data.signature?.judge_name && (
-              <Text style={styles.judgeName}>{data.signature.judge_name}</Text>
-            )}
-            {data.signature?.designation && (
-              <Text style={styles.designation}>
-                {data.signature.designation}
-              </Text>
-            )}
-            {data.signature?.court && (
-              <Text style={styles.smallCourtName}>{data.signature.court}</Text>
-            )}
+
+            <Text style={styles.judgeName}>
+              {data.signature?.judge_name && data.signature.judge_name}
+            </Text>
+
+            <Text style={styles.designation}>
+              {data.signature?.designation && data.signature.designation}
+            </Text>
+
+            <Text style={styles.smallCourtName}>
+              {data.signature?.court && data.signature.court}
+            </Text>
           </View>
         </View>
       </Page>
