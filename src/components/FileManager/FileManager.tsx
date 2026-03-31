@@ -245,7 +245,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       const blobUrl = URL.createObjectURL(blob);
       setPreviewUrl(blobUrl);
       setPreviewFileName(file.name);
-    } catch (err) {
+    } catch (err: any) {
       if (err.name === "CanceledError" || err.name === "AbortError") {
         console.log("Request aborted");
         return;
