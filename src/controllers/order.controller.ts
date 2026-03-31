@@ -16,7 +16,7 @@ export const extractOrderData = async (
     res: Response,
 ): Promise<any> => {
     try {
-        const { currentJsonString, chunk, language = "English" } = req.body;
+        const { chunk, language = "English" } = req.body;
 
         console.log(
             `[OrderController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars) in language: ${language} using Sarvam AI`,
@@ -263,8 +263,8 @@ function extractJSON(text: string) {
 
     // Remove markdown ```json blocks
     text = text
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
+        .replaceAll(/```json/gi, "")
+        .replaceAll("```", "")
         .trim();
 
     // Try direct parse first
@@ -284,7 +284,7 @@ function extractJSON(text: string) {
     }
 
     // fallback to existing regex match which is greedy
-    const match = text.match(/\{[\s\S]*\}/);
+    const match = /\{[\s\S]*\}/.exec(text);
     if (match) {
         try {
             return JSON.parse(match[0]);

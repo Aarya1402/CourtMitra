@@ -74,6 +74,79 @@ const client = new SarvamAIClient({
   apiSubscriptionKey: process.env.SARVAM_API_KEY as string,
 });
 
+/**
+ * Handles messages received from Sarvam AI stream and forwards them to the client
+ */
+const handleSarvamMessage = (ws: WebSocket, sarvamMsg: any) => {
+  console.log("Message from Sarvam:", JSON.stringify(sarvamMsg));
+
+  if (sarvamMsg.type === "data" && sarvamMsg.data) {
+    ws.send(JSON.stringify({ type: "transcript", data: sarvamMsg.data }));
+    return;
+  }
+
+  if (sarvamMsg.type === "error") {
+    console.error("Sarvam reported error in message:", sarvamMsg.data);
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message: "Sarvam Error",
+        details: sarvamMsg.data,
+      }),
+    );
+    return;
+  }
+
+  // Forward other events labeled as 'event'
+  ws.send(JSON.stringify({ type: "event", data: sarvamMsg }));
+};
+
+/**
+ * Sets up a new Sarvam AI streaming connection and its event listeners
+ */
+const initializeSarvamStream = async (ws: WebSocket, msg: any) => {
+  const langCode = msg.language || "gu-IN";
+  console.log(
+    `Starting Sarvam stream: model=saaras:v3, language=${langCode}, sampleRate=${msg.sampleRate}`,
+  );
+
+  const sarvamSocket = await client.speechToTextStreaming.connect({
+    model: "saaras:v3",
+    mode: "transcribe",
+    "language-code": langCode,
+    "Api-Subscription-Key": process.env.SARVAM_API_KEY,
+    input_audio_codec: "wav",
+    sample_rate: msg.sampleRate.toString(),
+  } as any);
+
+  sarvamSocket.on("open", () => {
+    console.log("Connected to Sarvam WS successfully");
+    ws.send(JSON.stringify({ type: "ready" }));
+  });
+
+  sarvamSocket.on("message", (sarvamMsg: any) =>
+    handleSarvamMessage(ws, sarvamMsg),
+  );
+
+  sarvamSocket.on("close", () => {
+    console.log("Sarvam WS closed");
+    ws.send(JSON.stringify({ type: "closed" }));
+  });
+
+  sarvamSocket.on("error", (err: any) => {
+    console.error("Sarvam WS error:", err);
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message: "Sarvam WS Error",
+        details: err?.message,
+      }),
+    );
+  });
+
+  return sarvamSocket;
+};
+
 const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
 wss.on("connection", (ws: WebSocket) => {
@@ -81,99 +154,38 @@ wss.on("connection", (ws: WebSocket) => {
   let sarvamSocket: any = null;
 
   ws.on("message", async (message: Buffer, isBinary: boolean) => {
-    if (!isBinary) {
-      try {
-        const msg = JSON.parse(message.toString());
-        if (msg.type === "start") {
-          const langCode = msg.language || "gu-IN";
-          console.log(
-            `Starting Sarvam stream: model=saaras:v3, language=${langCode}, sampleRate=${msg.sampleRate}`,
-          );
-          try {
-            sarvamSocket = await client.speechToTextStreaming.connect({
-              model: "saaras:v3",
-              mode: "transcribe",
-              "language-code": langCode,
-              "Api-Subscription-Key": process.env.SARVAM_API_KEY,
-              input_audio_codec: "wav",
-              sample_rate: msg.sampleRate.toString(),
-            } as any);
-
-            sarvamSocket.on("open", () => {
-              console.log("Connected to Sarvam WS successfully");
-              ws.send(JSON.stringify({ type: "ready" }));
-            });
-
-            sarvamSocket.on("message", (sarvamMsg: any) => {
-              console.log("Message from Sarvam:", JSON.stringify(sarvamMsg));
-              if (sarvamMsg.type === "data" && sarvamMsg.data) {
-                ws.send(
-                  JSON.stringify({ type: "transcript", data: sarvamMsg.data }),
-                );
-              } else if (sarvamMsg.type === "error") {
-                console.error(
-                  "Sarvam reported error in message:",
-                  sarvamMsg.data,
-                );
-                ws.send(
-                  JSON.stringify({
-                    type: "error",
-                    message: "Sarvam Error",
-                    details: sarvamMsg.data,
-                  }),
-                );
-              } else {
-                // Forward events if needed, but labeled
-                ws.send(JSON.stringify({ type: "event", data: sarvamMsg }));
-              }
-            });
-
-            sarvamSocket.on("close", () => {
-              console.log("Sarvam WS closed");
-              ws.send(JSON.stringify({ type: "closed" }));
-            });
-
-            sarvamSocket.on("error", (err: any) => {
-              console.error("Sarvam WS error:", err);
-              ws.send(
-                JSON.stringify({
-                  type: "error",
-                  message: "Sarvam WS Error",
-                  details: err?.message,
-                }),
-              );
-            });
-          } catch (e: any) {
-            console.error("Failed to connect to Sarvam initialization:", e);
-            ws.send(
-              JSON.stringify({
-                type: "error",
-                message: "Failed to connect to Sarvam",
-                details: e?.message,
-              }),
-            );
-          }
-        } else if (msg.type === "stop") {
-          console.log("Stopping stream (flush)");
-          if (sarvamSocket && sarvamSocket.readyState === 1)
-            sarvamSocket.flush();
-        }
-      } catch (e) {
-        console.error("Error parsing control message:", e);
-      }
-    } else {
-      // Binary audio data
-      if (sarvamSocket && sarvamSocket.readyState === 1) {
-        // 1 = OPEN
+    if (isBinary) {
+      if (sarvamSocket?.readyState === 1) {
         sarvamSocket.transcribe({
           audio: message.toString("base64"),
           sample_rate: 16000,
           encoding: "audio/wav",
         });
-      } else if (sarvamSocket) {
-        // Log if we are receiving data but socket isn't open yet
-        // console.log(`Sarvam socket state: ${sarvamSocket.readyState}`);
       }
+      return;
+    }
+
+    try {
+      const msg = JSON.parse(message.toString());
+      if (msg.type === "start") {
+        try {
+          sarvamSocket = await initializeSarvamStream(ws, msg);
+        } catch (e: any) {
+          console.error("Failed to connect to Sarvam initialization:", e);
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Failed to connect to Sarvam",
+              details: e?.message,
+            }),
+          );
+        }
+      } else if (msg.type === "stop" && sarvamSocket?.readyState === 1) {
+        console.log("Stopping stream (flush)");
+        sarvamSocket.flush();
+      }
+    } catch (e) {
+      console.error("Error parsing control message:", e);
     }
   });
 
@@ -182,7 +194,9 @@ wss.on("connection", (ws: WebSocket) => {
     if (sarvamSocket) {
       try {
         sarvamSocket.close();
-      } catch (e) { }
+      } catch (e) {
+        console.error("Error closing Sarvam socket:", e);
+      }
     }
   });
 
@@ -190,6 +204,7 @@ wss.on("connection", (ws: WebSocket) => {
     console.error("Local WS error:", err);
   });
 });
+
 
 app.post(
   "/api/transcribe",

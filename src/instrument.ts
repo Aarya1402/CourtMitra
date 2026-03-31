@@ -6,5 +6,5 @@ Sentry.init({
   // Only propagate traces to local routes, NOT to external Talkument API
   // This prevents extra headers from causing 404s on the upstream server
   tracePropagationTargets: [/^\//, "localhost"],
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 1,
 });
