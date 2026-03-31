@@ -51,9 +51,10 @@
 /* ================= BUTTON BASE ================= */
 
 .btn {
-  width: 44px;
-  height: 44px;
-  padding: 0;
+  width: auto;
+  height: 40px;
+  padding: 0 14px;
+  gap: 8px;
 
   display: flex;
   align-items: center;

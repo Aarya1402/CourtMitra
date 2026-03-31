@@ -495,8 +495,9 @@
 }
 
 .startRecordingBtn {
-  width: 42px;
+  width: auto;
   height: 42px;
+  padding: 0 14px;
   background: #fee2e2;
   color: #ef4444;
   border: 1px solid #fecaca;
@@ -504,6 +505,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   cursor: pointer;
   transition: all var(--transition-base);
 }
@@ -515,14 +517,16 @@
 }
 
 .uploadBtn {
-  width: 42px;
+  width: auto;
   height: 42px;
+  padding: 0 14px;
   background: white;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   cursor: pointer;
   transition: all var(--transition-base);
   color: var(--text-secondary);
@@ -858,9 +862,10 @@
   cursor: not-allowed;
 }
 .btn {
-  width: 44px;
-  height: 44px;
-  padding: 0;
+  width: auto;
+  height: 42px;
+  padding: 0 14px;
+  gap: 8px;
 
   display: flex;
   align-items: center;

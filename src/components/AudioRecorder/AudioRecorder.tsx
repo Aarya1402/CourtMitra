@@ -353,7 +353,7 @@ export default function AudioRecorder({
         className={`${styles.btn} ${styles.btnRecord}`}
         onClick={isRecording ? stopRecording : startRecording}
       >
-        {isRecording ? "■" : "●"}
+        {isRecording ? "■ Stop" : "● Record"}
       </button>
 
       {/* Pause */}
@@ -362,8 +362,9 @@ export default function AudioRecorder({
         onClick={togglePause}
         disabled={!isRecording}
       >
-        {isPaused ? "▶" : "⏸"}
+        {isPaused ? "▶ Resume" : "⏸ Pause"}
       </button>
+
 
       {/* Save (ALWAYS visible) */}
     </div>

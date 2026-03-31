@@ -896,6 +896,7 @@ const ThreadPage: React.FC = () => {
                           title="Recorder"
                         >
                           <Mic size={16} />
+                          <span>Mic</span>
                         </button>
 
                         <button
@@ -905,6 +906,7 @@ const ThreadPage: React.FC = () => {
                           title={isUploading ? "Uploading..." : "Upload Audio"}
                         >
                           <Upload size={16} />
+                          <span>Upload</span>
                         </button>
 
                         <input
@@ -923,6 +925,7 @@ const ThreadPage: React.FC = () => {
                             title="Save As MP3"
                           >
                             <Download size={16} />
+                            <span>Save</span>
                           </button>
                         )}
 
@@ -1033,6 +1036,7 @@ const ThreadPage: React.FC = () => {
                         title="Save As MP3"
                       >
                         <Download size={16} />
+                        <span>Save</span>
                       </button>
                     )}
                   </div>
