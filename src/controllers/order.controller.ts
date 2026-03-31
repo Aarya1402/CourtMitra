@@ -283,13 +283,7 @@ function extractJSON(text: string) {
         } catch { }
     }
 
-    // fallback to existing regex match which is greedy
-    const match = /\{[\s\S]*\}/.exec(text);
-    if (match) {
-        try {
-            return JSON.parse(match[0]);
-        } catch { }
-    }
+
 
     return null;
 }
