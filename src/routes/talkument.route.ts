@@ -109,17 +109,32 @@ const handleProxyError = (res: Response, req: Request, error: any) => {
     `[TalkumentProxy] Error in ${req.method} ${req.path}:`,
     error.message,
   );
+
   if (error.response) {
+    const errorData = error.response.data;
+    const errorStatus = error.response.status;
+
+    // Log error safely without stringifying potentially circular objects (like streams)
     console.error(
-      `[TalkumentProxy] API Response Error (${error.response.status}):`,
-      JSON.stringify(error.response.data).substring(0, 200),
+      `[TalkumentProxy] API Response Error (${errorStatus}):`,
+      typeof errorData === "string" ? errorData.substring(0, 200) : "Complex/Stream Data",
     );
-    return res.status(error.response.status).json(error.response.data);
+
+    // If it's a circular object (like a stream response error), don't pass it directly to .json()
+    // Extract only serializable properties if it's an object, or send a default message
+    const safeErrorData = (typeof errorData === "object" && errorData !== null) 
+      ? { message: error.message, status: errorStatus } // Fallback to safe info
+      : errorData;
+
+    return res.status(errorStatus).json(safeErrorData);
   }
+
   return res.status(500).json({
-    error: error.message || "Error communicating with Talkument API",
+    error: "Internal Server Error",
+    message: error.message || "Error communicating with Talkument API",
   });
 };
+
 
 export const handleTalkumentProxy = async (
   req: Request,
