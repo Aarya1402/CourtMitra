@@ -206,7 +206,11 @@ const FileManager: React.FC<FileManagerProps> = () => {
         return;
       }
 
-      const fileResponse = await axios.get(fileUrl, { responseType: "blob" });
+      const fileResponse = await axios.get(fileUrl, {
+        responseType: "blob",
+        withCredentials: false,
+      });
+
       const receivedBlob = fileResponse.data;
       const arrayBuffer = await receivedBlob.arrayBuffer();
       const fileType = file.name.split(".").pop()?.toLowerCase() || "";
