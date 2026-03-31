@@ -144,7 +144,7 @@ const ThreadPage: React.FC = () => {
         const langLabel =
           LANGUAGE_OPTIONS.find((opt) => opt.value === newLang)?.label ||
           newLang;
-        const res = await axios.post(`${API_BASE_URL}/api/gemini/translate`, {
+        const res = await axios.post(`${API_BASE_URL}/api/order/translate`, {
           orderData,
           language: langLabel,
         });
@@ -386,7 +386,7 @@ const ThreadPage: React.FC = () => {
       };
 
       const response = await axios.post(
-        `${API_BASE_URL}/api/gemini/extract`,
+        `${API_BASE_URL}/api/order/extract`,
         data
       );
 
