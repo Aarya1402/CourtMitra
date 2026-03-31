@@ -61,6 +61,32 @@ const getFontFamily = (language: string) => {
   }
 };
 
+const renderParagraphs = (styles: Record<string, any>, text: string = "") => {
+  if (!text) return null;
+  const sentences = text
+    .replace(/([.?!।])/g, "$1|")
+    .split("|")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const paragraphs: string[] = [];
+  let temp: string[] = [];
+  sentences.forEach((s, i) => {
+    temp.push(s);
+    if ((i + 1) % 3 === 0) {
+      paragraphs.push(temp.join(" "));
+      temp = [];
+    }
+  });
+  if (temp.length) paragraphs.push(temp.join(" "));
+
+  return paragraphs.map((p, i) => (
+    <Text key={`p-${i}`} style={styles.bodyText}>
+      {p}
+    </Text>
+  ));
+};
+
 const safeArray = (arr: any): string[] => (Array.isArray(arr) ? arr : []);
 
 const safeJoin = (arr: any): string => {
@@ -85,589 +111,377 @@ interface OrderDocumentProps {
 const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
   const t = getTranslation(language);
   const fontFamily = getFontFamily(language);
+  console.log(t.final_order_header);
 
-  // Mirrors .documentPage: padding: 30mm 25mm, font-size: 13pt, line-height: 1.7
-  // 1mm ≈ 2.835pt → 30mm ≈ 85pt, 25mm ≈ 71pt
   const styles = StyleSheet.create({
     page: {
-      paddingTop: 85,
-      paddingBottom: 85,
-      paddingHorizontal: 71,
-      fontSize: 13,
+      paddingTop: 50,
+      paddingBottom: 70,
+      paddingHorizontal: 60,
+      fontSize: 12,
       fontFamily,
-      lineHeight: 1.7,
+      lineHeight: 1.6,
       backgroundColor: "#FFFFFF",
     },
-
-    // .pageHeader → justify-content: flex-end, margin-bottom: 20px, font-size: 11pt, font-weight: bold
-    pageHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      marginBottom: 12,
-      fontSize: 11,
+    pageNumHeader: {
+      position: "absolute",
+      top: 30,
+      left: 60,
+      fontSize: 10,
+      color: "#666",
+      textAlign: "right",
+    },
+    /* ── HEADER ── */
+    header: { marginBottom: 20, textAlign: "center" },
+    courtName: { fontSize: 16, fontWeight: "bold", textTransform: "uppercase" },
+    location: { fontSize: 13, marginBottom: 6 },
+    caseInfoLine: {
+      fontSize: 13,
       fontWeight: "bold",
+      marginVertical: 10,
+      textDecoration: "underline",
     },
-
-    // .courtNameSection → text-align: center, margin-bottom: 25px
-    // h2 → font-size: 18pt, font-weight: bold
-    courtName: {
-      fontSize: 18,
-      fontWeight: "bold",
-      textAlign: "left",
-      marginBottom: 0,
-    },
-    // h3 → font-size: 14pt, margin: 8px 0 0 0
-    locationText: {
-      fontSize: 14,
-      textAlign: "left",
-      marginTop: 8,
-      marginBottom: 14,
-    },
-
-    // .caseTypeSection h4 → text-align: center, font-weight: bold, font-size: 14pt, margin-bottom: 35px
-    caseTypeText: {
-      textAlign: "left",
-      fontWeight: "bold",
-      fontSize: 14,
-      marginBottom: 18,
-    },
-
-    // .datesSection → flex-wrap, gap: 8px 32px, margin-bottom: 20px, font-size: 12pt
-    datesSection: {
+    /* ── DATES ── */
+    datesRow: {
       flexDirection: "column",
-      flexWrap: "wrap",
+      gap: 24,
       marginBottom: 12,
-      fontSize: 12,
     },
-    // .dateRow → display: flex, align-items: center, gap: 8px
-    dateRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginRight: 32,
-      marginBottom: 8,
-    },
-    // .dateRow span → font-weight: bold, white-space: nowrap
-    dateLabel: {
-      fontWeight: "bold",
-      marginRight: 8,
-    },
-
-    // .divider → border-top: 2px solid black, margin: 25px 0
+    dateItem: { flexDirection: "row", gap: 4, fontSize: 11 },
+    dateLabel: { fontWeight: "bold" },
+    /* ── DIVIDER ── */
     divider: {
-      borderTopWidth: 2,
-      borderTopColor: "#000000",
-      marginTop: 5,
-      marginBottom: 5,
+      borderTopWidth: 1.5,
+      borderTopColor: "#000",
+      marginVertical: 16,
     },
-
-    // .partiesSection → flex-direction: column, gap: 20px, margin-bottom: 35px
-    // .partyRow → justify-content: space-between, align-items: flex-start
+    /* ── PARTIES ── */
+    partiesSection: { marginBottom: 16 },
     partyRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "flex-start",
+      marginBottom: 10,
     },
-    // .partyDetails → flex: 1, max-width: 78%
-    partyDetails: {
-      flex: 1,
-      maxWidth: "78%",
-    },
-    // .partyRole → width: 20%, text-align: right, font-weight: bold
-    partyRole: {
-      width: "20%",
-      textAlign: "right",
-      fontWeight: "bold",
-    },
-    // .vsText → text-align: center, font-weight: bold, margin: 15px 0, font-style: italic
+    partyText: { flex: 1, maxWidth: "78%" },
+    partyRole: { width: "20%", textAlign: "right", fontWeight: "bold" },
     vsText: {
       textAlign: "center",
       fontWeight: "bold",
-      marginTop: 15,
-      marginBottom: 10,
+      marginVertical: 8,
     },
-
-    // .partiesDetailSection → margin-bottom: 20px
-    // .partyDetailRow → display: flex, gap: 12px, margin-bottom: 8px, align-items: flex-start
-    partyDetailRow: {
-      flexDirection: "row",
-      marginBottom: 8,
-      alignItems: "flex-start",
-    },
-    // .partyDetailLabel → font-weight: bold, min-width: 110px
-    partyDetailLabel: {
-      fontWeight: "bold",
-      minWidth: 110,
-      marginRight: 12,
-    },
-    partyDetailValue: {
-      flex: 1,
-    },
-
-    // .advocatesSection → margin-bottom: 35px
-    // .advocateRow → margin-bottom: 8px, display: flex, gap: 12px
-    // .advocateRow span → font-weight: bold, white-space: nowrap
-    advocateRow: {
-      flexDirection: "row",
-      marginBottom: 8,
-    },
-    advocateLabel: {
-      fontWeight: "bold",
-      marginRight: 12,
-    },
-    advocateValue: {
-      flex: 1,
-    },
-
-    // .appearanceRow → display: flex, align-items: center, gap: 12px, margin-bottom: 20px, font-size: 12pt
-    // .appearanceRow span → font-weight: bold, white-space: nowrap
+    /* ── LABEL ROWS (advocates / detail rows) ── */
+    labelRow: { flexDirection: "row", marginBottom: 6, gap: 8 },
+    labelBold: { fontWeight: "bold", minWidth: 140 },
+    labelValue: { flex: 1, textAlign: "justify" },
+    labelValueSmall: { flex: 1, fontSize: 11 },
+    /* ── APPEARANCE ── */
     appearanceRow: {
       flexDirection: "row",
-      alignItems: "center",
-      // marginBottom: 8,
-      fontSize: 12,
-    },
-    appearanceLabel: {
-      fontWeight: "bold",
-      marginRight: 12,
-    },
-
-    // .caseDetailsSection → margin-bottom: 30px
-    // .sectionHeading → text-decoration: underline, font-size: 14pt, margin: 0 0 12px 0, font-weight: bold
-    sectionHeading: {
-      textDecoration: "underline",
-      fontSize: 14,
+      gap: 8,
       marginBottom: 12,
-      fontWeight: "bold",
+      fontSize: 11,
     },
-    // .caseDetailRow → display: flex, gap: 12px, margin-bottom: 8px, align-items: flex-start
-    caseDetailRow: {
-      flexDirection: "row",
+    /* ── SECTIONS ── */
+    section: { marginBottom: 16 },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: "bold",
       marginBottom: 8,
-      alignItems: "flex-start",
-    },
-    caseDetailLabel: {
-      marginRight: 12,
-    },
-    caseDetailValue: {
-      flex: 1,
-    },
-
-    // .narrativeSection → margin-bottom: 30px
-    // .narrativeSection h5 → font-size: 13pt, margin: 0 0 10px 0, font-weight: bold
-    narrativeSection: {
-      marginBottom: 16,
-    },
-    narrativeHeading: {
-      fontSize: 13,
-      fontWeight: "bold",
-      marginBottom: 10,
-    },
-    bodyText: {
-      textAlign: "justify",
-      marginBottom: 10,
-    },
-
-    // .reasoningSection → margin-bottom: 35px
-    // h5 inline style: textDecoration: underline, fontSize: 14pt, marginBottom: 10px, fontWeight: bold
-    reasoningHeading: {
+      marginTop: 10,
       textDecoration: "underline",
+    },
+    bodyText: { textAlign: "justify", marginBottom: 10, textIndent: 30 },
+    listItem: { flexDirection: "row", marginBottom: 6, paddingLeft: 20 },
+    bullet: { width: 25, fontWeight: "bold" },
+    listContent: { flex: 1, textAlign: "justify" },
+    /* ── ORDER BANNER ── */
+    orderTitleBanner: {
+      textAlign: "center",
       fontSize: 14,
       fontWeight: "bold",
-      marginBottom: 10,
+      marginVertical: 26,
+      paddingVertical: 8,
     },
-    // .reasoningPoint → display: flex, gap: 12px, margin-bottom: 12px, align-items: flex-start
-    // number span → font-weight: bold, width: 30px
-    reasoningPoint: {
-      flexDirection: "row",
-      marginBottom: 12,
-      alignItems: "flex-start",
-    },
-    pointNumber: {
-      fontWeight: "bold",
-      width: 30,
-      marginRight: 12,
-    },
-    pointContent: {
-      flex: 1,
-      textAlign: "justify",
-    },
-
-    // .orderBodyTitle → text-align: center, font-weight: bold, font-size: 16pt,
-    //   margin: 50px 0 25px 0, letter-spacing: 0.1em
-    orderBodyTitle: {
-      textAlign: "center",
-      fontWeight: "bold",
-      fontSize: 16,
-      marginTop: 50,
-      marginBottom: 14,
-      letterSpacing: 1.3,
-    },
-
-    // .orderContent → margin-bottom: 45px, text-align: justify
-    orderContent: {
-      marginBottom: 24,
-    },
-
-    // directions h5 → font-size: 13pt (from .narrativeSection h5 equivalent), marginTop: 15px
-    directionsHeading: {
-      fontWeight: "bold",
-      fontSize: 13,
-      marginTop: 15,
-      marginBottom: 10,
-    },
-    // .directionPoint → display: flex, gap: 12px, margin-bottom: 12px, align-items: flex-start
-    directionPoint: {
-      flexDirection: "row",
-      marginBottom: 12,
-      alignItems: "flex-start",
-    },
-    directionNumber: {
-      fontWeight: "bold",
-      marginRight: 12,
-    },
-    directionContent: {
-      flex: 1,
-      textAlign: "justify",
-    },
-
-    // .signatureSection → display: flex, justify-content: space-between, margin-top: 60px
+    /* ── SIGNATURE ── */
     signatureSection: {
+      marginTop: 40,
       flexDirection: "row",
       justifyContent: "space-between",
-      marginTop: 60,
     },
-    // .sigLeft → width: 42%
-    sigLeft: {
-      width: "42%",
-    },
-    // .sigRow → margin-bottom: 8px, display: flex, align-items: center, gap: 12px
-    // .sigRow span → font-weight: bold
-    sigRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 8,
-    },
-    sigLabel: {
-      fontWeight: "bold",
-      marginRight: 12,
-    },
-    // .sigRight → width: 42%, text-align: center, flex-direction: column, gap: 6px
-    sigRight: {
-      width: "42%",
-      alignItems: "center",
-    },
-    // .sigPlaceholder → margin-bottom: 45px
-    sigPlaceholder: {
-      marginBottom: 24,
-    },
-    // .judgeName → font-weight: bold
-    judgeName: {
-      marginBottom: 6,
-      textAlign: "center",
-    },
-    // .judgeDesig / .sigCourtName → font-size: 11pt
-    judgeDesig: {
-      fontSize: 11,
-      marginBottom: 6,
-      textAlign: "center",
-    },
-    sigCourtName: {
-      fontSize: 11,
-      textAlign: "center",
-    },
+    signatureLeft: { fontSize: 11 },
+    signatureRight: { textAlign: "right" },
+    judgeName: { marginTop: 20, fontWeight: "bold" },
+    designation: { fontSize: 11 },
+    smallCourtName: { fontSize: 11 },
   });
-
-  const renderText = (text: string | undefined) => {
-    if (!text) return null;
-    return <Text style={styles.bodyText}>{text}</Text>;
-  };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* .pageHeader — case number top-right, page number top-left */}
-        <View style={styles.pageHeader} fixed>
-          <Text render={({ pageNumber }) => `Page No. ${pageNumber}`} />
-          <Text>{data.header?.case_number}</Text>
+        <Text
+          style={styles.pageNumHeader}
+          render={({ pageNumber }) =>
+            `${data.header?.case_number || ""} | Page No. ${pageNumber}`
+          }
+          fixed
+        />
+
+        {/* ── COURT HEADER ── */}
+        <View style={styles.header}>
+          <Text style={styles.courtName}>{data.header?.court_name}</Text>
+          <Text style={styles.location}>{data.header?.location}</Text>
+          <Text style={styles.caseInfoLine}>{data.header?.case_type}</Text>
+          <Text style={styles.caseInfoLine}>NO.</Text>
+          <Text style={styles.caseInfoLine}>{data.header?.case_number}</Text>
         </View>
 
-        {/* .courtNameSection h2 */}
-        <Text style={styles.courtName}>{data.header?.court_name}</Text>
-        {/* .courtNameSection h3 */}
-        <Text style={styles.locationText}>{data.header?.location}</Text>
+        <View style={styles.datesRow}>
+          {data.header.dates.filing_date && (
+            <View style={styles.dateItem}>
+              <Text style={styles.dateLabel}>{t.filing_date}</Text>
+              <Text>{data.header.dates.filing_date}</Text>
+            </View>
+          )}
+          {data.header.dates.registration_date && (
+            <View style={styles.dateItem}>
+              <Text style={styles.dateLabel}>{t.registration_date}:</Text>
+              <Text>{data.header.dates.registration_date}</Text>
+            </View>
+          )}
+          {data.header.dates.decision_date && (
+            <View style={styles.dateItem}>
+              <Text style={styles.dateLabel}>{t.decision_date}:</Text>
+              <Text>{data.header.dates.decision_date}</Text>
+            </View>
+          )}
+        </View>
 
-        {/* .caseTypeSection h4 */}
-        <Text style={styles.caseTypeText}>{data.header?.case_type}</Text>
-        <Text style={{ textAlign: "center" }}>NO.</Text>
-        <Text style={styles.caseTypeText}>{data.header?.case_number}</Text>
-        {/* .datesSection */}
-        <View style={styles.datesSection}>
-          <View style={styles.dateRow}>
-            <Text style={styles.dateLabel}>{t.filing_date}:</Text>
-            <Text>{data.header.dates.filing_date || "N/A"}</Text>
+        {/* ── PETITIONER vs RESPONDENT ── */}
+        <View style={styles.partiesSection}>
+          <View style={styles.partyRow}>
+            <Text style={styles.partyText}>{data.case_title?.petitioner}</Text>
+            <Text style={styles.partyRole}>{t.petitioner}</Text>
           </View>
-          <View style={styles.dateRow}>
-            <Text style={styles.dateLabel}>{t.registration_date}:</Text>
-            <Text>{data.header.dates.registration_date || "N/A"}</Text>
-          </View>
-          <View style={styles.dateRow}>
-            <Text style={styles.dateLabel}>{t.decision_date}:</Text>
-            <Text>{data.header.dates.decision_date || "N/A"}</Text>
+          <Text style={styles.vsText}>{t.versus}</Text>
+          <View style={styles.partyRow}>
+            <Text style={styles.partyText}>{data.case_title?.respondent}</Text>
+            <Text style={styles.partyRole}>{t.respondent}</Text>
           </View>
         </View>
 
-        {/* .partiesSection */}
-        <View style={styles.partyRow} wrap>
-          <Text style={styles.partyDetails}>{data.case_title?.petitioner}</Text>
-          <Text style={styles.partyRole}>{t.petitioner}</Text>
-        </View>
-
-        <Text style={styles.vsText}>{t.versus}</Text>
-
-        <View style={styles.partyRow} wrap>
-          <Text style={styles.partyDetails}>{data.case_title?.respondent}</Text>
-          <Text style={styles.partyRole}>{t.respondent}</Text>
-        </View>
-
-        {/* hr.divider */}
         <View style={styles.divider} />
 
-        {/* .partiesDetailSection */}
-        {(safeArray(data.parties?.complainant).length > 0 ||
-          safeArray(data.parties?.accused).length > 0 ||
-          safeArray(data.parties?.other_parties).length > 0) && (
-          <View style={{ marginBottom: 12 }}>
-            {safeArray(data.parties?.complainant).length > 0 && (
-              <View style={styles.partyDetailRow}>
-                <Text style={styles.partyDetailLabel}>{t.complainant}:</Text>
-                <Text style={styles.partyDetailValue}>
-                  {safeJoin(data.parties.complainant)}
-                </Text>
-              </View>
-            )}
-            {safeArray(data.parties?.accused).length > 0 && (
-              <View style={styles.partyDetailRow}>
-                <Text style={styles.partyDetailLabel}>{t.accused}:</Text>
-                <Text style={styles.partyDetailValue}>
-                  {safeJoin(data.parties.accused)}
-                </Text>
-              </View>
-            )}
-            {safeArray(data.parties?.other_parties).length > 0 && (
-              <View style={styles.partyDetailRow}>
-                <Text style={styles.partyDetailLabel}>{t.other_parties}:</Text>
-                <Text style={styles.partyDetailValue}>
-                  {safeJoin(data.parties.other_parties)}
-                </Text>
-              </View>
-            )}
+        <View style={styles.section}>
+          {safeArray(data.parties?.complainant).length > 0 && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.complainant}:</Text>
+              <Text style={styles.labelValue}>
+                {safeJoin(data.parties.complainant)}
+              </Text>
+            </View>
+          )}
+          {safeArray(data.parties?.accused).length > 0 && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.accused}:</Text>
+              <Text style={styles.labelValue}>
+                {safeJoin(data.parties.accused)}
+              </Text>
+            </View>
+          )}
+          {safeArray(data.parties?.other_parties).length > 0 && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.other_parties}:</Text>
+              <Text style={styles.labelValue}>
+                {safeJoin(data.parties.other_parties)}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ── ADVOCATES ── */}
+        <View style={styles.section}>
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.advocate_petitioner}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.petitioner_side)}
+            </Text>
+          </View>
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.advocate_respondent}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.respondent_side)}
+            </Text>
+          </View>
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.government_advocate}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.government_side)}
+            </Text>
+          </View>
+          <View style={styles.labelRow}>
+            <Text style={styles.labelBold}>{t.other_advocate}:</Text>
+            <Text style={styles.labelValue}>
+              {safeJoin(data.advocates.other)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.appearanceRow}>
+          <Text style={styles.dateLabel}>{t.appearance_mode}:</Text>
+          <Text>{data.appearance_mode}</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.case_details}</Text>
+          {data.case_details?.acts_sections && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.acts_sections}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.acts_sections}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.case_category && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.case_category}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.case_category}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.police_station && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.police_station}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.police_station}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.property_details && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.property_details}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.property_details}
+              </Text>
+            </View>
+          )}
+          {data.case_details?.other_details && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.other_details}:</Text>
+              <Text style={styles.labelValue}>
+                {data.case_details.other_details}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ── PROCEDURAL HISTORY ── */}
+        {data.procedural_history && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t.procedural_history}</Text>
+            {renderParagraphs(styles, data.procedural_history)}
           </View>
         )}
 
-        {/* .advocatesSection */}
-        <View>
-          <View style={styles.advocateRow}>
-            <Text style={styles.advocateLabel}>{t.advocate_petitioner}:</Text>
-            <Text style={styles.advocateValue}>
-              {safeJoin(data.advocates?.petitioner_side)}
-            </Text>
+        {/* ── ISSUES FRAMED ── */}
+        {data.issues_framed && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t.issues_framed}</Text>
+            {renderParagraphs(styles, data.issues_framed)}
           </View>
-          <View style={styles.advocateRow}>
-            <Text style={styles.advocateLabel}>{t.advocate_respondent}:</Text>
-            <Text style={styles.advocateValue}>
-              {safeJoin(data.advocates?.respondent_side)}
-            </Text>
-          </View>
-          {safeArray(data.advocates?.government_side).length > 0 && (
-            <View style={styles.advocateRow}>
-              <Text style={styles.advocateLabel}>{t.government_advocate}:</Text>
-              <Text style={styles.advocateValue}>
-                {safeJoin(data.advocates.government_side)}
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.evidence}:</Text>
+          {data.evidence?.oral_evidence && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.oral_evidence}:</Text>
+              <Text style={styles.labelValue}>
+                {data.evidence.oral_evidence}
               </Text>
             </View>
           )}
-          {safeArray(data.advocates?.other).length > 0 && (
-            <View style={styles.advocateRow}>
-              <Text style={styles.advocateLabel}>{t.other_advocate}:</Text>
-              <Text style={styles.advocateValue}>
-                {safeJoin(data.advocates.other)}
+          {data.evidence?.documentary_evidence && (
+            <View style={styles.labelRow}>
+              <Text style={styles.labelBold}>{t.documentary_evidence}:</Text>
+              <Text style={styles.labelValue}>
+                {data.evidence.documentary_evidence}
               </Text>
             </View>
           )}
         </View>
 
-        {/* .appearanceRow */}
-        {data.appearance_mode ? (
-          <View style={styles.appearanceRow}>
-            <Text style={styles.appearanceLabel}>{t.appearance_mode}:</Text>
-            <Text>{data.appearance_mode}</Text>
-          </View>
-        ) : null}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.arguments}</Text>
+          {renderParagraphs(styles, data.arguments)}
+        </View>
 
-        {/* hr.divider */}
-        <View style={styles.divider} />
-
-        {/* .caseDetailsSection */}
-        <Text style={styles.sectionHeading}>{t.case_details}:</Text>
-        {data.case_details?.acts_sections ? (
-          <View style={styles.caseDetailRow}>
-            <Text style={styles.caseDetailLabel}>{t.acts_sections}:</Text>
-            <Text style={styles.caseDetailValue}>
-              {data.case_details.acts_sections}
-            </Text>
-          </View>
-        ) : null}
-        {data.case_details?.case_category ? (
-          <View style={styles.caseDetailRow}>
-            <Text style={styles.caseDetailLabel}>{t.case_category}:</Text>
-            <Text style={styles.caseDetailValue}>
-              {data.case_details.case_category}
-            </Text>
-          </View>
-        ) : null}
-        {data.case_details?.police_station ? (
-          <View style={styles.caseDetailRow}>
-            <Text style={styles.caseDetailLabel}>{t.police_station}:</Text>
-            <Text style={styles.caseDetailValue}>
-              {data.case_details.police_station}
-            </Text>
-          </View>
-        ) : null}
-        {data.case_details?.property_details ? (
-          <View style={styles.caseDetailRow}>
-            <Text style={styles.caseDetailLabel}>{t.property_details}:</Text>
-            <Text style={styles.caseDetailValue}>
-              {data.case_details.property_details}
-            </Text>
-          </View>
-        ) : null}
-        {data.case_details?.other_details ? (
-          <View style={styles.caseDetailRow}>
-            <Text style={styles.caseDetailLabel}>{t.other_details}:</Text>
-            <Text style={styles.caseDetailValue}>
-              {data.case_details.other_details}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* .narrativeSection — procedural history */}
-        {data.procedural_history ? (
-          <View style={styles.narrativeSection}>
-            <Text style={styles.narrativeHeading}>{t.procedural_history}</Text>
-            {renderText(data.procedural_history)}
-          </View>
-        ) : null}
-
-        {/* .narrativeSection — issues framed */}
-        {data.issues_framed ? (
-          <View style={styles.narrativeSection}>
-            <Text style={styles.narrativeHeading}>{t.issues_framed}:</Text>
-            {renderText(data.issues_framed)}
-          </View>
-        ) : null}
-
-        {/* .narrativeSection — evidence */}
-        {data.evidence?.oral_evidence || data.evidence?.documentary_evidence ? (
-          <View style={styles.narrativeSection}>
-            <Text style={styles.narrativeHeading}>{t.evidence}:</Text>
-            {data.evidence?.oral_evidence ? (
-              <View style={styles.caseDetailRow}>
-                <Text style={styles.caseDetailLabel}>{t.oral_evidence}:</Text>
-                <Text style={styles.caseDetailValue}>
-                  {data.evidence.oral_evidence}
-                </Text>
-              </View>
-            ) : null}
-            {data.evidence?.documentary_evidence ? (
-              <View style={styles.caseDetailRow}>
-                <Text style={styles.caseDetailLabel}>
-                  {t.documentary_evidence}:
-                </Text>
-                <Text style={styles.caseDetailValue}>
-                  {data.evidence.documentary_evidence}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        ) : null}
-
-        {/* .narrativeSection — arguments */}
-        {data.arguments ? (
-          <View style={styles.narrativeSection}>
-            <Text style={styles.narrativeHeading}>{t.arguments}</Text>
-            {renderText(data.arguments)}
-          </View>
-        ) : null}
-
-        {/* .reasoningSection */}
-        <View>
-          <Text style={styles.reasoningHeading}>{t.reasoning}:</Text>
+        {/* ── REASONING ── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.reasoning}:</Text>
           {safeArray(data.reasoning_points)
             .filter((p) => p?.trim())
             .map((point, i) => (
-              <View key={`reasoning-${i}`} style={styles.reasoningPoint}>
-                <Text style={styles.pointNumber}>{i + 1}.</Text>
-                <Text style={styles.pointContent}>{point.trim()}</Text>
+              <View key={`reasoning-${i}`} style={styles.listItem}>
+                <Text style={styles.bullet}>{i + 1}.</Text>
+                <Text style={styles.listContent}>{point.trim()}</Text>
               </View>
             ))}
         </View>
 
-        {/* .orderBodyTitle — "---- FINAL ORDER ----" */}
-        <Text style={styles.orderBodyTitle}>---- {t.final_order} ----</Text>
+        {/* ── ORDER BANNER ── */}
+        <Text style={styles.orderTitleBanner}>{t.final_order_header}</Text>
 
-        {/* .orderContent */}
-        <View style={styles.orderContent}>
-          {renderText(data.operative_order?.full_text)}
+        {/* ── OPERATIVE ORDER ── */}
+        <View style={styles.section}>
+          {renderParagraphs(styles, data.operative_order?.full_text)}
 
-          {/* .directionsList */}
-          <View>
-            <Text style={styles.directionsHeading}>{t.directions}:</Text>
-            {safeArray(data.operative_order?.directions)
-              .filter((d) => d?.trim())
-              .map((dir, i) => (
-                <View key={`direction-${i}`} style={styles.directionPoint}>
-                  <Text style={styles.directionNumber}>({i + 1})</Text>
-                  <Text style={styles.directionContent}>{dir.trim()}</Text>
-                </View>
-              ))}
+          {safeArray(data.operative_order?.directions)
+            .filter((d) => d?.trim())
+            .map((dir, i) => (
+              <View key={`direction-${i}`} style={styles.listItem}>
+                <Text style={styles.bullet}>({i + 1})</Text>
+                <Text style={styles.listContent}>{dir.trim()}</Text>
+              </View>
+            ))}
+
+          <View style={{ marginTop: 12 }}>
+            <Text style={styles.sectionTitle}>{t.final_outcome}:</Text>
+            {renderParagraphs(styles, data.operative_order.final_outcome)}
           </View>
-
-          {/* final outcome inside orderContent */}
-          {data.operative_order?.final_outcome ? (
-            <View style={[styles.narrativeSection, { marginTop: 12 }]}>
-              <Text style={styles.narrativeHeading}>{t.final_outcome}:</Text>
-              {renderText(data.operative_order.final_outcome)}
-            </View>
-          ) : null}
         </View>
 
-        {/* standalone final_order field */}
-        {data.final_order ? (
-          <View style={styles.narrativeSection}>
-            <Text style={styles.sectionHeading}>{t.final_order}:</Text>
-            {renderText(data.final_order)}
-          </View>
-        ) : null}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.final_order}:</Text>
+          {renderParagraphs(styles, data.final_order)}
+        </View>
 
-        {/* .signatureSection */}
+        {/* ── SIGNATURE ── */}
         <View style={styles.signatureSection}>
-          {/* .sigLeft */}
-          <View style={styles.sigLeft}>
-            <View style={styles.sigRow}>
-              <Text style={styles.sigLabel}>{t.date}:</Text>
-              <Text>{data.signature?.date}</Text>
-            </View>
-            <View style={styles.sigRow}>
-              <Text style={styles.sigLabel}>{t.place}:</Text>
-              <Text>{data.signature?.place}</Text>
-            </View>
+          <View style={styles.signatureLeft}>
+            <Text>
+              {t.date}: {data.signature?.date && data.signature.date}
+            </Text>
+
+            <Text>
+              {t.place}: {data.signature?.place && data.signature.place}
+            </Text>
           </View>
-          {/* .sigRight */}
-          <View style={styles.sigRight}>
-            <Text style={styles.sigPlaceholder}>{t.signature_placeholder}</Text>
-            <Text style={styles.judgeName}>{data.signature?.judge_name}</Text>
-            <Text style={styles.judgeDesig}>{data.signature?.designation}</Text>
-            <Text style={styles.sigCourtName}>{data.signature?.court}</Text>
+          <View style={styles.signatureRight}>
+            <Text>{t.signature_placeholder}</Text>
+
+            <Text style={styles.judgeName}>
+              {data.signature?.judge_name && data.signature.judge_name}
+            </Text>
+
+            <Text style={styles.designation}>
+              {data.signature?.designation && data.signature.designation}
+            </Text>
+
+            <Text style={styles.smallCourtName}>
+              {data.signature?.court && data.signature.court}
+            </Text>
           </View>
         </View>
       </Page>

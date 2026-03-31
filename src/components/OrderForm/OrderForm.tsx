@@ -369,34 +369,38 @@ const OrderForm: React.FC<Props> = ({
 
           <div className={styles.courtNameSection}>
             <h2>
-              {renderInline(
-                formData.header?.court_name,
-                ["header", "court_name"],
-                t.court_name
-              )}
+              <AutoResizeTextarea
+                className={styles.docInlineTextareaCenter}
+                value={formData.header?.court_name || ""}
+                onChange={(v) => handleChange(["header", "court_name"], v)}
+                placeholder={t.court_name}
+              />
             </h2>
             <h3>
-              {renderInline(
-                formData.header?.location,
-                ["header", "location"],
-                t.location
-              )}
+              <AutoResizeTextarea
+                className={styles.docInlineTextareaCenter}
+                value={formData.header?.location || ""}
+                onChange={(v) => handleChange(["header", "location"], v)}
+                placeholder={t.location}
+              />
             </h3>
           </div>
 
           <div className={styles.caseTypeSection}>
             <h4>
-              {renderInline(
-                formData.header?.case_type,
-                ["header", "case_type"],
-                t.case_type
-              )}
+              <AutoResizeTextarea
+                className={styles.docInlineTextareaCenter}
+                value={formData.header?.case_type || ""}
+                onChange={(v) => handleChange(["header", "case_type"], v)}
+                placeholder={t.case_type}
+              />
               &nbsp;NO.&nbsp;
-              {renderInline(
-                formData.header?.case_number,
-                ["header", "case_number"],
-                t.case_number
-              )}
+              <AutoResizeTextarea
+                className={styles.docInlineTextareaCenter}
+                value={formData.header?.case_number || ""}
+                onChange={(v) => handleChange(["header", "case_number"], v)}
+                placeholder={t.case_number}
+              />
             </h4>
           </div>
 

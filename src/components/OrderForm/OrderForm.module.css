@@ -190,15 +190,35 @@
   border-bottom: 1px dashed transparent;
 }
 
+.docInlineTextareaCenter {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 100%;
+  resize: none;
+  min-height: 1.6em;
+  overflow: hidden;
+  padding: 4px;
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-sm);
+  border-bottom: 1px dashed transparent;
+  text-align: center;
+}
+
 .docTextarea:focus,
-.docInlineTextarea:focus {
+.docInlineTextarea:focus .docInlineTextareaCenter {
   outline: none;
   background: var(--bg-tertiary);
   border-bottom-color: var(--accent);
 }
 
 .docTextarea:hover,
-.docInlineTextarea:hover {
+.docInlineTextarea:hover .docInlineTextareaCenter {
   background: #fafafa;
   border-bottom-color: var(--border-strong);
 }
@@ -220,11 +240,13 @@
   font-size: 18pt;
   margin: 0;
   font-weight: bold;
+  text-align: center;
 }
 
 .courtNameSection h3 {
   font-size: 14pt;
   margin: 8px 0 0 0;
+  text-align: center;
 }
 
 .caseTypeSection {
