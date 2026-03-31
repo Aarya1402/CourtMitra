@@ -134,13 +134,29 @@
   border-radius: 50%;
 }
 
-.statusDot.processed {
+.processed {
+  color: var(--success);
+}
+.processed .statusDot {
   background: var(--success);
 }
-.statusDot.pending {
-  background: var(--warning);
+
+.pending {
+  color: #3b82f6; /* Blue for intermediate */
+}
+.pending .statusDot {
+  background: #3b82f6; 
   animation: pulse 1.5s infinite;
 }
+
+.failed {
+  color: var(--danger); /* Red for terminal failure */
+}
+.failed .statusDot {
+  background: var(--danger);
+}
+
+
 
 @keyframes pulse {
   0% {

@@ -151,7 +151,14 @@ const FileManager: React.FC<FileManagerProps> = () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [files, threadId, fetchFiles]);
-
+ 
+  const getStatusClass = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === "completed") return styles.processed; // Final green
+    if (s === "failed" || s === "error") return styles.failed; // Red
+    return styles.pending; // Intermediate (Processing, Pending, Uploading, etc.)
+  };
+ 
   const handlePlusClick = () => {
     if (!threadId) {
       showAlert("Please select or create a thread first.", { title: "Notice" });
@@ -324,12 +331,11 @@ const FileManager: React.FC<FileManagerProps> = () => {
               </div>
               <div className={styles.fileDetails}>
                 <span className={styles.fileName}>{file.name}</span>
-                <span className={styles.fileStatus}>
-                  <span
-                    className={`${styles.statusDot} ${file.status.toLowerCase() === "completed" ? styles.processed : styles.pending}`}
-                  />
+                <span className={`${styles.fileStatus} ${getStatusClass(file.status)}`}>
+                  <span className={styles.statusDot} />
                   {file.status}
                 </span>
+
               </div>
             </div>
             <div className={styles.actionMenu}>
