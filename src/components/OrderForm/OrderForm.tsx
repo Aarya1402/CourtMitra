@@ -8,6 +8,7 @@ import { getTranslation, LANGUAGE_OPTIONS } from "../../constants/translations";
 import { useTranscriber } from "../../hooks/useTranscriber";
 
 export type OrderData = {
+  [key: string]: any;
   header: {
     court_name: string;
     case_number: string;
@@ -156,7 +157,7 @@ const OrderForm: React.FC<Props> = ({
     if (transcript.trim()) {
       if (isNew) {
         // Append to the array
-        const newData = JSON.parse(JSON.stringify(formData));
+        const newData = structuredClone(formData);
         let current = newData;
         for (let i = 0; i < path.length; i++) {
           const key = path[i];
@@ -181,7 +182,7 @@ const OrderForm: React.FC<Props> = ({
     if (!isRecording && recordingField) {
       finalizeTranscription();
     }
-  }, [isRecording]);
+  }, [isRecording, recordingField]);
 
   const handleGeneratePDF = async () => {
     setIsGeneratingPdf(true);
@@ -206,7 +207,7 @@ const OrderForm: React.FC<Props> = ({
   };
 
   const handleChange = (path: string[], value: any) => {
-    const newData = JSON.parse(JSON.stringify(formData));
+    const newData = structuredClone(formData);
     let current = newData;
     for (let i = 0; i < path.length - 1; i++) {
       const key = path[i];
@@ -279,8 +280,8 @@ const OrderForm: React.FC<Props> = ({
                 className={styles.languageInline}
                 onClick={() => setShowLanguageMenu(true)}
               >
-                {LANGUAGE_OPTIONS.find((opt) => opt.value === language)?.label ||
-                  "English"}
+                {LANGUAGE_OPTIONS.find((opt) => opt.value === language)
+                  ?.label || "English"}
               </button>
               {showLanguageMenu && (
                 <>
@@ -434,7 +435,7 @@ const OrderForm: React.FC<Props> = ({
                 {renderTextArea(
                   safeJoinArray(formData.advocates?.petitioner_side),
                   ["advocates", "petitioner_side"],
-                  t.judge // Placeholder misuse? Let's use a generic one
+                  t.judge
                 )}
               </div>
             </div>
@@ -461,7 +462,7 @@ const OrderForm: React.FC<Props> = ({
             </h5>
             {Array.isArray(formData.reasoning_points) &&
               formData.reasoning_points.map((p, idx) => (
-                <div key={idx} className={styles.reasoningPoint}>
+                <div key={idx + p} className={styles.reasoningPoint}>
                   <span style={{ fontWeight: "bold", width: "30px" }}>
                     {idx + 1}.
                   </span>
@@ -554,7 +555,7 @@ const OrderForm: React.FC<Props> = ({
               <h5 style={{ marginTop: "15px" }}>{t.directions}:</h5>
               {Array.isArray(formData.operative_order?.directions) &&
                 formData.operative_order.directions.map((d, idx) => (
-                  <div key={idx} className={styles.directionPoint}>
+                  <div key={idx + d} className={styles.directionPoint}>
                     <span style={{ fontWeight: "bold" }}>({idx + 1})</span>
                     <div style={{ flex: 1 }}>
                       {renderTextArea(
@@ -579,7 +580,7 @@ const OrderForm: React.FC<Props> = ({
                         }}
                         title="Remove Direction"
                       >
-                        ×
+                        X
                       </button>
                     </div>
                   </div>

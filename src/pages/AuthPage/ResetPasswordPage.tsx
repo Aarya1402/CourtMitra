@@ -8,7 +8,7 @@ export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token");
-  
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<{ message: string }[]>([]);
@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
     return () => ctx.revert();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg([]);
     setSuccessMsg("");
@@ -51,7 +51,12 @@ export default function ResetPasswordPage() {
         setErrorMsg(
           Array.isArray(messages)
             ? messages
-            : [{ message: messages.message || messages.detail || "Error occurred" }]
+            : [
+                {
+                  message:
+                    messages.message || messages.detail || "Error occurred",
+                },
+              ]
         );
       } else {
         setErrorMsg([{ message: error.message || "Network Error" }]);
@@ -69,8 +74,11 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.fieldWrapper}>
-            <label className={styles.label}>New Password</label>
+            <label htmlFor="password" className={styles.label}>
+              New Password
+            </label>
             <input
+              id="password"
               type="password"
               placeholder="••••••••"
               value={password}
@@ -81,8 +89,11 @@ export default function ResetPasswordPage() {
           </div>
 
           <div className={styles.fieldWrapper}>
-            <label className={styles.label}>Confirm Password</label>
+            <label htmlFor="confirmPassword" className={styles.label}>
+              Confirm Password
+            </label>
             <input
+              id="confirmPassword"
               type="password"
               placeholder="••••••••"
               value={confirmPassword}
@@ -93,7 +104,7 @@ export default function ResetPasswordPage() {
           </div>
 
           {errorMsg?.map((err: { message: string }, index: number) => (
-            <p key={index} className={styles.error}>
+            <p key={index + err.message} className={styles.error}>
               {err.message}
             </p>
           ))}

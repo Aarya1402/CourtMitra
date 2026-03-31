@@ -10,10 +10,6 @@ import {
 import type { OrderData } from "./OrderForm";
 import { getTranslation } from "../../constants/translations";
 
-/**
- * 🔥 FONT REGISTRATION (IMPORTANT)
- * Place fonts inside: public/fonts/
- */
 Font.register({
   family: "Gujarati",
   src: "/fonts/NotoSerifGujarati-Regular.ttf",
@@ -86,11 +82,11 @@ const getFontFamily = (language: string) => {
 /**
  * 🔥 Paragraph splitter (works even without \n)
  */
-const renderParagraphs = (text: string = "", styles: any) => {
+const renderParagraphs = (styles: Record<string, any>, text: string = "") => {
   if (!text) return null;
 
   const sentences = text
-    .replace(/([.?!।])/g, "$1|")
+    .replaceAll(/([.?!।])/g, "$1|")
     .split("|")
     .map((s) => s.trim())
     .filter(Boolean);
@@ -109,7 +105,7 @@ const renderParagraphs = (text: string = "", styles: any) => {
   if (temp.length) paragraphs.push(temp.join(" "));
 
   return paragraphs.map((p, i) => (
-    <Text key={i} style={styles.bodyText}>
+    <Text key={`paragraph-${i}-${p.substring(0, 10)}`} style={styles.bodyText}>
       {p}
     </Text>
   ));
@@ -220,7 +216,7 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
     },
   });
 
-  const safeArray = (arr: any) => (Array.isArray(arr) ? arr : []);
+  const safeArray = (arr: string[]) => (Array.isArray(arr) ? arr : []);
 
   return (
     <Document>
@@ -244,7 +240,7 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
         {data.procedural_history && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.procedural_history}</Text>
-            {renderParagraphs(data.procedural_history, styles)}
+            {renderParagraphs(styles, data.procedural_history)}
           </View>
         )}
 
@@ -252,7 +248,7 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
         {data.arguments && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.arguments}</Text>
-            {renderParagraphs(data.arguments, styles)}
+            {renderParagraphs(styles, data.arguments)}
           </View>
         )}
 
@@ -262,7 +258,10 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
           {safeArray(data.reasoning_points)
             .filter((p) => p?.trim())
             .map((point, i) => (
-              <View key={i} style={styles.listItem}>
+              <View
+                key={`reasoning-${i}-${point.trim().substring(0, 10)}`}
+                style={styles.listItem}
+              >
                 <Text style={styles.bullet}>{i + 1}.</Text>
                 <Text style={styles.listContent}>{point.trim()}</Text>
               </View>
@@ -273,12 +272,15 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
         <Text style={styles.orderTitleBanner}>{t.final_order_header}</Text>
 
         <View style={styles.section}>
-          {renderParagraphs(data.operative_order.full_text, styles)}
+          {renderParagraphs(styles, data.operative_order.full_text)}
 
           {safeArray(data.operative_order.directions)
             .filter((d) => d?.trim())
             .map((dir, i) => (
-              <View key={i} style={styles.listItem}>
+              <View
+                key={`direction-${i}-${dir.trim().substring(0, 10)}`}
+                style={styles.listItem}
+              >
                 <Text style={styles.bullet}>({i + 1})</Text>
                 <Text style={styles.listContent}>{dir.trim()}</Text>
               </View>

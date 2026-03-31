@@ -17,11 +17,6 @@ const Sidebar: React.FC = () => {
 
   return (
     <div className="nav-sidebar">
-      {/* <div className="logo-container"> */}
-      {/* <img src="/logo.svg" alt="CourtMitra" className="logo-img" /> */}
-      {/* <span className="logo-text">CourtMitra</span> */}
-      {/* </div> */}
-
       <button className="new-chat-btn">
         <Plus size={18} />
         <span>New Chat</span>

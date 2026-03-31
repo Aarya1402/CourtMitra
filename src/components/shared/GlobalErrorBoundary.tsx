@@ -19,7 +19,7 @@ const ErrorFallback = ({ error }: any) => {
           We've encountered an unexpected error. Don't worry, our team has been
           notified and is looking into it.
         </p>
-        
+
         {import.meta.env.DEV && (
           <div className={styles.debugInfo}>
             <code>{error?.toString()}</code>
@@ -27,15 +27,15 @@ const ErrorFallback = ({ error }: any) => {
         )}
 
         <div className={styles.buttonGroup}>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => globalThis.location.reload()}
             className={styles.refreshButton}
           >
             <RefreshCcw size={18} />
             Reload Page
           </button>
-          <button 
-            onClick={() => window.location.href = "/"} 
+          <button
+            onClick={() => (globalThis.location.href = "/")}
             className={styles.homeButton}
           >
             <Home size={18} />
@@ -49,7 +49,7 @@ const ErrorFallback = ({ error }: any) => {
 
 const GlobalErrorBoundary: React.FC<Props> = ({ children }) => {
   return (
-    <Sentry.ErrorBoundary 
+    <Sentry.ErrorBoundary
       fallback={({ error, resetError }) => (
         <ErrorFallback error={error} resetError={resetError} />
       )}

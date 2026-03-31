@@ -28,7 +28,7 @@ const DeleteThreadModal = ({
   onConfirm: () => void;
   threadTitle: string;
 }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,8 +42,8 @@ const DeleteThreadModal = ({
 
   if (!isOpen) return null;
   return (
-    <div className={styles.modalOverlay} onClick={onCancel}>
-      <div
+    <button className={styles.modalOverlay} onClick={onCancel}>
+      <button
         ref={modalRef}
         className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
@@ -69,8 +69,8 @@ const DeleteThreadModal = ({
             Delete
           </button>
         </div>
-      </div>
-    </div>
+      </button>
+    </button>
   );
 };
 
@@ -105,7 +105,6 @@ const HomePage: React.FC = () => {
 
   const [showLogout, setShowLogout] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -237,7 +236,6 @@ const HomePage: React.FC = () => {
     try {
       const newThreadId = await uploadDocument(file, botId);
       setThreadId(newThreadId);
-
     } catch (error) {
       showAlert("Upload failed. Please try again.", { title: "Error" });
       console.error("Upload failed in HomePage:", error);
@@ -341,7 +339,11 @@ const HomePage: React.FC = () => {
               style={{ cursor: "pointer" }}
               ref={logoRef}
             >
-              <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
+              <img
+                src="/logo.svg"
+                alt="CourtMitra"
+                className={styles.logoImg}
+              />
               <span className={styles.logoText}>CourtMitra</span>
             </div>
             <button

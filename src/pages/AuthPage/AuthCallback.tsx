@@ -16,7 +16,7 @@ export default function AuthCallback() {
     const handleCallback = async () => {
       if (code) {
         try {
-          const redirectUrl = `${window.location.origin}/auth/callback`;
+          const redirectUrl = `${globalThis.location.origin}/auth/callback`;
           await GoogleCallback(code, redirectUrl);
           navigate("/");
         } catch (error) {
@@ -36,15 +36,23 @@ export default function AuthCallback() {
       <div className={styles.card}>
         <h2 className={styles.title}>Authenticating...</h2>
         <p className={styles.subtitle}>Please wait while we sign you in.</p>
-        <div style={{ display: "flex", justifyContent: "center", marginTop: "2rem" }}>
-           <div style={{ 
-             width: "40px", 
-             height: "40px", 
-             border: "3px solid var(--accent-soft)", 
-             borderTopColor: "var(--accent)", 
-             borderRadius: "50%",
-             animation: "spin 1s linear infinite"
-           }}></div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "2rem",
+          }}
+        >
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              border: "3px solid var(--accent-soft)",
+              borderTopColor: "var(--accent)",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          ></div>
         </div>
       </div>
       <style>{`

@@ -131,7 +131,18 @@ const ThreadPage: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const isLoadingHistoryRef = useRef(false); // tracks history fetches without re-render
 
+  useEffect(() => {
+    const selectedLang = localStorage.getItem(threadId + "selectedLanguage");
+    if (selectedLang) {
+      localStorage.setItem(threadId + "selectedLanguage", "gu-IN");
+      setLanguage(selectedLang);
+    } else {
+      localStorage.setItem(threadId + "selectedLanguage", "gu-IN");
+    }
+  }, [threadId]);
+
   const handleLanguageChange = async (newLang: string) => {
+    localStorage.setItem(threadId + "selectedLanguage", newLang);
     setLanguage(newLang);
 
     // Only translate if form has non-initial data
@@ -972,7 +983,13 @@ const ThreadPage: React.FC = () => {
                           <select
                             className={styles.languageInline}
                             value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
+                            onChange={(e) => {
+                              localStorage.setItem(
+                                threadId + "selectedLanguage",
+                                e.target.value
+                              );
+                              setLanguage(e.target.value);
+                            }}
                           >
                             {LANGUAGE_OPTIONS.map((option) => (
                               <option key={option.value} value={option.value}>

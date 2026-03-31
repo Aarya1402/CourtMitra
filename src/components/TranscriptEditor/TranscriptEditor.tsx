@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Download, Copy, Check, Trash2, Mic as MicIcon, Square } from "lucide-react";
+import {
+  Download,
+  Copy,
+  Check,
+  Trash2,
+  Mic as MicIcon,
+  Square,
+} from "lucide-react";
 import Button from "../shared/Button";
 import styles from "./TranscriptEditor.module.css";
 import { DEFAULT_PLACEHOLDER } from "./TranscriptEditor.logic";
@@ -54,7 +61,9 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
       if (!textareaRef.current) return;
       const start = textareaRef.current.selectionStart;
       const end = textareaRef.current.selectionEnd;
-      const selectedText = textareaRef.current.value.substring(start, end).trim();
+      const selectedText = textareaRef.current.value
+        .substring(start, end)
+        .trim();
 
       if (selectedText) {
         setContextMenu({
@@ -97,8 +106,8 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
         setContextMenu(null);
       }
     };
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
+    globalThis.addEventListener("click", handleClick);
+    return () => globalThis.removeEventListener("click", handleClick);
   }, [isLocalRecording]);
 
   const handleCopy = () => {
@@ -109,7 +118,9 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
   const handleDownload = async () => {
     try {
-      const doc = <TranscriptDocument transcript={transcript} language={language} />;
+      const doc = (
+        <TranscriptDocument transcript={transcript} language={language} />
+      );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -178,7 +189,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
           />
         )}
         {contextMenu && (
-          <div
+          <button
             className={`${styles.floatingMic} ${isLocalRecording ? styles.recording : ""}`}
             style={{ top: contextMenu.y, left: contextMenu.x }}
             onClick={handleModifyClick}
@@ -189,7 +200,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             ) : (
               <MicIcon size={18} />
             )}
-          </div>
+          </button>
         )}
       </div>
     </div>

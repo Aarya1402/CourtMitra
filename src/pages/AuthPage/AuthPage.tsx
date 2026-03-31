@@ -93,9 +93,10 @@ export default function AuthPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl = `${globalThis.location.origin}/auth/callback`;
       await GoogleLogin(redirectUrl);
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Google Login error:", error);
       setErrorMsg([{ message: "Failed to initialize Google Login" }]);
     }
   };
@@ -107,7 +108,7 @@ export default function AuthPage() {
 
     try {
       if (isForgotPassword) {
-        const redirectUrl = `${window.location.origin}/reset-password`;
+        const redirectUrl = `${globalThis.location.origin}/reset-password`;
         await ForgotPassword(form.email, redirectUrl);
         setSuccessMsg("Password reset link has been sent to your email");
         return;
@@ -135,24 +136,18 @@ export default function AuthPage() {
     }
   };
 
-
-
   return (
     <div className={styles.wrapper}>
       <div className={styles.card} ref={cardRef}>
         <h2 className={styles.title}>
-          {isForgotPassword
-            ? "Reset Password"
-            : isLogin
-              ? "Welcome back"
-              : "Create account"}
+          {isForgotPassword && "Reset Password"}
+          {!isForgotPassword && isLogin ? "Welcome back" : "Create account"}
         </h2>
         <p className={styles.subtitle}>
-          {isForgotPassword
-            ? "Enter your email to receive a reset link"
-            : isLogin
-              ? "Sign in to your account"
-              : "Get started today"}
+          {isForgotPassword && "Enter your email to receive a reset link"}
+          {!isForgotPassword && isLogin
+            ? "Sign in to your account"
+            : "Get started today"}
         </p>
 
         {successMsg && <p className={styles.successMessage}>{successMsg}</p>}
@@ -189,7 +184,13 @@ export default function AuthPage() {
                 onChange={handleChange}
               />
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
                 <Field
                   label="Password"
                   name="password"
@@ -232,7 +233,8 @@ export default function AuthPage() {
             </p>
           ))}
           <button type="submit" className={styles.button}>
-            {isForgotPassword ? "Send Reset Link" : isLogin ? "Login" : "Sign up"}
+            {isForgotPassword && "Send Reset Link"}
+            {!isForgotPassword && isLogin ? "Login" : "Sign up"}
           </button>
         </form>
 
@@ -279,7 +281,12 @@ export default function AuthPage() {
               <button
                 onClick={() => {
                   setIsLogin(!isLogin);
-                  setForm({ name: "", email: "", password: "", organisation: "" });
+                  setForm({
+                    name: "",
+                    email: "",
+                    password: "",
+                    organisation: "",
+                  });
                   setErrorMsg([]);
                   setSuccessMsg("");
                 }}

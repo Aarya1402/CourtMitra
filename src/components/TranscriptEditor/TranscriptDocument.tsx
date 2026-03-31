@@ -79,11 +79,39 @@ const getFontFamily = (language: string) => {
   }
 };
 
-/**
- * 🔥 Paragraph splitter (same logic as OrderDocument)
- */
-const renderParagraphs = (styles: any, text: string = "") => {
-
+const renderParagraphs = (
+  styles: {
+    page: {
+      paddingTop: number;
+      paddingBottom: number;
+      paddingHorizontal: number;
+      fontSize: number;
+      fontFamily: string;
+      lineHeight: number;
+      backgroundColor: string;
+    };
+    pageNumHeader: {
+      position: "absolute";
+      top: number;
+      left: number;
+      fontSize: number;
+      color: string;
+    };
+    header: {
+      fontSize: number;
+      fontWeight: string;
+      marginBottom: number;
+      textAlign: "center";
+      textTransform: "uppercase";
+    };
+    bodyText: {
+      textAlign: "justify";
+      marginBottom: number;
+      textIndent: number;
+    };
+  },
+  text: string = ""
+) => {
   const sentences = text
     .replaceAll(/([.?!।])/g, "$1|")
     .split("|")
@@ -104,7 +132,7 @@ const renderParagraphs = (styles: any, text: string = "") => {
   if (temp.length) paragraphs.push(temp.join(" "));
 
   return paragraphs.map((p, i) => (
-    <Text key={i} style={styles.bodyText}>
+    <Text key={i + p} style={styles.bodyText}>
       {p}
     </Text>
   ));

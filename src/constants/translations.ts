@@ -1,4 +1,4 @@
-export const translations: Record<string, any> = {
+export const translations: Record<string, { [key: string]: string }> = {
   "en-IN": {
     court_name: "In the Court of",
     location: "Location",

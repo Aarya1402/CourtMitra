@@ -23,7 +23,7 @@ const DeleteModal = ({
   onCancel: () => void;
   onConfirm: () => void;
 }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,8 +37,8 @@ const DeleteModal = ({
 
   if (!isOpen) return null;
   return (
-    <div className={styles.modalOverlay} onClick={onCancel}>
-      <div
+    <button className={styles.modalOverlay} onClick={onCancel}>
+      <button
         ref={modalRef}
         className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
@@ -60,8 +60,8 @@ const DeleteModal = ({
             Delete
           </button>
         </div>
-      </div>
-    </div>
+      </button>
+    </button>
   );
 };
 
@@ -83,7 +83,8 @@ const MessageMenu = ({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      const pureText = text.replaceAll(/<[^>]*>/g, "");
+      await navigator.clipboard.writeText(pureText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       setIsOpen(false);

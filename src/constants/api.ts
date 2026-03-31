@@ -1,5 +1,5 @@
-const isHttps = window.location.protocol === "https:";
-const host = window.location.host;
+const isHttps = globalThis.location.protocol === "https:";
+const host = globalThis.location.host;
 const protocol = isHttps ? "wss" : "ws";
 
 // API_BASE_URL: If not provided in .env, use empty string to allow relative pathing (Vite proxy)

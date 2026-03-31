@@ -12,31 +12,19 @@ const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
   const [input, setInput] = useState("");
   const { isRecording, transcript, start, stop, error } = useTranscriber();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const displayValue = isRecording ? transcript : input;
 
-  // Auto-resize textarea
+  // ✅ Resize properly for transcript too
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+        150
+      )}px`;
     }
-  }, [input]);
-
-  // Track recording state transition to sync transcript back to input
-  const wasRecordingRef = useRef(false);
-  useEffect(() => {
-    if (wasRecordingRef.current && !isRecording) {
-      if (transcript.trim()) {
-        setInput((prev) => {
-          const trimmedPrev = prev.trim();
-          return trimmedPrev
-            ? `${trimmedPrev} ${transcript.trim()}`
-            : transcript.trim();
-        });
-      }
-    }
-    wasRecordingRef.current = isRecording;
-  }, [isRecording, transcript]);
+  }, [displayValue]);
 
   const handleSend = () => {
     if (!input.trim() || isRecording) return;
@@ -47,8 +35,13 @@ const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
   const toggleMic = async () => {
     if (isRecording) {
       stop();
+
+      // ✅ push transcript into input after stop
+      if (transcript.trim()) {
+        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      }
     } else {
-      await start(); // Uses default 'unknown' for auto-detect
+      await start();
     }
   };
 
@@ -74,11 +67,11 @@ const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
           disabled={disabled}
           rows={1}
         />
+
         <button
           className={`${styles.micBtn} ${isRecording ? styles.recording : ""}`}
           onClick={toggleMic}
           disabled={disabled}
-          title={isRecording ? "Stop recording" : "Speak to type"}
           type="button"
         >
           <Mic size={20} />

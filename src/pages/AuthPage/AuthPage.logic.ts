@@ -9,15 +9,12 @@ export async function SignUp(
   organisation: string
 ) {
   try {
-    await axios.post(
-      `${API_BASE_URL}/api/talkument/auth/signup`,
-      {
-        name,
-        email,
-        password,
-        org_name: organisation,
-      }
-    );
+    await axios.post(`${API_BASE_URL}/api/talkument/auth/signup`, {
+      name,
+      email,
+      password,
+      org_name: organisation,
+    });
 
     // Auto login after signup
     return await SignIn(email, password);
@@ -56,7 +53,7 @@ export async function GoogleLogin(redirectUrl: string) {
       }
     );
     if (response.data.auth_url) {
-      window.location.href = response.data.auth_url;
+      globalThis.location.href = response.data.auth_url;
     }
     return response.data;
   } catch (error) {
@@ -99,7 +96,11 @@ export async function ForgotPassword(email: string, redirectUrl: string) {
   }
 }
 
-export async function ResetPassword(data: any) {
+export async function ResetPassword(data: {
+  token: string | null;
+  new_password: string;
+  confirm_password: string;
+}) {
   try {
     const response = await axios.post(
       `${API_BASE_URL}/api/talkument/auth/reset-password`,

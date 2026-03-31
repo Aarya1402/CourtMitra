@@ -171,7 +171,9 @@
   gap: 0.75rem;
   transition: background-color 0.2s;
   border-radius: var(--radius-md);
-  padding: 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 .userProfile:hover {
@@ -407,7 +409,9 @@
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   z-index: 1500;
-  transition: opacity var(--transition-base), visibility var(--transition-base);
+  transition:
+    opacity var(--transition-base),
+    visibility var(--transition-base);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

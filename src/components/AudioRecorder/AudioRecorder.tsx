@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import styles from "./AudioRecorder.module.css";
 import { WS_URL } from "./AudioRecorder.logic";
 
@@ -123,13 +123,15 @@ export default function AudioRecorder({
     animFrameRef.current = requestAnimationFrame(drawBars);
   };
 
-  const startRecording = async () => {
+  const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
       const audioCtx = new (
-        globalThis.AudioContext || (globalThis as any).webkitAudioContext
+        globalThis.AudioContext ||
+        (globalThis as unknown as Record<string, typeof AudioContext>)
+          .webkitAudioContext
       )({
         sampleRate: 16000,
       });
@@ -252,7 +254,15 @@ export default function AudioRecorder({
       console.error("Mic access denied", err);
       if (onTranscriptionError) onTranscriptionError("Mic access denied");
     }
-  };
+  }, [
+    onTranscriptionStart,
+    onTranscriptionComplete,
+    onTranscriptionError,
+    onRecordingStateChange,
+    onAudioBlobComplete,
+    setAudioURL,
+    language,
+  ]);
 
   const hasStartedRef = useRef(false);
 
@@ -261,7 +271,7 @@ export default function AudioRecorder({
       hasStartedRef.current = true;
       startRecording();
     }
-  }, [autoStart]);
+  }, [autoStart, startRecording]);
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
@@ -364,7 +374,6 @@ export default function AudioRecorder({
       >
         {isPaused ? "▶ Resume" : "⏸ Pause"}
       </button>
-
 
       {/* Save (ALWAYS visible) */}
     </div>
