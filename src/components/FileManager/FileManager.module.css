@@ -145,7 +145,7 @@
   color: #3b82f6; /* Blue for intermediate */
 }
 .pending .statusDot {
-  background: #3b82f6; 
+  background: #3b82f6;
   animation: pulse 1.5s infinite;
 }
 
@@ -155,8 +155,6 @@
 .failed .statusDot {
   background: var(--danger);
 }
-
-
 
 @keyframes pulse {
   0% {
@@ -379,4 +377,23 @@
 
 .confirmDeleteBtn:hover {
   background: #b91c1c;
+}
+
+.previewLoader {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #666;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

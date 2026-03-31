@@ -91,6 +91,8 @@ const FileManager: React.FC<FileManagerProps> = () => {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   const [fileToDelete, setFileToDelete] = useState<ThreadFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchFiles = useCallback(
     async (silent: boolean = false) => {
@@ -113,6 +115,11 @@ const FileManager: React.FC<FileManagerProps> = () => {
   useEffect(() => {
     fetchFiles();
   }, [threadId, fetchFiles]);
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -151,14 +158,14 @@ const FileManager: React.FC<FileManagerProps> = () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [files, threadId, fetchFiles]);
- 
+
   const getStatusClass = (status: string) => {
     const s = status.toLowerCase();
     if (s === "completed") return styles.processed; // Final green
     if (s === "failed" || s === "error") return styles.failed; // Red
     return styles.pending; // Intermediate (Processing, Pending, Uploading, etc.)
   };
- 
+
   const handlePlusClick = () => {
     if (!threadId) {
       showAlert("Please select or create a thread first.", { title: "Notice" });
@@ -199,11 +206,17 @@ const FileManager: React.FC<FileManagerProps> = () => {
 
   const handlePreview = async (file: ThreadFile) => {
     setActiveDropdownId(null);
+    setIsPreviewLoading(true);
+    abortControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       // Step 1: Get signed URL from your API
       const response = await axios.get(
-        `${API_BASE}/bots/file/${file.id}/download`
+        `${API_BASE}/bots/file/${file.id}/download`,
+        { signal: controller.signal }
       );
 
       const fileUrl: string | undefined = response.data?.file_url;
@@ -212,11 +225,13 @@ const FileManager: React.FC<FileManagerProps> = () => {
         showAlert("Preview URL not found.", { title: "Error" });
         return;
       }
-
+      //loading start here
       const fileResponse = await axios.get(fileUrl, {
         responseType: "blob",
         withCredentials: false,
+        signal: controller.signal,
       });
+      //loading end here
 
       const receivedBlob = fileResponse.data;
       const arrayBuffer = await receivedBlob.arrayBuffer();
@@ -231,8 +246,14 @@ const FileManager: React.FC<FileManagerProps> = () => {
       setPreviewUrl(blobUrl);
       setPreviewFileName(file.name);
     } catch (err) {
+      if (err.name === "CanceledError" || err.name === "AbortError") {
+        console.log("Request aborted");
+        return;
+      }
       console.error("Preview error:", err);
       showAlert("Failed to load preview.", { title: "Error" });
+    } finally {
+      setIsPreviewLoading(false);
     }
   };
 
@@ -253,26 +274,42 @@ const FileManager: React.FC<FileManagerProps> = () => {
     }
   };
 
-  if (previewUrl) {
+  if (previewUrl || isPreviewLoading) {
     return (
       <div className={styles.fileManager}>
         <div className={styles.fmHeader}>
           <div className={styles.fmActions}>
             <button
               className={styles.iconBtn}
-              onClick={() => setPreviewUrl(null)}
+              onClick={() => {
+                setPreviewUrl(null);
+                setIsPreviewLoading(false);
+                abortControllerRef.current?.abort();
+              }}
             >
               <ArrowLeft size={16} /> Back
             </button>
           </div>
-          <h3>Preview: {previewFileName}</h3>
+          <h3>
+            {isPreviewLoading
+              ? "Loading Preview..."
+              : `Preview: ${previewFileName}`}
+          </h3>
         </div>
+
         <div className={styles.previewContainer}>
-          <iframe
-            src={`${previewUrl}`}
-            className={styles.previewFrame}
-            title="Document Preview"
-          />
+          {isPreviewLoading ? (
+            <div className={styles.previewLoader}>
+              <Loader2 size={40} className={styles.spin} />
+              <p>Loading document preview...</p>
+            </div>
+          ) : (
+            <iframe
+              src={`${previewUrl}`}
+              className={styles.previewFrame}
+              title="Document Preview"
+            />
+          )}
         </div>
       </div>
     );
@@ -331,11 +368,12 @@ const FileManager: React.FC<FileManagerProps> = () => {
               </div>
               <div className={styles.fileDetails}>
                 <span className={styles.fileName}>{file.name}</span>
-                <span className={`${styles.fileStatus} ${getStatusClass(file.status)}`}>
+                <span
+                  className={`${styles.fileStatus} ${getStatusClass(file.status)}`}
+                >
                   <span className={styles.statusDot} />
                   {file.status}
                 </span>
-
               </div>
             </div>
             <div className={styles.actionMenu}>

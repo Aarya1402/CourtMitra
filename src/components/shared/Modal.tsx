@@ -22,8 +22,8 @@ const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <button className={styles.overlay} onClick={onClose}>
-      <button
+    <div className={styles.overlay} onClick={onClose}>
+      <div
         className={`${styles.modal} ${styles[size]}`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -37,8 +37,8 @@ const Modal: React.FC<ModalProps> = ({
         <section className={styles.content}>{children}</section>
 
         {footer && <footer className={styles.footer}>{footer}</footer>}
-      </button>
-    </button>
+      </div>
+    </div>
   );
 };
 
