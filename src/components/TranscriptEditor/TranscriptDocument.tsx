@@ -8,76 +8,11 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { getTranslation } from "../../constants/translations";
+import { fontConfigs, getFontFamily } from "../../constants/fontConfig";
 
-/**
- * 🔥 FONT REGISTRATION (same as OrderDocument)
- */
-Font.register({
-  family: "Gujarati",
-  src: "/fonts/NotoSerifGujarati-Regular.ttf",
-});
-
-Font.register({
-  family: "Hindi",
-  src: "/fonts/NotoSerifDevanagari-Regular.ttf",
-});
-
-Font.register({
-  family: "Tamil",
-  src: "/fonts/NotoSerifTamil_SemiCondensed-Regular.ttf",
-});
-
-Font.register({
-  family: "Telugu",
-  src: "/fonts/NotoSerifTelugu-Regular.ttf",
-});
-
-Font.register({
-  family: "Kannada",
-  src: "/fonts/NotoSerifKannada-Regular.ttf",
-});
-
-Font.register({
-  family: "Bengali",
-  src: "/fonts/NotoSerifBengali-Regular.ttf",
-});
-
-Font.register({
-  family: "Punjabi",
-  src: "/fonts/NotoSerifGurmukhi-Regular.ttf",
-});
-
-Font.register({
-  family: "Odia",
-  src: "/fonts/NotoSerifOriya-Regular.ttf",
-});
-
-/**
- * 🔥 Dynamic font selection
- */
-const getFontFamily = (language: string) => {
-  switch (language) {
-    case "gu-IN":
-      return "Gujarati";
-    case "hi-IN":
-    case "mr-IN":
-      return "Hindi";
-    case "ta-IN":
-      return "Tamil";
-    case "te-IN":
-      return "Telugu";
-    case "kn-IN":
-      return "Kannada";
-    case "bn-IN":
-      return "Bengali";
-    case "pa-IN":
-      return "Punjabi";
-    case "od-IN":
-      return "Odia";
-    default:
-      return "Times-Roman";
-  }
-};
+for (const font of fontConfigs) {
+  Font.register(font);
+}
 
 const renderParagraphs = (
   styles: {

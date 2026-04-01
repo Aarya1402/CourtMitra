@@ -23,12 +23,9 @@ const mergeTranscriptChunk = (previous: string, incoming: string) => {
   if (!next) return previous;
   if (!prev) return next;
 
-  // If backend sends full cumulative text, trust it and replace.
   if (next.startsWith(prev)) return next;
-  // If backend repeats older content, keep the longest stable transcript.
   if (prev.startsWith(next)) return prev;
 
-  // For delta chunks, append with spacing.
   return `${prev} ${next}`.replaceAll(/\s+/g, " ").trim();
 };
 
@@ -52,6 +49,8 @@ export default function AudioRecorder({
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const workletRef = useRef<AudioWorkletNode | null>(null); // ✅ NEW
+
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -61,7 +60,6 @@ export default function AudioRecorder({
   const timerRef = useRef<number | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
   const isRecordingRef = useRef<boolean>(false);
   const isPausedRef = useRef<boolean>(false);
   const transcriptRef = useRef<string>("");
@@ -72,14 +70,19 @@ export default function AudioRecorder({
       setTimeout(() => wsRef.current?.close(), 100);
       wsRef.current = null;
     }
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
+
+    // ❌ removed ScriptProcessor cleanup
+    // ✅ AudioWorklet cleanup
+    if (workletRef.current) {
+      workletRef.current.disconnect();
+      workletRef.current = null;
     }
+
     if (audioCtxRef.current) {
       audioCtxRef.current.close();
       audioCtxRef.current = null;
     }
+
     if (streamRef.current) {
       for (const t of streamRef.current.getTracks()) {
         t.stop();
@@ -100,7 +103,6 @@ export default function AudioRecorder({
     };
   }, []);
 
-  // Sync ref with the transcript prop so we always append to the latest version (including manual edits)
   useEffect(() => {
     if (!isRecordingRef.current) {
       transcriptRef.current = transcript;
@@ -109,6 +111,7 @@ export default function AudioRecorder({
 
   const drawBars = () => {
     if (!analyserRef.current) return;
+
     const analyser = analyserRef.current;
     const data = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(data);
@@ -117,10 +120,15 @@ export default function AudioRecorder({
       const slice = Math.floor(data.length / 40);
       const start = i * slice;
       let sum = 0;
-      for (let j = start; j < start + slice; j++) sum += data[j];
+
+      for (let j = start; j < start + slice; j++) {
+        sum += data[j];
+      }
+
       const avg = sum / slice;
       return Math.max(2, (avg / 255) * 64);
     });
+
     setBarHeights(bars);
     animFrameRef.current = requestAnimationFrame(drawBars);
   };
@@ -137,39 +145,41 @@ export default function AudioRecorder({
       )({
         sampleRate: 16000,
       });
+
       if (audioCtx.state === "suspended") {
         await audioCtx.resume();
       }
 
       audioCtxRef.current = audioCtx;
+
       const source = audioCtx.createMediaStreamSource(stream);
       sourceRef.current = source;
+
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 256;
       analyserRef.current = analyser;
-      source.connect(analyser);
 
-      // Start streaming WebSocket
+      source.connect(analyser);
 
       const ws = new WebSocket(WS_URL);
       wsRef.current = ws;
 
       transcriptRef.current = "";
-      if (onTranscriptionStart) onTranscriptionStart();
+      onTranscriptionStart?.();
 
       ws.onopen = () => {
         ws.send(
           JSON.stringify({
             type: "start",
             sampleRate: audioCtx.sampleRate,
-            language: language,
+            language,
           })
         );
       };
 
       ws.onerror = (err) => {
         console.error("WebSocket error:", err);
-        if (onTranscriptionError) onTranscriptionError("Connection error");
+        onTranscriptionError?.("Connection error");
       };
 
       ws.onmessage = (event) => {
@@ -177,84 +187,92 @@ export default function AudioRecorder({
           const msg = JSON.parse(event.data);
 
           if (msg.type === "transcript") {
-            // Handle both structured data and flat strings
             const text =
               msg.data?.transcript ||
               msg.data?.text ||
               (typeof msg.data === "string" ? msg.data : null);
+
             if (text) {
-              const mergedText = mergeTranscriptChunk(
-                transcriptRef.current,
-                text
-              );
-              transcriptRef.current = mergedText;
-              if (onTranscriptionComplete) onTranscriptionComplete(mergedText);
+              const merged = mergeTranscriptChunk(transcriptRef.current, text);
+              transcriptRef.current = merged;
+              onTranscriptionComplete?.(merged);
             }
           } else if (msg.type === "error") {
-            console.error("Backend reported error:", msg.message);
-            if (onTranscriptionError) onTranscriptionError(msg.message);
+            onTranscriptionError?.(msg.message);
           }
         } catch (e) {
-          console.error("Error parsing WS message:", e);
+          console.error("WS parse error", e);
         }
       };
 
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
-      processor.onaudioprocess = (e) => {
+      // 🔥 AUDIO WORKLET (REPLACEMENT)
+      await audioCtx.audioWorklet.addModule("/pcm-processor.js");
+
+      const worklet = new AudioWorkletNode(audioCtx, "pcm-processor");
+      workletRef.current = worklet;
+
+      worklet.port.onmessage = (event) => {
         if (
           isRecordingRef.current &&
           !isPausedRef.current &&
           ws.readyState === WebSocket.OPEN
         ) {
-          const inputData = e.inputBuffer.getChannelData(0);
-          const pcm16 = new Int16Array(inputData.length);
-          for (let i = 0; i < inputData.length; i++) {
-            // Clamp and convert to 16-bit PCM
-            const s = Math.max(-1, Math.min(1, inputData[i]));
-            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-          }
-          ws.send(pcm16.buffer);
+          ws.send(event.data);
         }
       };
-      source.connect(processor);
-      processor.connect(audioCtx.destination);
 
+      source.connect(worklet);
+      worklet.connect(audioCtx.destination);
+
+      // MediaRecorder (UNCHANGED)
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: "audio/webm;codecs=opus",
       });
+
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (e) => chunksRef.current.push(e.data);
+      mediaRecorder.ondataavailable = (e) => {
+        chunksRef.current.push(e.data);
+      };
+
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, {
+          type: "audio/webm",
+        });
+
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
-        if (onAudioBlobComplete) onAudioBlobComplete(blob);
+
+        onAudioBlobComplete?.(blob);
+
         setBarHeights(new Array(40).fill(2));
+
         if (animFrameRef.current !== null) {
           cancelAnimationFrame(animFrameRef.current);
         }
       };
 
       mediaRecorder.start();
+
       setIsRecording(true);
-      if (onRecordingStateChange) onRecordingStateChange(true);
+      onRecordingStateChange?.(true);
+
       isRecordingRef.current = true;
       setIsPaused(false);
       isPausedRef.current = false;
+
       setAudioURL("");
       setDuration(0);
 
-      timerRef.current = globalThis.setInterval(
-        () => setDuration((d) => d + 1),
-        1000
-      );
+      timerRef.current = globalThis.setInterval(() => {
+        setDuration((d) => d + 1);
+      }, 1000);
+
       drawBars();
     } catch (err) {
       console.error("Mic access denied", err);
-      if (onTranscriptionError) onTranscriptionError("Mic access denied");
+      onTranscriptionError?.("Mic access denied");
     }
   }, [
     onTranscriptionStart,
@@ -277,27 +295,33 @@ export default function AudioRecorder({
 
   const togglePause = () => {
     if (!mediaRecorderRef.current) return;
+
     if (isPaused) {
       mediaRecorderRef.current.resume();
       setIsPaused(false);
       isPausedRef.current = false;
+
       timerRef.current = globalThis.setInterval(
         () => setDuration((d) => d + 1),
         1000
       );
+
       drawBars();
     } else {
       mediaRecorderRef.current.pause();
       setIsPaused(true);
       isPausedRef.current = true;
+
       if (timerRef.current !== null) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+
       if (animFrameRef.current !== null) {
         cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = null;
       }
+
       setBarHeights(new Array(40).fill(2));
     }
   };
@@ -317,20 +341,24 @@ export default function AudioRecorder({
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+
     if (animFrameRef.current !== null) {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
     }
+
     setIsRecording(false);
-    if (onRecordingStateChange) onRecordingStateChange(false);
+    onRecordingStateChange?.(false);
+
     isRecordingRef.current = false;
     setIsPaused(false);
     isPausedRef.current = false;
+
     setShowRecorder?.(false);
 
     setTimeout(() => {
       if (!transcriptRef.current.trim()) {
-        onTranscriptionComplete?.(""); // force completion
+        onTranscriptionComplete?.("");
       }
     }, 200);
   };
@@ -339,7 +367,9 @@ export default function AudioRecorder({
     const m = Math.floor(s / 60)
       .toString()
       .padStart(2, "0");
+
     const sec = (s % 60).toString().padStart(2, "0");
+
     return `${m}:${sec}`;
   };
 
@@ -347,10 +377,8 @@ export default function AudioRecorder({
 
   return (
     <div className={styles.inlineRecorder}>
-      {/* Timer */}
       <span className={styles.timerInline}>{formatTime(duration)}</span>
 
-      {/* Waveform */}
       <div className={styles.waveformInline}>
         {barHeights.map((h, i) => (
           <div
@@ -365,7 +393,6 @@ export default function AudioRecorder({
         ))}
       </div>
 
-      {/* Record */}
       <button
         className={`${styles.btn} ${styles.btnRecord}`}
         onClick={isRecording ? stopRecording : startRecording}
@@ -373,7 +400,6 @@ export default function AudioRecorder({
         {isRecording ? "■ Stop" : "● Record"}
       </button>
 
-      {/* Pause */}
       <button
         className={`${styles.btn} ${styles.btnPause}`}
         onClick={togglePause}
@@ -381,8 +407,6 @@ export default function AudioRecorder({
       >
         {isPaused ? "▶ Resume" : "⏸ Pause"}
       </button>
-
-      {/* Save (ALWAYS visible) */}
     </div>
   );
 }

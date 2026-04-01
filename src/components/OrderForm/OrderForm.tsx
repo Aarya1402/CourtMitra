@@ -189,7 +189,6 @@ const OrderForm: React.FC<Props> = ({
   const handleGeneratePDF = async () => {
     setIsGeneratingPdf(true);
     try {
-      console.log(formData);
       const doc = (
         <OrderDocument data={formData} language={language || "gu-IN"} />
       );

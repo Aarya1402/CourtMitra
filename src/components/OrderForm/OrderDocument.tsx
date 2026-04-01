@@ -9,61 +9,21 @@ import {
 } from "@react-pdf/renderer";
 import type { OrderData } from "./OrderForm";
 import { getTranslation } from "../../constants/translations";
+import { fontConfigs, getFontFamily } from "../../constants/fontConfig";
 
-Font.register({
-  family: "Gujarati",
-  src: "/fonts/NotoSerifGujarati-Regular.ttf",
-});
-Font.register({
-  family: "Hindi",
-  src: "/fonts/NotoSerifDevanagari-Regular.ttf",
-});
-Font.register({
-  family: "Tamil",
-  src: "/fonts/NotoSerifTamil_SemiCondensed-Regular.ttf",
-});
-Font.register({ family: "Telugu", src: "/fonts/NotoSerifTelugu-Regular.ttf" });
-Font.register({
-  family: "Kannada",
-  src: "/fonts/NotoSerifKannada-Regular.ttf",
-});
-Font.register({
-  family: "Bengali",
-  src: "/fonts/NotoSerifBengali-Regular.ttf",
-});
-Font.register({
-  family: "Punjabi",
-  src: "/fonts/NotoSerifGurmukhi-Regular.ttf",
-});
-Font.register({ family: "Odia", src: "/fonts/NotoSerifOriya-Regular.ttf" });
+for (const font of fontConfigs) {
+  Font.register(font);
+}
 
-const getFontFamily = (language: string) => {
-  switch (language) {
-    case "gu-IN":
-      return "Gujarati";
-    case "hi-IN":
-    case "mr-IN":
-      return "Hindi";
-    case "ta-IN":
-      return "Tamil";
-    case "te-IN":
-      return "Telugu";
-    case "kn-IN":
-      return "Kannada";
-    case "bn-IN":
-      return "Bengali";
-    case "pa-IN":
-      return "Punjabi";
-    case "od-IN":
-      return "Odia";
-    default:
-      return "Times-Roman";
-  }
-};
-
-const renderParagraphs = (styles: Record<string, any>, text: string = "") => {
+const renderParagraphs = (
+  styles: Record<string, any>,
+  text: string | string[] | null
+) => {
   if (!text) return null;
-  const sentences = text
+
+  const safeText = Array.isArray(text) ? text.join(" ") : text;
+
+  const sentences = safeText
     .replaceAll(/([.?!।])/g, "$1|")
     .split("|")
     .map((s) => s.trim())
@@ -112,7 +72,6 @@ interface OrderDocumentProps {
 const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
   const t = getTranslation(language);
   const fontFamily = getFontFamily(language);
-  console.log(t.final_order_header);
 
   const styles = StyleSheet.create({
     page: {

@@ -402,41 +402,29 @@ const HomePage: React.FC = () => {
             </div>
           </div>
 
-          <div
-            className={styles.userProfile}
-            role="button"
-            tabIndex={0}
-            onClick={() => setShowLogout(!showLogout)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setShowLogout(!showLogout);
-              }
-            }}
-            ref={userMenuRef}
-          >
-            <div className={styles.avatar}>
-              {user?.name.charAt(0)?.toLocaleUpperCase() || "U"}
-            </div>
-            <div className={styles.userInfo}>
-              <span className={styles.userName}>{user?.name || "User"}</span>
-              <span className={styles.userEmail}>
-                {user?.email || "user@example.com"}
-              </span>
-            </div>
-            <div
-              style={{ marginLeft: "auto", display: "flex", gap: "4px" }}
-            ></div>
+          <div className={styles.userProfile} ref={userMenuRef}>
+            {/* ✅ Trigger button (real button, no role hack) */}
+            <button
+              type="button"
+              className={styles.profileTrigger}
+              onClick={() => setShowLogout(!showLogout)}
+            >
+              <div className={styles.avatar}>
+                {user?.name.charAt(0)?.toUpperCase() || "U"}
+              </div>
 
+              <div className={styles.userInfo}>
+                <span className={styles.userName}>{user?.name || "User"}</span>
+                <span className={styles.userEmail}>
+                  {user?.email || "user@example.com"}
+                </span>
+              </div>
+            </button>
+
+            {/* ✅ Dropdown OUTSIDE button */}
             {showLogout && (
               <div className={styles.logoutDropdown}>
-                <button
-                  className={styles.logoutBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLogout();
-                  }}
-                >
+                <button className={styles.logoutBtn} onClick={handleLogout}>
                   <LogOut size={16} /> Logout
                 </button>
               </div>

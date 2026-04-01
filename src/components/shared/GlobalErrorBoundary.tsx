@@ -7,14 +7,21 @@ interface Props {
   children: React.ReactNode;
 }
 
-const ErrorFallback = ({ error, resetError }: { error: any; resetError: () => void }) => {
+interface FallbackProps {
+  error: unknown;
+  resetError(): void;
+}
+
+const ErrorFallback: React.FC<FallbackProps> = ({ error, resetError }) => {
   return (
     <div className={styles.errorContainer}>
       <div className={styles.errorCard}>
         <div className={styles.iconWrapper}>
           <AlertCircle size={48} className={styles.errorIcon} />
         </div>
+
         <h1 className={styles.errorTitle}>Something went wrong</h1>
+
         <p className={styles.errorMessage}>
           We've encountered an unexpected error. Don't worry, our team has been
           notified and is looking into it.
@@ -22,7 +29,7 @@ const ErrorFallback = ({ error, resetError }: { error: any; resetError: () => vo
 
         {import.meta.env.DEV && (
           <div className={styles.debugInfo}>
-            <code>{error?.toString()}</code>
+            <code>{String(error)}</code>
           </div>
         )}
 
@@ -31,6 +38,7 @@ const ErrorFallback = ({ error, resetError }: { error: any; resetError: () => vo
             <RefreshCcw size={18} />
             Try to Recover
           </button>
+
           <button
             onClick={() => (globalThis.location.href = "/")}
             className={styles.homeButton}
@@ -44,12 +52,14 @@ const ErrorFallback = ({ error, resetError }: { error: any; resetError: () => vo
   );
 };
 
+// ✅ Proper Sentry fallback function
+const renderFallback: Sentry.FallbackRender = (props) => {
+  return <ErrorFallback {...props} />;
+};
+
 const GlobalErrorBoundary: React.FC<Props> = ({ children }) => {
   return (
-    <Sentry.ErrorBoundary
-      fallback={(props) => <ErrorFallback {...props} />}
-      showDialog={false} // Custom UI is better for UX
-    >
+    <Sentry.ErrorBoundary fallback={renderFallback} showDialog={false}>
       {children}
     </Sentry.ErrorBoundary>
   );

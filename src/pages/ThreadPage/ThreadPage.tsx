@@ -165,7 +165,7 @@ const GlobalHeader: React.FC<{
         <button
           className={styles.userProfile}
           onClick={() => setShowLogout(!showLogout)}
-          ref={userMenuRef as any}
+          ref={userMenuRef}
           type="button"
           aria-label="User Profile"
         >
@@ -585,7 +585,9 @@ const DivisionCenter: React.FC<{
     ? mobileTab === "chat" || mobileTab === "files"
     : true;
 
-  const isChatTabActive = isMobile ? mobileTab === "chat" : centerTab === "chat";
+  const isChatTabActive = isMobile
+    ? mobileTab === "chat"
+    : centerTab === "chat";
   const isFilesTabActive = isMobile
     ? mobileTab === "files"
     : centerTab === "files";
@@ -1223,7 +1225,9 @@ const ThreadPage: React.FC = () => {
                     })
                   );
                 }
-              } catch (err) {}
+              } catch (err) {
+                console.error(err);
+              }
             }
           },
         }
@@ -1280,7 +1284,9 @@ const ThreadPage: React.FC = () => {
         navigate={navigate}
       />
 
-      {isMobile && <MobileTabs mobileTab={mobileTab} onTabChange={setMobileTab} />}
+      {isMobile && (
+        <MobileTabs mobileTab={mobileTab} onTabChange={setMobileTab} />
+      )}
 
       <div className={styles.mainLayout}>
         <DivisionLeft

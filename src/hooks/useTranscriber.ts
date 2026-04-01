@@ -25,7 +25,13 @@ export function useTranscriber() {
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+
+  // ❌ REMOVED ScriptProcessor
+  // const processorRef = useRef<ScriptProcessorNode | null>(null);
+
+  // ✅ NEW
+  const workletRef = useRef<AudioWorkletNode | null>(null);
+
   const streamRef = useRef<MediaStream | null>(null);
   const isRecordingRef = useRef<boolean>(false);
   const transcriptRef = useRef<string>("");
@@ -36,16 +42,28 @@ export function useTranscriber() {
       setTimeout(() => wsRef.current?.close(), 100);
       wsRef.current = null;
     }
-    processorRef.current?.disconnect();
+
+    // ❌ old
+    // processorRef.current?.disconnect();
+
+    // ✅ new
+    if (workletRef.current) {
+      workletRef.current.disconnect();
+      workletRef.current = null;
+    }
+
     sourceRef.current?.disconnect();
     audioCtxRef.current?.close();
+
     if (streamRef.current) {
       for (const t of streamRef.current.getTracks()) {
         t.stop();
       }
     }
 
-    processorRef.current = null;
+    // ❌ removed
+    // processorRef.current = null;
+
     sourceRef.current = null;
     audioCtxRef.current = null;
     streamRef.current = null;
@@ -56,7 +74,6 @@ export function useTranscriber() {
     setIsRecording(false);
     isRecordingRef.current = false;
 
-    // 🔥 release lock
     if (activeRecorderId === idRef.current) {
       activeRecorderId = null;
     }
@@ -64,7 +81,6 @@ export function useTranscriber() {
 
   const start = useCallback(
     async (language: string = "gu-IN") => {
-      // 🔥 BLOCK if another recorder active
       if (activeRecorderId && activeRecorderId !== idRef.current) {
         setError("Another recording is in progress");
         return;
@@ -117,27 +133,23 @@ export function useTranscriber() {
         };
 
         const source = audioCtx.createMediaStreamSource(stream);
-        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-
         sourceRef.current = source;
-        processorRef.current = processor;
 
-        processor.onaudioprocess = (e) => {
+        // 🔥 REPLACEMENT START
+        await audioCtx.audioWorklet.addModule("/pcm-processor.js");
+
+        const worklet = new AudioWorkletNode(audioCtx, "pcm-processor");
+        workletRef.current = worklet;
+
+        worklet.port.onmessage = (event) => {
           if (isRecordingRef.current && ws.readyState === WebSocket.OPEN) {
-            const input = e.inputBuffer.getChannelData(0);
-            const pcm16 = new Int16Array(input.length);
-
-            for (let i = 0; i < input.length; i++) {
-              const s = Math.max(-1, Math.min(1, input[i]));
-              pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-            }
-
-            ws.send(pcm16.buffer);
+            ws.send(event.data);
           }
         };
 
-        source.connect(processor);
-        processor.connect(audioCtx.destination);
+        source.connect(worklet);
+        worklet.connect(audioCtx.destination);
+        // 🔥 REPLACEMENT END
 
         setIsRecording(true);
         isRecordingRef.current = true;
