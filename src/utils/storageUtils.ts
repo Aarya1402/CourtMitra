@@ -7,7 +7,8 @@ const DB_VERSION = 1;
 function getDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onerror = () => reject(request.error);
+    request.onerror = () =>
+      reject(request.error || new Error("Failed to open IndexedDB"));
     request.onsuccess = () => resolve(request.result);
     request.onupgradeneeded = (event: any) => {
       const db = event.target.result;
@@ -29,7 +30,8 @@ export async function saveThreadState(
     const store = transaction.objectStore(STORE_NAME);
     const request = store.put(state, threadId);
     request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    request.onerror = () =>
+      reject(request.error || new Error("Failed to save thread state"));
   });
 }
 
@@ -41,6 +43,7 @@ export async function loadThreadState(threadId: string): Promise<any> {
     const store = transaction.objectStore(STORE_NAME);
     const request = store.get(threadId);
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onerror = () =>
+      reject(request.error || new Error("Failed to load thread state"));
   });
 }

@@ -83,7 +83,9 @@ const MessageMenu = ({
 
   const handleCopy = async () => {
     try {
-      const pureText = text.replaceAll(/<[^>]*>/g, "");
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = text;
+      const pureText = tempDiv.textContent || "";
       await navigator.clipboard.writeText(pureText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
