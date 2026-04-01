@@ -61,7 +61,8 @@
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-base);
-  position: relative;
+  padding: 0;
+  font: inherit;
 }
 
 .logoutDropdown {
@@ -97,11 +98,11 @@
 }
 
 .globalHeader {
-  height: 60px;
+  height: 64px;
   border-bottom: 1px solid var(--border-strong);
-  background: white;
+  background: var(--bg-secondary);
   display: grid;
-  grid-template-columns: 280px 1fr 280px;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 0 1.5rem;
   z-index: 100;
@@ -120,6 +121,11 @@
   gap: 0.75rem;
   cursor: pointer;
   transition: opacity var(--transition-base);
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
 }
 
 .logoSection:hover {
@@ -158,6 +164,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
+  color: inherit;
+  font-family: inherit;
 }
 
 .threadTitle:hover {
@@ -397,6 +406,7 @@
   align-items: center;
   gap: 12px;
   flex: 1;
+  flex-wrap: wrap;
 }
 
 .tabsWrapper {
@@ -599,81 +609,7 @@
   font-weight: 600;
 }
 
-.languageInline:hover {
-  border-color: var(--text-muted);
-  background: var(--bg-tertiary);
-}
-
-.recorderLeftGroup {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.recorderSection {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 2rem;
-  background-color: white;
-  border-top: 1px solid var(--border-strong);
-  gap: 1.5rem;
-}
-.globalHeader {
-  height: 64px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 0 1.5rem;
-}
-
-.headerLeftSection {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.headerCenterSection {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.headerRightSection {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-}
-
-.threadTitle {
-  font-size: 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.threadTitle:hover {
-  background-color: var(--bg-tertiary);
-}
-
-.threadTitleInput {
-  font-size: 1.4rem;
-  font-weight: 600;
-  background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--text-primary);
-  padding: 4px 8px;
-  border-radius: 4px;
-  width: auto;
-  min-width: 200px;
-  outline: none;
-}
+/* End of main selectors */
 
 /* layout fix */
 

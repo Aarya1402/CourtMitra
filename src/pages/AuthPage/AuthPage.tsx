@@ -273,7 +273,7 @@ export default function AuthPage() {
                 alt="Google"
                 className={styles.googleLogo}
               />
-              Continue with Google
+              <span>Continue with Google</span>
             </button>
 
             <p className={styles.toggleText}>

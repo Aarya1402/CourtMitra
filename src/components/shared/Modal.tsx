@@ -22,24 +22,16 @@ const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          onClose();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label="Close modal"
-    >
-      <div
+    <div className={styles.overlay}>
+      <button
+        type="button"
+        className={styles.backdropButton}
+        onClick={onClose}
+        aria-label="Close modal"
+      />
+      <dialog
+        open
         className={`${styles.modal} ${styles[size]}`}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
         aria-labelledby="modal-title"
       >
         <header className={styles.header}>
@@ -52,7 +44,7 @@ const Modal: React.FC<ModalProps> = ({
         <section className={styles.content}>{children}</section>
 
         {footer && <footer className={styles.footer}>{footer}</footer>}
-      </div>
+      </dialog>
     </div>
   );
 };

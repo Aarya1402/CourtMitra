@@ -80,8 +80,8 @@ const renderParagraphs = (styles: Record<string, any>, text: string = "") => {
   });
   if (temp.length) paragraphs.push(temp.join(" "));
 
-  return paragraphs.map((p, i) => (
-    <Text key={`p-${i}`} style={styles.bodyText}>
+  return paragraphs.map((p) => (
+    <Text key={p} style={styles.bodyText}>
       {p}
     </Text>
   ));
@@ -423,7 +423,7 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
           {safeArray(data.reasoning_points)
             .filter((p) => p?.trim())
             .map((point, i) => (
-              <View key={`reasoning-${i}`} style={styles.listItem}>
+              <View key={point} style={styles.listItem}>
                 <Text style={styles.bullet}>{i + 1}.</Text>
                 <Text style={styles.listContent}>{point.trim()}</Text>
               </View>
@@ -440,7 +440,7 @@ const OrderDocument: React.FC<OrderDocumentProps> = ({ data, language }) => {
           {safeArray(data.operative_order?.directions)
             .filter((d) => d?.trim())
             .map((dir, i) => (
-              <View key={`direction-${i}`} style={styles.listItem}>
+              <View key={dir} style={styles.listItem}>
                 <Text style={styles.bullet}>({i + 1})</Text>
                 <Text style={styles.listContent}>{dir.trim()}</Text>
               </View>

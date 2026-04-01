@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
 import Modal from "../components/shared/Modal";
 import Button from "../components/shared/Button";
 
@@ -91,8 +91,13 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({
     if (config.resolve) config.resolve(false);
   }, [config]);
 
+  const contextValue = useMemo(
+    () => ({ showAlert, showConfirm }),
+    [showAlert, showConfirm]
+  );
+
   return (
-    <AlertContext.Provider value={{ showAlert, showConfirm }}>
+    <AlertContext.Provider value={contextValue}>
       {children}
       <Modal
         isOpen={isOpen}

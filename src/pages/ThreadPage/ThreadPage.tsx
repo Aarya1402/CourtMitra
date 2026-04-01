@@ -116,10 +116,14 @@ const GlobalHeader: React.FC<{
 }) => (
   <div className={styles.globalHeader}>
     <div className={styles.headerLeftSection}>
-      <div className={styles.logoSection} onClick={() => navigate("/")}>
+      <button
+        className={styles.logoSection}
+        onClick={() => navigate("/")}
+        type="button"
+      >
         <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
         <span className={styles.logoText}>CourtMitra</span>
-      </div>
+      </button>
     </div>
     <div className={styles.headerCenterSection}>
       {isEditingTitle ? (
@@ -138,26 +142,35 @@ const GlobalHeader: React.FC<{
           }}
         />
       ) : (
-        <h2
+        <button
           className={styles.threadTitle}
           onClick={() => setIsEditingTitle(true)}
           title="Click to edit"
+          type="button"
         >
           {threadTitle || "Untitled Chat"}
-        </h2>
+        </button>
       )}
     </div>
     <div className={styles.headerRightSection}>
-      <button className={styles.newChatBtn} onClick={() => navigate("/")}>
+      <button
+        className={styles.newChatBtn}
+        onClick={() => navigate("/")}
+        type="button"
+      >
         <Plus size={18} />
         <span>New Chat</span>
       </button>
-      <div
-        className={styles.userProfile}
-        onClick={() => setShowLogout(!showLogout)}
-        ref={userMenuRef as any}
-      >
-        <User size={18} />
+      <div style={{ position: "relative" }}>
+        <button
+          className={styles.userProfile}
+          onClick={() => setShowLogout(!showLogout)}
+          ref={userMenuRef as any}
+          type="button"
+          aria-label="User Profile"
+        >
+          <User size={18} />
+        </button>
         {showLogout && (
           <div className={styles.logoutDropdown}>
             <button
@@ -166,6 +179,7 @@ const GlobalHeader: React.FC<{
                 e.stopPropagation();
                 handleLogout();
               }}
+              type="button"
             >
               <LogOut size={16} /> Logout
             </button>
@@ -494,6 +508,11 @@ const DivisionLeft: React.FC<{
     ? mobileTab === "transcript" || mobileTab === "order"
     : true;
 
+  const isTranscriptActive = isMobile
+    ? mobileTab === "transcript"
+    : leftTab === "transcript";
+  const isOrderActive = isMobile ? mobileTab === "order" : leftTab === "order";
+
   if (!isVisible) return null;
 
   return (
@@ -505,14 +524,18 @@ const DivisionLeft: React.FC<{
         {!isMobile && (
           <div className={styles.tabContainer}>
             <button
-              className={leftTab === "transcript" ? styles.activeTab : styles.tab}
+              className={
+                leftTab === "transcript" ? styles.activeTab : styles.tab
+              }
               onClick={() => setLeftTab("transcript")}
+              type="button"
             >
               Transcript
             </button>
             <button
               className={leftTab === "order" ? styles.activeTab : styles.tab}
               onClick={() => setLeftTab("order")}
+              type="button"
             >
               Order
             </button>
@@ -522,27 +545,17 @@ const DivisionLeft: React.FC<{
         {errorMessage && (
           <div className={styles.errorBanner}>
             {errorMessage}
-            <button onClick={() => setErrorMessage(null)}>Dismiss</button>
+            <button onClick={() => setErrorMessage(null)} type="button">
+              Dismiss
+            </button>
           </div>
         )}
 
-        <Activity
-          mode={
-            (isMobile ? mobileTab === "transcript" : leftTab === "transcript")
-              ? "visible"
-              : "hidden"
-          }
-        >
+        <Activity mode={isTranscriptActive ? "visible" : "hidden"}>
           <TranscriptWorkspace {...transcriptWorkspaceProps} />
         </Activity>
 
-        <Activity
-          mode={
-            (isMobile ? mobileTab === "order" : leftTab === "order")
-              ? "visible"
-              : "hidden"
-          }
-        >
+        <Activity mode={isOrderActive ? "visible" : "hidden"}>
           <OrderForm {...orderFormProps} />
         </Activity>
       </div>
@@ -568,35 +581,49 @@ const DivisionCenter: React.FC<{
   handleScroll,
   chatWorkspaceProps,
 }) => {
-  const isVisible = isMobile ? mobileTab === "chat" || mobileTab === "files" : true;
+  const isVisible = isMobile
+    ? mobileTab === "chat" || mobileTab === "files"
+    : true;
+
+  const isChatTabActive = isMobile ? mobileTab === "chat" : centerTab === "chat";
+  const isFilesTabActive = isMobile
+    ? mobileTab === "files"
+    : centerTab === "files";
 
   if (!isVisible) return null;
 
   return (
-    <main className={styles.divisionCenter} style={isMobile ? { width: "100%" } : {}}>
+    <main
+      className={styles.divisionCenter}
+      style={isMobile ? { width: "100%" } : {}}
+    >
       {!isMobile && (
         <div className={styles.tabContainer}>
           <button
             className={centerTab === "chat" ? styles.activeTab : styles.tab}
             onClick={() => setCenterTab("chat")}
+            type="button"
           >
             Chat
           </button>
           <button
             className={centerTab === "files" ? styles.activeTab : styles.tab}
             onClick={() => setCenterTab("files")}
+            type="button"
           >
             Files
           </button>
         </div>
       )}
 
-      <div className={styles.centerWorkspace} ref={scrollRef} onScroll={handleScroll}>
-        {(isMobile ? mobileTab === "chat" : centerTab === "chat") && (
-          <ChatWorkspace {...chatWorkspaceProps} />
-        )}
+      <div
+        className={styles.centerWorkspace}
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
+        {isChatTabActive && <ChatWorkspace {...chatWorkspaceProps} />}
 
-        {(isMobile ? mobileTab === "files" : centerTab === "files") && <FileManager />}
+        {isFilesTabActive && <FileManager />}
       </div>
     </main>
   );

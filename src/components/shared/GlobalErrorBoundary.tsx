@@ -7,7 +7,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-const ErrorFallback = ({ error }: any) => {
+const ErrorFallback = ({ error, resetError }: { error: any; resetError: () => void }) => {
   return (
     <div className={styles.errorContainer}>
       <div className={styles.errorCard}>
@@ -27,12 +27,9 @@ const ErrorFallback = ({ error }: any) => {
         )}
 
         <div className={styles.buttonGroup}>
-          <button
-            onClick={() => globalThis.location.reload()}
-            className={styles.refreshButton}
-          >
+          <button onClick={resetError} className={styles.refreshButton}>
             <RefreshCcw size={18} />
-            Reload Page
+            Try to Recover
           </button>
           <button
             onClick={() => (globalThis.location.href = "/")}
@@ -50,9 +47,7 @@ const ErrorFallback = ({ error }: any) => {
 const GlobalErrorBoundary: React.FC<Props> = ({ children }) => {
   return (
     <Sentry.ErrorBoundary
-      fallback={({ error, resetError }) => (
-        <ErrorFallback error={error} resetError={resetError} />
-      )}
+      fallback={(props) => <ErrorFallback {...props} />}
       showDialog={false} // Custom UI is better for UX
     >
       {children}

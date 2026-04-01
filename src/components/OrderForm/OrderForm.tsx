@@ -726,7 +726,7 @@ const OrderForm: React.FC<Props> = ({
             </h5>
             {Array.isArray(formData.reasoning_points) &&
               formData.reasoning_points.map((p, idx) => (
-                <div key={idx} className={styles.reasoningPoint}>
+                <div key={p || `point-${idx}`} className={styles.reasoningPoint}>
                   <span style={{ fontWeight: "bold", width: "30px" }}>
                     {idx + 1}.
                   </span>
@@ -817,7 +817,7 @@ const OrderForm: React.FC<Props> = ({
               <h5 style={{ marginTop: "15px" }}>{t.directions}:</h5>
               {Array.isArray(formData.operative_order?.directions) &&
                 formData.operative_order.directions.map((d, idx) => (
-                  <div key={idx} className={styles.directionPoint}>
+                  <div key={d || `dir-${idx}`} className={styles.directionPoint}>
                     <span style={{ fontWeight: "bold" }}>({idx + 1})</span>
                     <div style={{ flex: 1 }}>
                       {renderTextArea(
