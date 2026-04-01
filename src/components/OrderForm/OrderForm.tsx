@@ -147,10 +147,10 @@ const OrderForm: React.FC<Props> = ({
   };
 
   const appendToArrayAtPath = (path: string[], value: string) => {
-    const newData = JSON.parse(JSON.stringify(formData));
-    let current = newData;
+    const newData = structuredClone(formData);
+    let current: Record<string, any> = newData;
 
-    path.forEach((key, i) => {
+    for (const [i, key] of path.entries()) {
       if (i === path.length - 1) {
         if (!Array.isArray(current[key])) current[key] = [];
         current[key].push(value);
@@ -158,7 +158,7 @@ const OrderForm: React.FC<Props> = ({
         if (!current[key]) current[key] = {};
         current = current[key];
       }
-    });
+    }
 
     return newData;
   };
@@ -209,16 +209,18 @@ const OrderForm: React.FC<Props> = ({
   };
 
   const handleChange = (path: string[], value: any) => {
-    const newData = JSON.parse(JSON.stringify(formData));
-    let current = newData;
+    const newData = structuredClone(formData);
+    let current: Record<string, any> = newData;
+
     for (let i = 0; i < path.length - 1; i++) {
       const key = path[i];
       if (!current[key]) current[key] = {};
       current = current[key];
     }
-    const index = path.at(-1);
-    if (index) {
-      current[index] = value;
+
+    const lastKey = path.at(-1);
+    if (lastKey) {
+      current[lastKey] = value;
       onUpdate(newData);
     }
   };
@@ -726,7 +728,10 @@ const OrderForm: React.FC<Props> = ({
             </h5>
             {Array.isArray(formData.reasoning_points) &&
               formData.reasoning_points.map((p, idx) => (
-                <div key={p || `point-${idx}`} className={styles.reasoningPoint}>
+                <div
+                  key={p || `point-${idx}`}
+                  className={styles.reasoningPoint}
+                >
                   <span style={{ fontWeight: "bold", width: "30px" }}>
                     {idx + 1}.
                   </span>
@@ -817,7 +822,10 @@ const OrderForm: React.FC<Props> = ({
               <h5 style={{ marginTop: "15px" }}>{t.directions}:</h5>
               {Array.isArray(formData.operative_order?.directions) &&
                 formData.operative_order.directions.map((d, idx) => (
-                  <div key={d || `dir-${idx}`} className={styles.directionPoint}>
+                  <div
+                    key={d || `dir-${idx}`}
+                    className={styles.directionPoint}
+                  >
                     <span style={{ fontWeight: "bold" }}>({idx + 1})</span>
                     <div style={{ flex: 1 }}>
                       {renderTextArea(

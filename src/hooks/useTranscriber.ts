@@ -39,7 +39,11 @@ export function useTranscriber() {
     processorRef.current?.disconnect();
     sourceRef.current?.disconnect();
     audioCtxRef.current?.close();
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    if (streamRef.current) {
+      for (const t of streamRef.current.getTracks()) {
+        t.stop();
+      }
+    }
 
     processorRef.current = null;
     sourceRef.current = null;

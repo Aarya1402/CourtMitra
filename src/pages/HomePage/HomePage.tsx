@@ -5,7 +5,7 @@ import axios from "axios";
 import { checkAndCreateBot } from "../../utils/botAuthUtils";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   fetchThreads,
   fetchUser,
@@ -80,7 +80,7 @@ const HomePage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLButtonElement>(null);
   const newChatBtnRef = useRef<HTMLButtonElement>(null);
   const threadsRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -272,6 +272,7 @@ const HomePage: React.FC = () => {
       );
       setThreadToDelete(null);
     } catch (error) {
+      console.error(error);
       showAlert("Failed to delete thread.", { title: "Error" });
     }
   };
@@ -289,6 +290,7 @@ const HomePage: React.FC = () => {
       const newThreadId = await createEmptyThread(botId);
       navigate(`/threads/${newThreadId}`);
     } catch (error) {
+      console.error(error);
       showAlert("Failed to create new chat. Please try again.", {
         title: "Error",
       });
@@ -301,10 +303,10 @@ const HomePage: React.FC = () => {
     <div className={styles.homeContainer}>
       {/* Mobile Header */}
       <div className={styles.mobileHeader}>
-        <div className={styles.mobileLogo} onClick={() => navigate("/")}>
+        <button className={styles.mobileLogo} onClick={() => navigate("/")}>
           <img src="/logo.svg" alt="CourtMitra" className={styles.logoImg} />
           <span className={styles.logoText}>CourtMitra</span>
-        </div>
+        </button>
         <button
           className={styles.menuBtn}
           onClick={() => setIsSidebarOpen(true)}
@@ -322,7 +324,7 @@ const HomePage: React.FC = () => {
       />
       {/* Sidebar */}
       {/* Sidebar Overlay */}
-      <div
+      <button
         className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.sidebarOverlayVisible : ""}`}
         onClick={() => setIsSidebarOpen(false)}
       />
@@ -333,7 +335,7 @@ const HomePage: React.FC = () => {
       >
         <div className={styles.sidebarContent}>
           <div className={styles.sidebarHeader}>
-            <div
+            <button
               className={styles.logoSection}
               onClick={() => navigate("/")}
               style={{ cursor: "pointer" }}
@@ -345,7 +347,7 @@ const HomePage: React.FC = () => {
                 className={styles.logoImg}
               />
               <span className={styles.logoText}>CourtMitra</span>
-            </div>
+            </button>
             <button
               className={styles.closeSidebarBtn}
               onClick={() => setIsSidebarOpen(false)}
@@ -378,14 +380,15 @@ const HomePage: React.FC = () => {
                 <div
                   key={thread.thread_uuid}
                   className={styles.navItemContainer}
-                  onClick={() => {
-                    navigate(`/threads/${thread.thread_uuid}`);
-                    setIsSidebarOpen(false);
-                  }}
                 >
-                  <button className={styles.navItem}>
+                  <Link
+                    to={`/threads/${thread.thread_uuid}`}
+                    className={styles.navItem}
+                    onClick={() => setIsSidebarOpen(false)}
+                  >
                     {thread.title || "Untitled Chat"}
-                  </button>
+                  </Link>
+
                   <button
                     className={styles.deleteBtn}
                     onClick={(e) =>
@@ -401,8 +404,15 @@ const HomePage: React.FC = () => {
 
           <div
             className={styles.userProfile}
+            role="button"
+            tabIndex={0}
             onClick={() => setShowLogout(!showLogout)}
-            style={{ cursor: "pointer", position: "relative" }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setShowLogout(!showLogout);
+              }
+            }}
             ref={userMenuRef}
           >
             <div className={styles.avatar}>

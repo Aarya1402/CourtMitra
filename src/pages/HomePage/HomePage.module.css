@@ -21,6 +21,24 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 2rem;
+
+  /* 🔥 Reset button styles (if used on button) */
+  background: none;
+  border: none;
+  padding: 0;
+  margin-inline: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Optional */
+.logoSection:focus {
+  outline: none;
+}
+
+.logoSection:active {
+  transform: none;
 }
 
 .logoImg {
@@ -127,6 +145,7 @@
   text-overflow: ellipsis;
   font-weight: 400;
   transition: color var(--transition-base);
+  text-decoration: none;
 }
 
 .navItemContainer:hover .navItem {
@@ -389,6 +408,25 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  /* 🔥 Reset button styles */
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Optional: remove default focus outline */
+.mobileLogo:focus {
+  outline: none;
+}
+
+/* Optional: remove click “pressed” effect */
+.mobileLogo:active {
+  transform: none;
 }
 
 .menuBtn {

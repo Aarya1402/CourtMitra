@@ -23,11 +23,11 @@ Sentry.init({
   ],
 
   // Performance Monitoring
-  tracesSampleRate: 1.0,
-  
+  tracesSampleRate: 1,
+
   // Session Replay
-  replaysSessionSampleRate: 0.1, 
-  replaysOnErrorSampleRate: 1.0,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
 
   tracePropagationTargets: ["localhost", API_BASE_URL],
 });

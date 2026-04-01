@@ -81,7 +81,9 @@ export default function AudioRecorder({
       audioCtxRef.current = null;
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t: MediaStreamTrack) => t.stop());
+      for (const t of streamRef.current.getTracks()) {
+        t.stop();
+      }
       streamRef.current = null;
     }
   };
@@ -302,7 +304,12 @@ export default function AudioRecorder({
 
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
-    streamRef.current?.getTracks().forEach((t: MediaStreamTrack) => t.stop());
+
+    if (streamRef.current) {
+      for (const t of streamRef.current.getTracks()) {
+        t.stop();
+      }
+    }
 
     stopResources();
 

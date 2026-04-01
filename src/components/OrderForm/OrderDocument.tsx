@@ -64,20 +64,21 @@ const getFontFamily = (language: string) => {
 const renderParagraphs = (styles: Record<string, any>, text: string = "") => {
   if (!text) return null;
   const sentences = text
-    .replace(/([.?!।])/g, "$1|")
+    .replaceAll(/([.?!।])/g, "$1|")
     .split("|")
     .map((s) => s.trim())
     .filter(Boolean);
 
   const paragraphs: string[] = [];
   let temp: string[] = [];
-  sentences.forEach((s, i) => {
+  for (const [i, s] of sentences.entries()) {
     temp.push(s);
+
     if ((i + 1) % 3 === 0) {
       paragraphs.push(temp.join(" "));
       temp = [];
     }
-  });
+  }
   if (temp.length) paragraphs.push(temp.join(" "));
 
   return paragraphs.map((p) => (
