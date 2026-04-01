@@ -1,6 +1,6 @@
 export const fontConfigs = [
-  { family: "Gujarati", src: "/fonts/NotoSerifGujarati-Regular.ttf" },
-  { family: "Hindi", src: "/fonts/NotoSerifDevanagari-Regular.ttf" },
+  { family: "Gujarati", src: "/fonts/shruti.ttf" },
+  { family: "Hindi", src: "/fonts/mangal.ttf" },
 ];
 
 export const getFontFamily = (language: string) => {
