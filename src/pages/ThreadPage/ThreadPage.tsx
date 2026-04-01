@@ -82,13 +82,6 @@ const LANGUAGE_OPTIONS = [
   { value: "gu-IN", label: "Gujarati" },
   { value: "en-IN", label: "English" },
   { value: "hi-IN", label: "Hindi" },
-  // { value: "ta-IN", label: "Tamil" },
-  // { value: "te-IN", label: "Telugu" },
-  // { value: "kn-IN", label: "Kannada" },
-  // { value: "mr-IN", label: "Marathi" },
-  // { value: "bn-IN", label: "Bengali" },
-  // { value: "pa-IN", label: "Punjabi" },
-  // { value: "od-IN", label: "Odia" },
 ] as const;
 
 /** ✅ GLOBAL HEADER COMPONENT */
@@ -651,8 +644,25 @@ const ThreadPage: React.FC = () => {
   const dispatch = useDispatch();
 
   const language = useSelector(
-    (state: RootState) => state.bot.languageByThread[threadId!] || "gu-IN"
+    (state: RootState) => state.bot.languageByThread[threadId!]
   );
+
+  useEffect(() => {
+    if (!threadId) return;
+
+    if (!language) {
+      const storedLang = localStorage.getItem(threadId);
+
+      const finalLang = storedLang || "gu-IN";
+
+      dispatch(
+        setLanguageForThread({
+          threadId,
+          language: finalLang,
+        })
+      );
+    }
+  }, [threadId, language, dispatch]);
   const [isActuallyRecording, setIsActuallyRecording] = useState(false);
   const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
     useState("");
@@ -663,7 +673,6 @@ const ThreadPage: React.FC = () => {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const isLoadingHistoryRef = useRef(false); // tracks history fetches without re-render
-
 
   const handleLanguageChange = async (newLang: string) => {
     dispatch(setLanguageForThread({ threadId: threadId!, language: newLang }));

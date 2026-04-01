@@ -31,6 +31,7 @@ const botSlice = createSlice({
       action: PayloadAction<{ threadId: string; language: string }>
     ) => {
       state.languageByThread[action.payload.threadId] = action.payload.language;
+      localStorage.setItem(action.payload.threadId, action.payload.language);
     },
   },
 });
