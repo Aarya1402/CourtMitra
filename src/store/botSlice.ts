@@ -4,11 +4,13 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 interface BotState {
   botId: string | null;
   botStatus: "idle" | "loading" | "succeeded" | "failed";
+  languageByThread: Record<string, string>;
 }
 
 const initialState: BotState = {
   botId: null,
   botStatus: "idle",
+  languageByThread: {},
 };
 
 const botSlice = createSlice({
@@ -24,8 +26,15 @@ const botSlice = createSlice({
     setBotStatus: (state, action: PayloadAction<BotState["botStatus"]>) => {
       state.botStatus = action.payload;
     },
+    setLanguageForThread: (
+      state,
+      action: PayloadAction<{ threadId: string; language: string }>
+    ) => {
+      state.languageByThread[action.payload.threadId] = action.payload.language;
+    },
   },
 });
 
-export const { setBotId, clearBotId, setBotStatus } = botSlice.actions;
+export const { setBotId, clearBotId, setBotStatus, setLanguageForThread } =
+  botSlice.actions;
 export default botSlice.reducer;

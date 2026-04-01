@@ -24,6 +24,7 @@ import {
   updateBotMessage,
   prependMessagesForThread,
 } from "../../store/chatSlice";
+import { setLanguageForThread } from "../../store/botSlice";
 import type { RootState } from "../../store";
 import axios from "axios";
 import { setDocumentIds } from "../../store/documentSlicer";
@@ -229,8 +230,6 @@ const TranscriptWorkspace: React.FC<{
   showLanguageMenu: boolean;
   setShowLanguageMenu: (v: boolean) => void;
   handleLanguageChange: (v: string) => void;
-  threadId: string | undefined;
-  setLanguage: (v: string) => void;
   modificationRange: any;
   setModificationRange: (v: any) => void;
   originalTranscriptBeforeModify: string;
@@ -260,8 +259,6 @@ const TranscriptWorkspace: React.FC<{
   showLanguageMenu,
   setShowLanguageMenu,
   handleLanguageChange,
-  threadId,
-  setLanguage,
   modificationRange,
   setModificationRange,
   originalTranscriptBeforeModify,
@@ -364,13 +361,7 @@ const TranscriptWorkspace: React.FC<{
               <select
                 className={styles.languageInline}
                 value={language}
-                onChange={(e) => {
-                  localStorage.setItem(
-                    threadId + "selectedLanguage",
-                    e.target.value
-                  );
-                  setLanguage(e.target.value);
-                }}
+                onChange={(e) => handleLanguageChange(e.target.value)}
               >
                 {LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -658,35 +649,27 @@ const ThreadPage: React.FC = () => {
     start: number;
     end: number;
   } | null>(null);
-  const [language, setLanguage] = useState("gu-IN"); // Defaulting to Gujarati as requested
+  const dispatch = useDispatch();
+
+  const language = useSelector(
+    (state: RootState) => state.bot.languageByThread[threadId!] || "gu-IN"
+  );
   const [isActuallyRecording, setIsActuallyRecording] = useState(false);
   const [originalTranscriptBeforeModify, setOriginalTranscriptBeforeModify] =
     useState("");
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const userMenuRef = useRef<HTMLButtonElement>(null);
-
-  const dispatch = useDispatch();
   const botId = useSelector((state: RootState) => state.bot.botId);
   const [audioURL, setAudioURL] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const isLoadingHistoryRef = useRef(false); // tracks history fetches without re-render
 
-  useEffect(() => {
-    const selectedLang = localStorage.getItem(threadId + "selectedLanguage");
-    if (selectedLang) {
-      localStorage.setItem(threadId + "selectedLanguage", "gu-IN");
-      setLanguage(selectedLang);
-    } else {
-      localStorage.setItem(threadId + "selectedLanguage", "gu-IN");
-    }
-  }, [threadId]);
 
   const handleLanguageChange = async (newLang: string) => {
-    localStorage.setItem(threadId + "selectedLanguage", newLang);
-    setLanguage(newLang);
+    dispatch(setLanguageForThread({ threadId: threadId!, language: newLang }));
 
-    // Only translate if form has non-initial data
+    // Only set language in order section if form has non-initial data
     const isFormEmpty =
       JSON.stringify(orderData) === JSON.stringify(initialOrderData);
 
@@ -910,6 +893,14 @@ const ThreadPage: React.FC = () => {
         setTranscript(state.transcript || "");
         setOrderData(normalizeOrderData(state.orderData));
         setAudioBlob(state.audioBlob || null);
+        if (state.language) {
+          dispatch(
+            setLanguageForThread({
+              threadId: threadId!,
+              language: state.language,
+            })
+          );
+        }
 
         lastProcessedTranscriptRef.current = state.transcript || "";
       }
@@ -920,7 +911,12 @@ const ThreadPage: React.FC = () => {
   // Save persistent workspace state whenever it updates (after initial load)
   useEffect(() => {
     if (threadId && isStateLoaded) {
-      saveThreadState(threadId, { transcript, orderData, audioBlob });
+      saveThreadState(threadId, {
+        transcript,
+        orderData,
+        audioBlob,
+        language,
+      });
     }
   }, [transcript, orderData, audioBlob, threadId, isStateLoaded]);
 
@@ -1323,8 +1319,6 @@ const ThreadPage: React.FC = () => {
             showLanguageMenu,
             setShowLanguageMenu,
             handleLanguageChange,
-            threadId,
-            setLanguage,
             modificationRange,
             setModificationRange,
             originalTranscriptBeforeModify,
