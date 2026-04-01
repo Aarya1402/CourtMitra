@@ -216,7 +216,8 @@ app.post(
       }
 
       const filePath = req.file.path;
-      const transcriptText = await getTranscript(filePath);
+      const language = req.body.language || "gu-IN";
+      const transcriptText = await getTranscript(filePath, language);
 
       // Cleanup uploaded file
       if (fs.existsSync(filePath)) {

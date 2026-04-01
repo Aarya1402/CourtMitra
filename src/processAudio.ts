@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export async function getTranscript(filePath: string): Promise<string> {
+export async function getTranscript(filePath: string, languageCode: string = "unknown"): Promise<string> {
   const client = new SarvamAIClient({
     apiSubscriptionKey: process.env.SARVAM_API_KEY as string,
   });
@@ -14,12 +14,12 @@ export async function getTranscript(filePath: string): Promise<string> {
     throw new Error(`Audio file not found at: ${filePath}`);
   }
 
-  console.log(`Processing file: ${filePath}`);
+  console.log(`Processing file: ${filePath} with language: ${languageCode}`);
 
   // Create batch job
   const job = await client.speechToTextJob.createJob({
     model: "saaras:v3",
-    languageCode: "unknown",
+    languageCode: languageCode as any,
     withDiarization: true,
     numSpeakers: 2,
   });
