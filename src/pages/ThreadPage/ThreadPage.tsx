@@ -162,11 +162,10 @@ const GlobalHeader: React.FC<{
         <Plus size={18} />
         <span>New Chat</span>
       </button>
-      <div style={{ position: "relative" }}>
+      <div style={{ position: "relative" }} ref={userMenuRef}>
         <button
           className={styles.userProfile}
           onClick={() => setShowLogout(!showLogout)}
-          ref={userMenuRef}
           type="button"
           aria-label="User Profile"
         >
