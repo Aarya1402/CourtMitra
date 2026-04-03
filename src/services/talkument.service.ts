@@ -33,10 +33,6 @@ export const talkumentApiCall = async (
     maxBodyLength: Infinity,
   };
 
-  try {
-    const response = await axios(config);
-    return response.data;
-  } catch (error: any) {
-    throw error;
-  }
+  const response = await axios(config);
+  return response.data;
 };

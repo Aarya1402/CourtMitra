@@ -1,32 +1,30 @@
 import { Request, Response } from "express";
 import { SarvamAIClient } from "sarvamai";
+import { LegalOrderData, SarvamChatResponse } from "../types/index.js";
 
 // Initialize Sarvam AI Client
 const getSarvamClient = () => {
-    if (!process.env.SARVAM_API_KEY) {
-        throw new Error("SARVAM_API_KEY is not set in environment variables");
-    }
-    return new SarvamAIClient({
-        apiSubscriptionKey: process.env.SARVAM_API_KEY,
-    });
+  if (!process.env.SARVAM_API_KEY) {
+    throw new Error("SARVAM_API_KEY is not set in environment variables");
+  }
+  return new SarvamAIClient({
+    apiSubscriptionKey: process.env.SARVAM_API_KEY,
+  });
 };
 
-export const extractOrderData = async (
-    req: Request,
-    res: Response,
-): Promise<any> => {
-    try {
-        const { chunk, language = "English" } = req.body;
+export const extractOrderData = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { chunk, language = "English" } = req.body;
 
-        console.log(
-            `[OrderController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars) in language: ${language} using Sarvam AI`,
-        );
+    console.log(
+      `[OrderController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars) in language: ${language} using Sarvam AI`,
+    );
 
-        if (!chunk) {
-            return res.status(400).json({ error: "chunk is required" });
-        }
+    if (!chunk) {
+      return res.status(400).json({ error: "chunk is required" });
+    }
 
-        const promptText = `You are a legal document synthesis expert specializing in Indian court proceedings.
+    const promptText = `You are a legal document synthesis expert specializing in Indian court proceedings.
 
 Your task is to analyze the FULL TRANSCRIPT of a court session and generate a COMPLETE and VALID JSON object strictly following the schema provided below.
 
@@ -140,71 +138,64 @@ FINAL INSTRUCTION:
 Generate a complete, accurate, and legally structured court order JSON in "${language}", strictly adhering to the schema and rules above.
 Only return JSON. Absolutely no <think> commentary.`;
 
+    const client = getSarvamClient();
+    const response = (await client.chat.completions({
+      model: "sarvam-m",
+      messages: [
+        {
+          role: "user",
+          content: promptText,
+        },
+      ],
+      max_tokens: 4000,
+    })) as SarvamChatResponse;
 
-        const client = getSarvamClient();
-        const response: any = await client.chat.completions({
-            model: "sarvam-m", 
-            messages: [
-                {
-                    role: "user",
-                    content: promptText,
-                },
-            ],
-            max_tokens: 4000,
-        });
+    const responseText = response.choices[0].message.content;
+    console.log(`[OrderController] AI response received (length: ${responseText.length} chars)`);
 
-        const responseText = response.choices[0].message.content;
-        console.log(
-            `[OrderController] AI response received (length: ${responseText.length} chars)`,
-        );
+    const cleanedJSON = extractJSON(responseText);
 
-        const cleanedJSON = extractJSON(responseText);
+    if (!cleanedJSON) {
+      console.error(
+        "[OrderController] Failed to clean AI response into JSON:",
+        responseText.substring(0, 500),
+      );
 
-        if (!cleanedJSON) {
-            console.error(
-                "[OrderController] Failed to clean AI response into JSON:",
-                responseText.substring(0, 500),
-            );
+      // Special handling for truncated responses - maybe tell user to try again
+      const isTruncated = responseText.length > 0 && !responseText.trim().endsWith("}");
 
-            // Special handling for truncated responses - maybe tell user to try again
-            const isTruncated = responseText.length > 0 && !responseText.trim().endsWith("}");
-            
-            return res.status(500).json({
-                error: isTruncated ? "AI response was truncated. Please try again with a shorter chunk." : "Failed to parse JSON from AI response",
-                raw: responseText, 
-            });
-        }
-
-        console.log(
-            "[OrderController] Synthesis successful, sending refined JSON",
-        );
-        return res.json({
-            result: cleanedJSON,
-        });
-    } catch (error: any) {
-        console.error("Sarvam AI API Error:", error);
-        return res
-            .status(500)
-            .json({ error: error.message || "Error processing with Sarvam AI" });
+      return res.status(500).json({
+        error: isTruncated
+          ? "AI response was truncated. Please try again with a shorter chunk."
+          : "Failed to parse JSON from AI response",
+        raw: responseText,
+      });
     }
+
+    console.log("[OrderController] Synthesis successful, sending refined JSON");
+    return res.json({
+      result: cleanedJSON as unknown as LegalOrderData,
+    });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "Error processing with Sarvam AI";
+    console.error("Sarvam AI API Error:", error);
+    return res.status(500).json({ error: errorMsg });
+  }
 };
 
-export const translateOrderData = async (
-    req: Request,
-    res: Response,
-): Promise<any> => {
-    try {
-        const { orderData, language = "English" } = req.body;
+export const translateOrderData = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { orderData, language = "English" } = req.body;
 
-        if (!orderData) {
-            return res.status(400).json({ error: "orderData is required" });
-        }
+    if (!orderData) {
+      return res.status(400).json({ error: "orderData is required" });
+    }
 
-        console.log(
-            `[OrderController] Starting translation of orderData to language: ${language} using Sarvam AI`,
-        );
+    console.log(
+      `[OrderController] Starting translation of orderData to language: ${language} using Sarvam AI`,
+    );
 
-        const promptText = `You are a legal translation expert. 
+    const promptText = `You are a legal translation expert. 
 Translate the following JSON object representing a court order into the language: "${language}".
 
 🔒 RULES:
@@ -224,69 +215,67 @@ ${JSON.stringify(orderData, null, 2)}
 FINAL INSTRUCTION:
 Return ONLY the translated JSON object in "${language}" now. No other text.`;
 
-        const client = getSarvamClient();
-        const response: any = await client.chat.completions({
-            model: "sarvam-m",
-            messages: [
-                {
-                    role: "user",
-                    content: promptText,
-                },
-            ],
-            max_tokens: 4000,
-        });
+    const client = getSarvamClient();
+    const response = (await client.chat.completions({
+      model: "sarvam-m",
+      messages: [
+        {
+          role: "user",
+          content: promptText,
+        },
+      ],
+      max_tokens: 4000,
+    })) as SarvamChatResponse;
 
-        const responseText = response.choices[0].message.content;
+    const responseText = response.choices[0].message.content;
 
-        const cleanedJSON = extractJSON(responseText);
+    const cleanedJSON = extractJSON(responseText);
 
-        if (!cleanedJSON) {
-            return res.status(500).json({
-                error: "Failed to parse translated JSON from AI response",
-                raw: responseText,
-            });
-        }
-
-        return res.json({
-            result: cleanedJSON,
-        });
-    } catch (error: any) {
-        console.error("Sarvam AI Translation Error:", error);
-        return res
-            .status(500)
-            .json({ error: error.message || "Error translating with Sarvam AI" });
+    if (!cleanedJSON) {
+      return res.status(500).json({
+        error: "Failed to parse translated JSON from AI response",
+        raw: responseText,
+      });
     }
+
+    return res.json({
+      result: cleanedJSON as unknown as LegalOrderData,
+    });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "Error translating with Sarvam AI";
+    console.error("Sarvam AI Translation Error:", error);
+    return res.status(500).json({ error: errorMsg });
+  }
 };
 
-function extractJSON(text: string) {
-    if (!text) return null;
+function extractJSON(text: string): Record<string, unknown> | null {
+  if (!text) return null;
 
-    // Remove markdown ```json blocks
-    text = text
-        .replaceAll(/```json/gi, "")
-        .replaceAll("```", "")
-        .trim();
+  // Remove markdown ```json blocks
+  text = text
+    .replaceAll(/```json/gi, "")
+    .replaceAll("```", "")
+    .trim();
 
-    // Try direct parse first
+  // Try direct parse first
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Falls through to extraction logic if direct JSON parsing fails
+  }
+
+  // If it starts with <think> or other text, find the first '{'
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
+
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    const potentialJSON = text.substring(firstBrace, lastBrace + 1);
     try {
-        return JSON.parse(text);
-    } catch { }
-
-    // If it starts with <think> or other text, find the first '{'
-    const firstBrace = text.indexOf("{");
-    const lastBrace = text.lastIndexOf("}");
-    
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        const potentialJSON = text.substring(firstBrace, lastBrace + 1);
-        try {
-            return JSON.parse(potentialJSON);
-        } catch { }
+      return JSON.parse(potentialJSON);
+    } catch {
+      // Ignore parse failure; results in null being returned
     }
+  }
 
-
-
-    return null;
+  return null;
 }
-
-
-

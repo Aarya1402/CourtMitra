@@ -1,5 +1,5 @@
 import request from "supertest";
-import { app } from "../index.js";
+import { app } from "../app.js";
 
 describe("Server Verification", () => {
   it("should respond to /health endpoint", async () => {

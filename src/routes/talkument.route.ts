@@ -53,9 +53,7 @@ const handleStreamingResponse = async (
     url: `${process.env.TALKUMENT_API_BASE || "https://nighthack.api.talkument.co/api"}${endpoint}`,
     headers: {
       Authorization: token ? `Bearer ${token}` : "",
-      ...(isMultipart
-        ? data.getHeaders()
-        : { "Content-Type": "application/json" }),
+      ...(isMultipart ? data.getHeaders() : { "Content-Type": "application/json" }),
     },
     data: isMultipart ? data : req.body,
     responseType: "stream",
@@ -67,9 +65,7 @@ const handleStreamingResponse = async (
   if (res.flushHeaders) res.flushHeaders();
 
   console.log(`[TalkumentProxy] Starting stream for ${endpoint}`);
-  axiosRes.data.on("end", () =>
-    console.log(`[TalkumentProxy] Stream ended for ${endpoint}`),
-  );
+  axiosRes.data.on("end", () => console.log(`[TalkumentProxy] Stream ended for ${endpoint}`));
   axiosRes.data.on("error", (err: any) =>
     console.error(`[TalkumentProxy] Stream error for ${endpoint}:`, err),
   );
@@ -80,14 +76,8 @@ const handleStreamingResponse = async (
 /**
  * Handles setting authentication cookies upon successful sign-in or callback
  */
-const handleAuthCookies = (
-  res: Response,
-  endpoint: string,
-  method: string,
-  responseData: any,
-) => {
-  const isAuthAction =
-    endpoint === "/auth/signin" || endpoint === "/auth/callback";
+const handleAuthCookies = (res: Response, endpoint: string, method: string, responseData: any) => {
+  const isAuthAction = endpoint === "/auth/signin" || endpoint === "/auth/callback";
   if (isAuthAction && method === "POST") {
     const accessToken = responseData.access_token;
     if (accessToken) {
@@ -105,10 +95,7 @@ const handleAuthCookies = (
  * Standard error handler for the proxy
  */
 const handleProxyError = (res: Response, req: Request, error: any) => {
-  console.error(
-    `[TalkumentProxy] Error in ${req.method} ${req.path}:`,
-    error.message,
-  );
+  console.error(`[TalkumentProxy] Error in ${req.method} ${req.path}:`, error.message);
 
   if (error.response) {
     const errorData = error.response.data;
@@ -122,9 +109,10 @@ const handleProxyError = (res: Response, req: Request, error: any) => {
 
     // If it's a circular object (like a stream response error), don't pass it directly to .json()
     // Extract only serializable properties if it's an object, or send a default message
-    const safeErrorData = (typeof errorData === "object" && errorData !== null) 
-      ? { message: error.message, status: errorStatus } // Fallback to safe info
-      : errorData;
+    const safeErrorData =
+      typeof errorData === "object" && errorData !== null
+        ? { message: error.message, status: errorStatus } // Fallback to safe info
+        : errorData;
 
     return res.status(errorStatus).json(safeErrorData);
   }
@@ -135,31 +123,21 @@ const handleProxyError = (res: Response, req: Request, error: any) => {
   });
 };
 
-
 export const handleTalkumentProxy = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): Promise<any> => {
   try {
     const endpoint = req.params[0] ? `/${req.params[0]}` : req.path;
     const token = req.cookies.token;
 
-    console.log(
-      `[TalkumentProxy] ${req.method} ${endpoint} (Auth: ${!!token})`,
-    );
+    console.log(`[TalkumentProxy] ${req.method} ${endpoint} (Auth: ${!!token})`);
 
     const { data, isMultipart } = prepareMultipartData(req);
 
     if (endpoint.includes("/bots/agui/interact")) {
-      return await handleStreamingResponse(
-        req,
-        res,
-        endpoint,
-        token,
-        data,
-        isMultipart,
-      );
+      return await handleStreamingResponse(req, res, endpoint, token, data, isMultipart);
     }
 
     const responseData = await talkumentApiCall(
@@ -177,7 +155,6 @@ export const handleTalkumentProxy = async (
     return handleProxyError(res, req, error);
   }
 };
-
 
 export const logout = (req: Request, res: Response) => {
   res.clearCookie("token");

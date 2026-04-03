@@ -2,10 +2,14 @@ import { SarvamAIClient } from "sarvamai";
 import fs from "node:fs";
 import path from "node:path";
 import dotenv from "dotenv";
+import { SarvamTranscriptSegment } from "./types/index.js";
 
 dotenv.config();
 
-export async function getTranscript(filePath: string, languageCode: string = "unknown"): Promise<string> {
+export async function getTranscript(
+  filePath: string,
+  languageCode: string = "unknown",
+): Promise<string> {
   const client = new SarvamAIClient({
     apiSubscriptionKey: process.env.SARVAM_API_KEY as string,
   });
@@ -43,28 +47,32 @@ export async function getTranscript(filePath: string, languageCode: string = "un
   }
 
   // Download outputs for successful files to a temp directory
-  const tempOutputDir = path.join('temp_output', `job_${Date.now()}`);
+  const tempOutputDir = path.join("temp_output", `job_${Date.now()}`);
   if (!fs.existsSync(tempOutputDir)) {
     fs.mkdirSync(tempOutputDir, { recursive: true });
   }
 
   try {
     await job.downloadOutputs(tempOutputDir);
-    
+
     // Read the transcript from the downloaded JSON file
     const outputFiles = fs.readdirSync(tempOutputDir);
-    const transcriptFile = outputFiles.find(f => f.endsWith('.json'));
+    const transcriptFile = outputFiles.find((f) => f.endsWith(".json"));
 
     if (!transcriptFile) {
       throw new Error("Transcript file not found in downloaded outputs.");
     }
 
-    const content = JSON.parse(fs.readFileSync(path.join(tempOutputDir, transcriptFile), 'utf-8'));
-    
+    const content: SarvamTranscriptSegment | SarvamTranscriptSegment[] = JSON.parse(
+      fs.readFileSync(path.join(tempOutputDir, transcriptFile), "utf-8"),
+    );
+
     // Extract transcript text - Sarvam's JSON format can vary slightly
-    const transcriptText = Array.isArray(content) 
-      ? content.map((s: any) => s.transcript || s.text).join('\n')
-      : (content.transcript || content.text || "");
+    const transcriptText = Array.isArray(content)
+      ? content.map((s: SarvamTranscriptSegment) => s.transcript || s.text).join("\n")
+      : (content as SarvamTranscriptSegment).transcript ||
+        (content as SarvamTranscriptSegment).text ||
+        "";
 
     return transcriptText;
   } finally {
