@@ -23,7 +23,9 @@ export async function getTranscript(
   // Create batch job
   const job = await client.speechToTextJob.createJob({
     model: "saaras:v3",
-    languageCode: languageCode as any,
+    languageCode: languageCode as NonNullable<
+      Parameters<typeof client.speechToTextJob.createJob>[0]
+    >["languageCode"],
     withDiarization: true,
     numSpeakers: 2,
   });

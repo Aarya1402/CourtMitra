@@ -2,11 +2,12 @@ import { jest } from "@jest/globals";
 
 // Mock axios BEFORE anything else
 jest.unstable_mockModule("axios", () => ({
-  default: jest.fn().mockImplementation(async (config: any) => {
-    if (config.url.includes("/api/auth/logout")) {
+  default: jest.fn().mockImplementation(async (config: unknown) => {
+    const cfg = config as { url: string };
+    if (cfg.url.includes("/api/auth/logout")) {
       return { data: { message: "Mocked Logout" } };
     }
-    if (config.url.includes("/error")) {
+    if (cfg.url.includes("/error")) {
       throw new Error("Mocked API Error");
     }
     return { data: { success: true } };
@@ -31,7 +32,7 @@ describe("Talkument Routes", () => {
   });
 
   it("should pass through auth token if provided in cookies", async () => {
-    const axiosMock = (await import("axios")).default as any;
+    const axiosMock = (await import("axios")).default as unknown as jest.Mock;
     axiosMock.mockClear();
 
     await request(app).get("/api/talkument/test-proxy").set("Cookie", ["token=mock-token"]);

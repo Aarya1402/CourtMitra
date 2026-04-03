@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 
 // Define a shared mock function to control behavior across all instances
-const mockCompletions = jest.fn() as any;
+const mockCompletions = jest.fn() as unknown as jest.Mock<(...args: unknown[]) => Promise<unknown>>;
 
 jest.unstable_mockModule("sarvamai", () => ({
   SarvamAIClient: jest.fn().mockImplementation(() => ({
@@ -20,8 +20,9 @@ describe("Order Controller", () => {
     jest.clearAllMocks();
 
     // Default success mock behavior
-    mockCompletions.mockImplementation(async (options: any) => {
-      const prompt = options.messages[0].content;
+    mockCompletions.mockImplementation(async (options: unknown) => {
+      const opts = options as { messages: Array<{ content: string }> };
+      const prompt = opts.messages[0].content;
       if (prompt.includes("Translate")) {
         return {
           choices: [{ message: { content: JSON.stringify({ translated: "data" }) } }],

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 // Define shared mock functions to control behavior across instances
-const mockCreateJob = jest.fn() as any;
+const mockCreateJob = jest.fn() as unknown as jest.Mock<(...args: unknown[]) => Promise<unknown>>;
 
 jest.unstable_mockModule("sarvamai", () => ({
   SarvamAIClient: jest.fn().mockImplementation(() => ({
@@ -14,7 +14,7 @@ jest.unstable_mockModule("sarvamai", () => ({
 }));
 
 describe("processAudio", () => {
-  let getTranscript: any;
+  let getTranscript: (filePath: string, language?: string) => Promise<string>;
 
   beforeAll(async () => {
     // Import dynamically after mock is established
@@ -34,7 +34,7 @@ describe("processAudio", () => {
         failed: [],
         successful: [{ file_id: "test", output_file_id: "output" }],
       })),
-      downloadOutputs: jest.fn().mockImplementation(async (dir: any) => {
+      downloadOutputs: jest.fn().mockImplementation(async (dir: unknown) => {
         const transcriptPath = path.join(dir as string, "transcript.json");
         fs.writeFileSync(
           transcriptPath,
@@ -141,7 +141,7 @@ describe("processAudio", () => {
         failed: [],
         successful: [{ file_id: "test", output_file_id: "output" }],
       })),
-      downloadOutputs: jest.fn().mockImplementation(async (dir: any) => {
+      downloadOutputs: jest.fn().mockImplementation(async (dir: unknown) => {
         const transcriptPath = path.join(dir as string, "transcript.json");
         const multiSegmentData = [{ transcript: "First segment." }, { text: "Second segment." }];
         fs.writeFileSync(transcriptPath, JSON.stringify(multiSegmentData));
@@ -169,7 +169,7 @@ describe("processAudio", () => {
         failed: [],
         successful: [{ file_id: "test", output_file_id: "output" }],
       })),
-      downloadOutputs: jest.fn().mockImplementation(async (dir: any) => {
+      downloadOutputs: jest.fn().mockImplementation(async (dir: unknown) => {
         const transcriptPath = path.join(dir as string, "transcript.json");
         fs.writeFileSync(transcriptPath, "NOT VALID JSON");
         return Promise.resolve();

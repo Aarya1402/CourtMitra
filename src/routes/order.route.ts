@@ -3,7 +3,7 @@ import { extractOrderData, translateOrderData } from "../controllers/order.contr
 
 const router = Router();
 
-router.post("/extract", extractOrderData as any);
-router.post("/translate", translateOrderData as any);
+router.post("/extract", extractOrderData);
+router.post("/translate", translateOrderData);
 
 export default router;

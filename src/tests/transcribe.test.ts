@@ -35,7 +35,9 @@ describe("Transcribe API", () => {
 
   it("should handle processing errors", async () => {
     const { getTranscript } = await import("../processAudio.js");
-    (getTranscript as any).mockRejectedValueOnce(new Error("Transcription failure"));
+    (getTranscript as jest.MockedFunction<typeof getTranscript>).mockRejectedValueOnce(
+      new Error("Transcription failure"),
+    );
 
     const testFile = "test_transcribe_fail.wav";
     fs.writeFileSync(testFile, "mock audio");

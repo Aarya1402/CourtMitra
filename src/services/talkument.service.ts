@@ -6,20 +6,24 @@ const TALKUMENT_API_BASE =
 export const talkumentApiCall = async (
   method: string,
   endpoint: string,
-  data?: any,
+  data?: unknown,
   token?: string,
-  params?: any,
+  params?: Record<string, unknown>,
   isMultipart = false,
 ) => {
   const url = `${TALKUMENT_API_BASE}${endpoint}`;
-  const headers: any = {};
+  const headers: Record<string, string> = {};
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  if (isMultipart && data && typeof data.getHeaders === "function") {
-    Object.assign(headers, data.getHeaders());
+  if (
+    isMultipart &&
+    data &&
+    typeof (data as { getHeaders?: () => Record<string, string> }).getHeaders === "function"
+  ) {
+    Object.assign(headers, (data as { getHeaders: () => Record<string, string> }).getHeaders());
   } else if (data) {
     headers["Content-Type"] = "application/json";
   }

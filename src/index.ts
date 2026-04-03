@@ -31,8 +31,6 @@ const handleSarvamMessage = (ws: WebSocket, sarvamMsg: SarvamWSResponse) => {
     return;
   }
 
-
-
   if (sarvamMsg.type === "error") {
     ws.send(
       JSON.stringify({
@@ -56,7 +54,7 @@ const initializeSarvamStream = async (ws: WebSocket, msg: ClientControlMessage) 
     "Api-Subscription-Key": process.env.SARVAM_API_KEY,
     input_audio_codec: "wav",
     sample_rate: msg.sampleRate?.toString() || "16000",
-  } as any);
+  } as unknown as Parameters<typeof client.speechToTextStreaming.connect>[0]);
 
   sarvamSocket.on("open", () => ws.send(JSON.stringify({ type: "ready" })));
   sarvamSocket.on("message", (sarvamMsg: unknown) =>
@@ -73,9 +71,7 @@ const initializeSarvamStream = async (ws: WebSocket, msg: ClientControlMessage) 
 const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
 wss.on("connection", (ws: WebSocket) => {
-  let sarvamSocket: any = null; // Sarvam SDK streaming socket type is complex, using any here or from SDK if available. 
-  // Actually I should try to find its type. It's often EventEmitter.
-
+  let sarvamSocket: Awaited<ReturnType<typeof initializeSarvamStream>> | null = null;
 
   ws.on("message", async (message: Buffer, isBinary: boolean) => {
     if (isBinary) {

@@ -45,7 +45,7 @@ const handleStreamingResponse = async (
   res: Response,
   endpoint: string,
   token: string | undefined,
-  data: any,
+  data: unknown,
   isMultipart: boolean,
 ) => {
   const axiosRes = await axios({
@@ -53,7 +53,7 @@ const handleStreamingResponse = async (
     url: `${process.env.TALKUMENT_API_BASE || "https://nighthack.api.talkument.co/api"}${endpoint}`,
     headers: {
       Authorization: token ? `Bearer ${token}` : "",
-      ...(isMultipart ? data.getHeaders() : { "Content-Type": "application/json" }),
+      ...(isMultipart ? (data as FormData).getHeaders() : { "Content-Type": "application/json" }),
     },
     data: isMultipart ? data : req.body,
     responseType: "stream",
@@ -66,7 +66,7 @@ const handleStreamingResponse = async (
 
   console.log(`[TalkumentProxy] Starting stream for ${endpoint}`);
   axiosRes.data.on("end", () => console.log(`[TalkumentProxy] Stream ended for ${endpoint}`));
-  axiosRes.data.on("error", (err: any) =>
+  axiosRes.data.on("error", (err: Error) =>
     console.error(`[TalkumentProxy] Stream error for ${endpoint}:`, err),
   );
 
@@ -76,10 +76,15 @@ const handleStreamingResponse = async (
 /**
  * Handles setting authentication cookies upon successful sign-in or callback
  */
-const handleAuthCookies = (res: Response, endpoint: string, method: string, responseData: any) => {
+const handleAuthCookies = (
+  res: Response,
+  endpoint: string,
+  method: string,
+  responseData: Record<string, unknown>,
+) => {
   const isAuthAction = endpoint === "/auth/signin" || endpoint === "/auth/callback";
   if (isAuthAction && method === "POST") {
-    const accessToken = responseData.access_token;
+    const accessToken = responseData.access_token as string | undefined;
     if (accessToken) {
       res.cookie("token", accessToken, {
         httpOnly: true,
@@ -94,12 +99,13 @@ const handleAuthCookies = (res: Response, endpoint: string, method: string, resp
 /**
  * Standard error handler for the proxy
  */
-const handleProxyError = (res: Response, req: Request, error: any) => {
-  console.error(`[TalkumentProxy] Error in ${req.method} ${req.path}:`, error.message);
+const handleProxyError = (res: Response, req: Request, error: unknown) => {
+  const err = error as { message?: string; response?: { data: unknown; status: number } };
+  console.error(`[TalkumentProxy] Error in ${req.method} ${req.path}:`, err.message);
 
-  if (error.response) {
-    const errorData = error.response.data;
-    const errorStatus = error.response.status;
+  if (err.response) {
+    const errorData = err.response.data;
+    const errorStatus = err.response.status;
 
     // Log error safely without stringifying potentially circular objects (like streams)
     console.error(
@@ -111,7 +117,7 @@ const handleProxyError = (res: Response, req: Request, error: any) => {
     // Extract only serializable properties if it's an object, or send a default message
     const safeErrorData =
       typeof errorData === "object" && errorData !== null
-        ? { message: error.message, status: errorStatus } // Fallback to safe info
+        ? { message: err.message, status: errorStatus } // Fallback to safe info
         : errorData;
 
     return res.status(errorStatus).json(safeErrorData);
@@ -119,7 +125,7 @@ const handleProxyError = (res: Response, req: Request, error: any) => {
 
   return res.status(500).json({
     error: "Internal Server Error",
-    message: error.message || "Error communicating with Talkument API",
+    message: err.message || "Error communicating with Talkument API",
   });
 };
 
@@ -127,7 +133,7 @@ export const handleTalkumentProxy = async (
   req: Request,
   res: Response,
   _next: NextFunction,
-): Promise<any> => {
+): Promise<Response | void> => {
   try {
     const endpoint = req.params[0] ? `/${req.params[0]}` : req.path;
     const token = req.cookies.token;
@@ -140,18 +146,18 @@ export const handleTalkumentProxy = async (
       return await handleStreamingResponse(req, res, endpoint, token, data, isMultipart);
     }
 
-    const responseData = await talkumentApiCall(
+    const responseData = (await talkumentApiCall(
       req.method,
       endpoint,
       data,
       token,
       req.query,
       isMultipart,
-    );
+    )) as Record<string, unknown>;
 
     handleAuthCookies(res, endpoint, req.method, responseData);
     return res.status(200).json(responseData);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleProxyError(res, req, error);
   }
 };
@@ -164,6 +170,10 @@ export const logout = (req: Request, res: Response) => {
 router.post("/auth/logout", logout);
 
 // Catch-all route for Talkument API
-router.all(/.*/, upload.single("file"), handleTalkumentProxy as any);
+router.all(
+  /.*/,
+  upload.single("file"),
+  handleTalkumentProxy as unknown as import("express").RequestHandler,
+);
 
 export default router;
