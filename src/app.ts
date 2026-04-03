@@ -17,7 +17,7 @@ app.set("trust proxy", 1);
 app.use(
   cors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) =>
-      callback(null, origin ? true : true),
+      callback(null, true),
     credentials: true,
   }),
 );
@@ -51,7 +51,10 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+});
 
 app.post(
   "/api/transcribe",

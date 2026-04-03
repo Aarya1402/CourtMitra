@@ -71,10 +71,8 @@ export async function getTranscript(
 
     // Extract transcript text - Sarvam's JSON format can vary slightly
     const transcriptText = Array.isArray(content)
-      ? content.map((s: SarvamTranscriptSegment) => s.transcript || s.text).join("\n")
-      : (content as SarvamTranscriptSegment).transcript ||
-        (content as SarvamTranscriptSegment).text ||
-        "";
+      ? content.map((s) => s.transcript || s.text).join("\n")
+      : content.transcript || content.text || "";
 
     return transcriptText;
   } finally {
