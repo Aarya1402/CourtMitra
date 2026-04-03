@@ -17,7 +17,7 @@ import orderRoutes from "./routes/order.route.js";
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
@@ -234,6 +234,10 @@ app.post(
   },
 );
 
+app.get("/health", (req: Request, res: Response) => {
+  res.status(200).json({ status: "OK", message: "Server is operational" });
+});
+
 // The error handler must be registered before any other error middleware and after all controllers
 Sentry.setupExpressErrorHandler(app);
 
@@ -250,6 +254,9 @@ app.use((err: any, req: any, res: any, next: any) => {
   });
 });
 
-httpServer.listen(Number(PORT), "0.0.0.0", () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  httpServer.listen(Number(PORT), "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  });
+}
+
