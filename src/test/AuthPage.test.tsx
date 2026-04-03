@@ -12,13 +12,25 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
+// 🔥 Mock GSAP (important)
+vi.mock("gsap", () => ({
+  default: {
+    context: () => ({
+      revert: vi.fn(),
+    }),
+    fromTo: vi.fn(),
+  },
+}));
+
 // 🔥 Mock API functions
 vi.mock("../pages/AuthPage/AuthPage.logic", () => ({
   SignIn: vi.fn(),
   SignUp: vi.fn(),
+  GoogleLogin: vi.fn(),
+  ForgotPassword: vi.fn(),
 }));
 
-import { SignIn, SignUp } from "../pages/AuthPage/AuthPage.logic";
+import * as AuthApi from "../pages/AuthPage/AuthPage.logic";
 
 describe("AuthPage", () => {
   beforeEach(() => {
@@ -55,7 +67,7 @@ describe("AuthPage", () => {
 
   // ✅ 4. Login success
   test("calls SignIn and navigates on success", async () => {
-    (SignIn as any).mockResolvedValue({});
+    vi.mocked(AuthApi.SignIn).mockResolvedValue({} as any);
 
     render(<AuthPage />);
 
@@ -70,14 +82,14 @@ describe("AuthPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
     await waitFor(() => {
-      expect(SignIn).toHaveBeenCalled();
+      expect(AuthApi.SignIn).toHaveBeenCalled();
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
 
   // ✅ 5. Signup flow
   test("calls SignUp on signup", async () => {
-    (SignUp as any).mockResolvedValue({});
+    vi.mocked(AuthApi.SignUp).mockResolvedValue({} as any);
 
     render(<AuthPage />);
 
@@ -102,17 +114,18 @@ describe("AuthPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
 
     await waitFor(() => {
-      expect(SignUp).toHaveBeenCalled();
+      expect(AuthApi.SignUp).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
 
-  // ✅ 6. Error handling
+  // ✅ 6. Error handling (API response)
   test("shows error on failed login", async () => {
-    (SignIn as any).mockRejectedValue({
+    vi.mocked(AuthApi.SignIn).mockRejectedValue({
       response: {
         data: { message: "Invalid credentials" },
       },
-    });
+    } as any);
 
     render(<AuthPage />);
 
@@ -129,5 +142,100 @@ describe("AuthPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
     });
+  });
+
+  // ✅ 7. Network error fallback
+  test("shows network error if no response", async () => {
+    vi.mocked(AuthApi.SignIn).mockRejectedValue(new Error("Network Error"));
+
+    render(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
+      target: { value: "test@mail.com" },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
+      target: { value: "123456" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/network error/i)).toBeInTheDocument();
+    });
+  });
+
+  // ✅ 8. Forgot password flow
+  test("handles forgot password", async () => {
+    vi.mocked(AuthApi.ForgotPassword).mockResolvedValue({} as any);
+
+    render(<AuthPage />);
+
+    fireEvent.click(screen.getByText(/forgot password/i));
+
+    fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
+      target: { value: "test@mail.com" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
+
+    await waitFor(() => {
+      expect(AuthApi.ForgotPassword).toHaveBeenCalled();
+      expect(
+        screen.getByText(/password reset link has been sent/i)
+      ).toBeInTheDocument();
+    });
+  });
+
+  // ✅ 9. Back to login from forgot password
+  test("returns to login view", () => {
+    render(<AuthPage />);
+
+    fireEvent.click(screen.getByText(/forgot password/i));
+    fireEvent.click(screen.getByText(/back to login/i));
+
+    expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
+  });
+
+  // ✅ 10. Google login success
+  test("calls GoogleLogin", async () => {
+    vi.mocked(AuthApi.GoogleLogin).mockResolvedValue({} as any);
+
+    render(<AuthPage />);
+
+    fireEvent.click(screen.getByText(/continue with google/i));
+
+    await waitFor(() => {
+      expect(AuthApi.GoogleLogin).toHaveBeenCalled();
+    });
+  });
+
+  // ✅ 11. Google login error
+  test("handles Google login error", async () => {
+    vi.mocked(AuthApi.GoogleLogin).mockRejectedValue(new Error("fail"));
+
+    render(<AuthPage />);
+
+    fireEvent.click(screen.getByText(/continue with google/i));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/failed to initialize google login/i)
+      ).toBeInTheDocument();
+    });
+  });
+
+  // ✅ 12. Form reset on toggle
+  test("resets form on toggle", () => {
+    render(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
+      target: { value: "test@mail.com" },
+    });
+
+    fireEvent.click(screen.getByText(/sign up/i));
+    fireEvent.click(screen.getByText(/log in/i));
+
+    expect(screen.getByPlaceholderText(/john@talkument.co/i)).toHaveValue("");
   });
 });
