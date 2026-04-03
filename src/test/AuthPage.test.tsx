@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import AuthPage from "./../pages/AuthPage/AuthPage";
-import { describe, vi } from "vitest";
+import AuthPage from "../pages/AuthPage/AuthPage";
+import { beforeEach, describe, vi } from "vitest";
 
 // 🔥 Mock navigation
 const mockNavigate = vi.fn();
@@ -13,12 +13,12 @@ vi.mock("react-router-dom", async () => {
 });
 
 // 🔥 Mock API functions
-vi.mock("./../pages/AuthPage/AuthPage.logic", () => ({
+vi.mock("../pages/AuthPage/AuthPage.logic", () => ({
   SignIn: vi.fn(),
   SignUp: vi.fn(),
 }));
 
-import { SignIn, SignUp } from "./../pages/AuthPage/AuthPage.logic";
+import { SignIn, SignUp } from "../pages/AuthPage/AuthPage.logic";
 
 describe("AuthPage", () => {
   beforeEach(() => {

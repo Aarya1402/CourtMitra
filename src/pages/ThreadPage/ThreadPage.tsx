@@ -800,7 +800,6 @@ const ThreadPage: React.FC = () => {
 
     const formData = new FormData();
     formData.append("audio", file);
-    formData.append("language", language);
 
     try {
       const response = await axios.post("/api/transcribe", formData, {

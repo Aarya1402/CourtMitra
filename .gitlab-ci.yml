@@ -1,4 +1,5 @@
 stages:
+  - test
   - build-sonar
   - build
   - deploy
@@ -7,6 +8,21 @@ variables:
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
   IMAGE_NAME: $CI_REGISTRY_IMAGE/frontend
+
+run-tests:
+  stage: test
+  image: node:20
+  script:
+    - npm i
+    - npm run test:coverage
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'development'
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 hour
+
+
 
 # 🔍 SONARQUBE ANALYSIS
 build-sonar:
