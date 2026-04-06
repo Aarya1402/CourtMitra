@@ -65,7 +65,7 @@ const DeleteFileModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay} aria-hidden="true">
+    <div className={styles.modalOverlay}>
       <dialog
         ref={dialogRef}
         className={styles.modalContent}
