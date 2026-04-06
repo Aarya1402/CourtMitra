@@ -154,7 +154,6 @@ describe("TranscriptEditor", () => {
     });
   });
 
-  // ❌ Cancel clear
   it("does not clear transcript if confirm false", async () => {
     mockConfirm.mockResolvedValue(false);
 
@@ -162,9 +161,13 @@ describe("TranscriptEditor", () => {
 
     fireEvent.click(screen.getByText("TrashIcon"));
 
+    // ✅ Ensure confirm was called
     await waitFor(() => {
-      expect(onChange).not.toHaveBeenCalled();
+      expect(mockConfirm).toHaveBeenCalled();
     });
+
+    // ❌ Ensure transcript not cleared
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   // ✅ Typing updates transcript
@@ -221,7 +224,6 @@ describe("TranscriptEditor", () => {
     });
   });
 
-  // ❌ No selection → no menu
   it("does not show menu if no selection", async () => {
     setup();
 
@@ -229,12 +231,15 @@ describe("TranscriptEditor", () => {
 
     fireEvent.mouseUp(textarea, { clientX: 10, clientY: 10 });
 
+    // ✅ Ensure textarea exists and interaction happened
+    expect(textarea).toBeInTheDocument();
+
     await waitFor(() => {
+      // ❌ Menu should not appear
       expect(screen.queryByText("MicIcon")).not.toBeInTheDocument();
     });
   });
 
-  // ❌ Prevent selection during recording
   it("does not allow selection during recording", async () => {
     mockTranscriberState.isRecording = true;
 
@@ -244,12 +249,15 @@ describe("TranscriptEditor", () => {
 
     fireEvent.mouseUp(textarea, { clientX: 10, clientY: 10 });
 
+    // ✅ Ensure recording state is active
+    expect(mockTranscriberState.isRecording).toBe(true);
+
     await waitFor(() => {
+      // ❌ Menu should not appear
       expect(screen.queryByText("MicIcon")).not.toBeInTheDocument();
     });
   });
 
-  // ✅ Click outside hides menu
   it("hides menu on outside click", async () => {
     setup();
 
@@ -260,10 +268,13 @@ describe("TranscriptEditor", () => {
 
     fireEvent.mouseUp(textarea, { clientX: 10, clientY: 10 });
 
-    await waitFor(() => screen.getByText("MicIcon"));
+    // ✅ Assert menu is shown first
+    const mic = await screen.findByText("MicIcon");
+    expect(mic).toBeInTheDocument();
 
     fireEvent.click(document);
 
+    // ❌ Then assert it disappears
     await waitFor(() => {
       expect(screen.queryByText("MicIcon")).not.toBeInTheDocument();
     });

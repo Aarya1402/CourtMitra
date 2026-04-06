@@ -122,15 +122,18 @@ describe("ChatMessages", () => {
     expect(screen.getByText("Delete message?")).toBeInTheDocument();
   });
 
-  // ✅ Cancel delete
   it("closes modal on cancel", () => {
     render(<ChatMessages messages={messages} onDelete={mockDelete} />);
 
     fireEvent.click(screen.getAllByText("MenuIcon")[0]);
     fireEvent.click(screen.getByText("Delete"));
 
+    // ✅ Assert modal opened
+    expect(screen.getByText("Delete message?")).toBeInTheDocument();
+
     fireEvent.click(screen.getByText("Cancel"));
 
+    // ✅ Assert modal closed
     expect(screen.queryByText("Delete message?")).not.toBeInTheDocument();
   });
 
@@ -154,6 +157,10 @@ describe("ChatMessages", () => {
 
     fireEvent.click(screen.getByText("MenuIcon"));
 
+    // ✅ Ensure menu opened
+    expect(screen.getByText("Copy")).toBeInTheDocument();
+
+    // ❌ Ensure delete is not shown
     expect(screen.queryByText("Delete")).not.toBeInTheDocument();
   });
 
@@ -185,6 +192,10 @@ describe("ChatMessages", () => {
   it("renders without delete menu if onDelete not provided", () => {
     render(<ChatMessages messages={messages} />);
 
+    // ✅ Ensure messages rendered
+    expect(screen.getByText("Hello")).toBeInTheDocument();
+
+    // ❌ Ensure menu is not rendered
     expect(screen.queryByText("MenuIcon")).not.toBeInTheDocument();
   });
 });

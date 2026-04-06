@@ -48,13 +48,17 @@ describe("Sidebar", () => {
     expect(chatsItem).toHaveClass("active");
   });
 
-  // ❌ Other items not active
   it("other menu items are not active", () => {
     render(<Sidebar />);
 
+    const chats = screen.getByText("Chats").closest("div");
     const dashboard = screen.getByText("Dashboard").closest("div");
     const docs = screen.getByText("Documents").closest("div");
 
+    // ✅ Positive assertion
+    expect(chats).toHaveClass("active");
+
+    // ❌ Negative assertions
     expect(dashboard).not.toHaveClass("active");
     expect(docs).not.toHaveClass("active");
   });
