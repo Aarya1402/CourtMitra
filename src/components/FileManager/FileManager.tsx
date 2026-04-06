@@ -34,8 +34,8 @@ const DeleteFileModal = ({
 }) => {
   if (!isOpen) return null;
   return (
-    <div className={styles.modalOverlay} onClick={onCancel}>
-      <div
+    <button className={styles.modalOverlay} onClick={onCancel}>
+      <button
         className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
       >
@@ -60,8 +60,8 @@ const DeleteFileModal = ({
             Delete
           </button>
         </div>
-      </div>
-    </div>
+      </button>
+    </button>
   );
 };
 
