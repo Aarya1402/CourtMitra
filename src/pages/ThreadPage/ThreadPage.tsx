@@ -749,14 +749,14 @@ const ThreadPage: React.FC = () => {
   const [mobileTab, setMobileTab] = useState<
     "transcript" | "order" | "chat" | "files"
   >("transcript");
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(globalThis.innerWidth <= 768);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(globalThis.innerWidth <= 768);
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    globalThis.addEventListener("resize", handleResize);
+    return () => globalThis.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -836,7 +836,7 @@ const ThreadPage: React.FC = () => {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      const percentage = (e.clientX / window.innerWidth) * 100;
+      const percentage = (e.clientX / globalThis.innerWidth) * 100;
 
       if (isDraggingLeft) {
         const newLeft = Math.max(20, Math.min(percentage, 80));

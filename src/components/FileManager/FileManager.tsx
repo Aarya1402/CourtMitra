@@ -33,6 +33,7 @@ const DeleteFileModal = ({
   fileName: string;
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,12 +49,15 @@ const DeleteFileModal = ({
     };
 
     if (isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
+      globalThis.addEventListener("keydown", handleKeyDown);
       document.addEventListener("mousedown", handleClickOutside);
+      dialogRef.current?.showModal();
+    } else {
+      dialogRef.current?.close();
     }
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      globalThis.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onCancel]);
@@ -61,49 +65,50 @@ const DeleteFileModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay} role="presentation">
-      <div
-        ref={modalRef}
+    <div className={styles.modalOverlay} aria-hidden="true">
+      <dialog
+        ref={dialogRef}
         className={styles.modalContent}
-        role="dialog"
-        aria-modal="true"
         aria-labelledby="delete-file-title"
+        onClose={onCancel}
       >
-        <div className={styles.modalHeader}>
-          <h3 id="delete-file-title">Delete file?</h3>
-          <button
-            type="button"
-            onClick={onCancel}
-            className={styles.closeBtn}
-            aria-label="Close modal"
-          >
-            <X size={18} />
-          </button>
+        <div ref={modalRef}>
+          <div className={styles.modalHeader}>
+            <h3 id="delete-file-title">Delete file?</h3>
+            <button
+              type="button"
+              onClick={onCancel}
+              className={styles.closeBtn}
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <div className={styles.modalBody}>
+            <p>
+              Are you sure you want to delete{" "}
+              <strong>"{fileName || "Untitled File"}"</strong>? This action
+              cannot be undone.
+            </p>
+          </div>
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.confirmDeleteBtn}
+              onClick={onConfirm}
+            >
+              Delete
+            </button>
+          </div>
         </div>
-        <div className={styles.modalBody}>
-          <p>
-            Are you sure you want to delete{" "}
-            <strong>"{fileName || "Untitled File"}"</strong>? This action cannot
-            be undone.
-          </p>
-        </div>
-        <div className={styles.modalFooter}>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.confirmDeleteBtn}
-            onClick={onConfirm}
-          >
-            Delete
-          </button>
-        </div>
-      </div>
+      </dialog>
     </div>
   );
 };

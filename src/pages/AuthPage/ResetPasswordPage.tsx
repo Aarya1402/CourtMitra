@@ -49,17 +49,14 @@ export default function ResetPasswordPage() {
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.data) {
         const data = error.response.data as Record<string, unknown>;
-        const messages = data.errors || data;
-        setErrorMsg(
-          Array.isArray(messages)
-            ? (messages as { message: string }[])
-            : [
-                {
-                  message:
-                    String((messages as Record<string, unknown>).message || (messages as Record<string, unknown>).detail || messages || "Error occurred"),
-                },
-              ]
-        );
+        const messages = data.errors || data.message || data.detail || data;
+        
+        if (Array.isArray(messages)) {
+          setErrorMsg(messages.map(m => typeof m === 'string' ? { message: m } : m as { message: string }));
+        } else {
+          const message = typeof messages === 'string' ? messages : "An error occurred while resetting password";
+          setErrorMsg([{ message }]);
+        }
       } else if (error instanceof Error) {
         setErrorMsg([{ message: error.message || "Network Error" }]);
       } else {
