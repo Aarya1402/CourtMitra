@@ -119,7 +119,7 @@ const handleProxyError = (res: Response, req: Request, error: unknown) => {
     // Extract only serializable properties if it's an object, or send a default message
     const safeErrorData =
       typeof errorData === "object" && errorData !== null
-        ? { message: err.message, status: errorStatus } // Fallback to safe info
+        ? { message: (errorData as any).message || err.message, status: errorStatus } // Fallback to safe info
         : errorData;
 
     return res.status(errorStatus).json(safeErrorData);
