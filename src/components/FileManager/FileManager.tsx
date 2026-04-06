@@ -32,16 +32,51 @@ const DeleteFileModal = ({
   onConfirm: () => void;
   fileName: string;
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancel();
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onCancel();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
+
   return (
-    <div className={styles.modalOverlay} onClick={onCancel}>
+    <div className={styles.modalOverlay} role="presentation">
       <div
+        ref={modalRef}
         className={styles.modalContent}
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-file-title"
       >
         <div className={styles.modalHeader}>
-          <h3>Delete file?</h3>
-          <button onClick={onCancel} className={styles.closeBtn}>
+          <h3 id="delete-file-title">Delete file?</h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className={styles.closeBtn}
+            aria-label="Close modal"
+          >
             <X size={18} />
           </button>
         </div>
@@ -53,10 +88,18 @@ const DeleteFileModal = ({
           </p>
         </div>
         <div className={styles.modalFooter}>
-          <button className={styles.cancelBtn} onClick={onCancel}>
+          <button
+            type="button"
+            className={styles.cancelBtn}
+            onClick={onCancel}
+          >
             Cancel
           </button>
-          <button className={styles.confirmDeleteBtn} onClick={onConfirm}>
+          <button
+            type="button"
+            className={styles.confirmDeleteBtn}
+            onClick={onConfirm}
+          >
             Delete
           </button>
         </div>
@@ -279,6 +322,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
         <div className={styles.fmHeader}>
           <div className={styles.fmActions}>
             <button
+              type="button"
               className={styles.iconBtn}
               onClick={() => {
                 setPreviewUrl(null);
@@ -326,6 +370,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
       <div className={styles.fmHeader}>
         <div className={styles.fmActions}>
           <button
+            type="button"
             className={styles.iconBtn}
             onClick={() => fetchFiles(false)}
             disabled={isLoading || isUploading}
@@ -338,6 +383,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
             )}
           </button>
           <button
+            type="button"
             className={`${styles.iconBtn} ${styles.primary}`}
             onClick={handlePlusClick}
             disabled={isUploading}
@@ -356,7 +402,11 @@ const FileManager: React.FC<FileManagerProps> = () => {
         {files.length === 0 && !isLoading && (
           <div className={styles.emptyFiles}>
             <p>No documents found.</p>
-            <button className={styles.uploadBtn} onClick={handlePlusClick}>
+            <button
+              type="button"
+              className={styles.uploadBtn}
+              onClick={handlePlusClick}
+            >
               Upload Document
             </button>
           </div>
@@ -379,6 +429,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
             </div>
             <div className={styles.actionMenu}>
               <button
+                type="button"
                 className={styles.iconBtn}
                 aria-label={`Actions for ${file.name}`}
                 onClick={() =>
@@ -392,12 +443,14 @@ const FileManager: React.FC<FileManagerProps> = () => {
               {activeDropdownId === file.id && (
                 <div className={styles.dropdown}>
                   <button
+                    type="button"
                     className={styles.dropdownItem}
                     onClick={() => handlePreview(file)}
                   >
                     <Eye size={14} /> View Preview
                   </button>
                   <button
+                    type="button"
                     className={`${styles.dropdownItem} ${styles.deleteItem}`}
                     onClick={() => handleDeleteClick(file)}
                   >
