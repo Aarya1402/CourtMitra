@@ -102,6 +102,31 @@ export default function AuthPage() {
     }
   };
 
+  const handleAuthError = (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const data = error.response.data as Record<string, unknown>;
+      const messages =
+        data.errors || data.message || data.error || data.detail || data;
+
+      if (Array.isArray(messages)) {
+        setErrorMsg(
+          messages.map((m) =>
+            typeof m === "string" ? { message: m } : (m as { message: string })
+          )
+        );
+      } else {
+        const message =
+          typeof messages === "string" ? messages : "An unknown error occurred";
+        setErrorMsg([{ message }]);
+      }
+    } else if (error instanceof Error) {
+      setErrorMsg([{ message: error.message || "Network Error" }]);
+    } else {
+      setErrorMsg([{ message: "An unknown error occurred" }]);
+    }
+    console.error("Auth error:", error);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg([]);
@@ -123,22 +148,7 @@ export default function AuthPage() {
 
       navigate("/");
     } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const data = error.response.data as Record<string, unknown>;
-        const messages = data.errors || data.message || data.error || data.detail || data;
-        
-        if (Array.isArray(messages)) {
-          setErrorMsg(messages.map(m => typeof m === 'string' ? { message: m } : m as { message: string }));
-        } else {
-          const message = typeof messages === 'string' ? messages : "An unknown error occurred";
-          setErrorMsg([{ message }]);
-        }
-      } else if (error instanceof Error) {
-        setErrorMsg([{ message: error.message || "Network Error" }]);
-      } else {
-        setErrorMsg([{ message: "An unknown error occurred" }]);
-      }
-      console.error("Auth error:", error);
+      handleAuthError(error);
     }
   };
 

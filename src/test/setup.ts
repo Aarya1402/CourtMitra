@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import { vi } from "vitest";
 
 // Polyfill HTMLDialogElement for JSDOM
 if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.showModal) {
@@ -11,4 +12,9 @@ if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.sho
     const event = new Event("close");
     this.dispatchEvent(event);
   };
+}
+
+// Polyfill scrollIntoView for JSDOM
+if (typeof window !== "undefined") {
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
 }

@@ -195,6 +195,7 @@ const MobileTabs: React.FC<{
           key={tab}
           className={mobileTab === tab ? styles.activeTab : styles.tab}
           onClick={() => onTabChange(tab)}
+          data-testid={`mobile-tab-${tab}`}
         >
           {tab.charAt(0).toUpperCase() + tab.slice(1)}
         </button>
@@ -415,6 +416,7 @@ const TranscriptWorkspace: React.FC<{
         className={styles.generateOrderBtn}
         onClick={() => extractDataFromChunk(transcript)}
         disabled={isExtracting || !transcript?.trim()}
+        data-testid="generate-order-btn"
       >
         {isExtracting ? "Generating..." : "Generate Order"}
       </button>
@@ -502,6 +504,7 @@ const DivisionLeft: React.FC<{
     <div
       className={styles.divisionLeft}
       style={isMobile ? { width: "100%" } : { width: `${leftWidth}%` }}
+      data-testid="division-left"
     >
       <div className={styles.transcriptSection}>
         {!isMobile && (
@@ -581,6 +584,7 @@ const DivisionCenter: React.FC<{
     <main
       className={styles.divisionCenter}
       style={isMobile ? { width: "100%" } : {}}
+      data-testid="division-center"
     >
       {!isMobile && (
         <div className={styles.tabContainer}>
@@ -1353,6 +1357,7 @@ const ThreadPage: React.FC = () => {
             className={styles.resizeHandle}
             onMouseDown={() => setIsDraggingLeft(true)}
             data-resize-handle-state={isDraggingLeft ? "drag" : "idle"}
+            data-testid="resize-handle"
           />
         )}
 

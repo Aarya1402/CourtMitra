@@ -73,6 +73,7 @@ const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
           onClick={toggleMic}
           disabled={disabled}
           type="button"
+          aria-label="Microphone"
         >
           <Mic size={20} />
         </button>
@@ -80,13 +81,14 @@ const ChatInput: React.FC<Props> = ({ onSend, disabled }) => {
         {error && <span className={styles.errorText}>{error}</span>}
       </div>
 
-      <button
-        className={styles.sendBtn}
-        onClick={handleSend}
-        disabled={disabled || !input.trim() || isRecording}
-      >
-        <Send size={18} />
-      </button>
+        <button
+          className={styles.sendBtn}
+          onClick={handleSend}
+          disabled={disabled || !input.trim() || isRecording}
+          aria-label="Send Message"
+        >
+          <Send size={18} />
+        </button>
     </div>
   );
 };
