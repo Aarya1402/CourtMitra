@@ -34,8 +34,8 @@ const DeleteFileModal = ({
 }) => {
   if (!isOpen) return null;
   return (
-    <button className={styles.modalOverlay} onClick={onCancel}>
-      <button
+    <div className={styles.modalOverlay} onClick={onCancel}>
+      <div
         className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
       >
@@ -60,8 +60,8 @@ const DeleteFileModal = ({
             Delete
           </button>
         </div>
-      </button>
-    </button>
+      </div>
+    </div>
   );
 };
 
@@ -237,7 +237,6 @@ const FileManager: React.FC<FileManagerProps> = () => {
       const arrayBuffer = await receivedBlob.arrayBuffer();
       const fileType = file.name.split(".").pop()?.toLowerCase() || "";
 
-      // 🔥 Force correct MIME type
       const blob = new Blob([arrayBuffer], {
         type: mimeTypes[fileType],
       });
@@ -330,6 +329,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
             className={styles.iconBtn}
             onClick={() => fetchFiles(false)}
             disabled={isLoading || isUploading}
+            aria-label="Refresh files"
           >
             {isLoading ? (
               <Loader2 size={16} className={styles.spin} />
@@ -341,6 +341,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
             className={`${styles.iconBtn} ${styles.primary}`}
             onClick={handlePlusClick}
             disabled={isUploading}
+            aria-label="Add file"
           >
             {isUploading ? (
               <Loader2 size={16} className={styles.spin} />
@@ -379,6 +380,7 @@ const FileManager: React.FC<FileManagerProps> = () => {
             <div className={styles.actionMenu}>
               <button
                 className={styles.iconBtn}
+                aria-label={`Actions for ${file.name}`}
                 onClick={() =>
                   setActiveDropdownId(
                     activeDropdownId === file.id ? null : file.id
