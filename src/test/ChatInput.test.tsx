@@ -12,7 +12,7 @@ vi.mock("lucide-react", () => ({
 const mockStart = vi.fn();
 const mockStop = vi.fn();
 
-let mockState: any = {};
+let mockState: Record<string, unknown> = {};
 
 vi.mock("../hooks/useTranscriber", () => ({
   useTranscriber: () => mockState,

@@ -1,13 +1,15 @@
 // ✅ MUST BE AT TOP (before any imports using it)
 vi.mock("@react-pdf/renderer", () => ({
-  Document: ({ children }: any) => <div data-testid="document">{children}</div>,
-  Page: ({ children }: any) => <div data-testid="page">{children}</div>,
-  Text: ({ children, render }: any) => {
-    if (render) return <span>{render({ pageNumber: 1 })}</span>;
+  Document: ({ children }: React.PropsWithChildren) => <div data-testid="document">{children}</div>,
+  Page: ({ children }: React.PropsWithChildren) => <div data-testid="page">{children}</div>,
+  Text: ({ children, render }: React.PropsWithChildren<{ render?: (props: { pageNumber: number }) => React.ReactNode }>) => {
+    if (render) {
+      return <div>{render({ pageNumber: 1 })}</div>;
+    }
     return <span>{children}</span>;
   },
-  View: ({ children }: any) => <div>{children}</div>,
-  StyleSheet: { create: (styles: any) => styles },
+  View: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  StyleSheet: { create: (styles: Record<string, unknown>) => styles },
   Font: { register: vi.fn() }, // ✅ REQUIRED
   pdf: vi.fn(), // 🔥 also needed for other tests
 }));

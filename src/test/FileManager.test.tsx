@@ -40,11 +40,11 @@ describe("FileManager Component", () => {
     vi.spyOn(AlertContext, "useAlert").mockReturnValue({
       showAlert: mockShowAlert,
       showConfirm: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof AlertContext.useAlert>);
   });
 
   it("renders empty state when no files exist", async () => {
-    (axios.get as any).mockResolvedValue({ data: { files: [] } });
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
 
     renderFileManager();
 
@@ -58,7 +58,7 @@ describe("FileManager Component", () => {
       { id: "1", name: "test1.pdf", status: "completed" },
       { id: "2", name: "test2.docx", status: "pending" },
     ];
-    (axios.get as any).mockResolvedValue({ data: { files: mockFiles } });
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
 
     renderFileManager();
 
@@ -69,7 +69,7 @@ describe("FileManager Component", () => {
   });
 
   it("triggers file upload when add button is clicked", async () => {
-    (axios.get as any).mockResolvedValue({ data: { files: [] } });
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
 
     renderFileManager();
 
@@ -82,8 +82,8 @@ describe("FileManager Component", () => {
   });
 
   it("allows file upload and refreshes file list", async () => {
-    (axios.get as any).mockResolvedValue({ data: { files: [] } });
-    (axios.post as any).mockResolvedValue({ data: { success: true } });
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
+    (axios.post as import("vitest").Mock).mockResolvedValue({ data: { success: true } });
 
     renderFileManager();
 
@@ -108,7 +108,7 @@ describe("FileManager Component", () => {
     window.URL.createObjectURL = vi.fn().mockReturnValue(mockBlobUrl);
 
     const mockFiles = [{ id: "file1", name: "document.pdf", status: "completed" }];
-    (axios.get as any)
+    (axios.get as import("vitest").Mock)
       .mockResolvedValueOnce({ data: { files: mockFiles } }) 
       .mockResolvedValueOnce({ data: { file_url: "http://signed-url.com" } }) 
       .mockResolvedValueOnce({ data: blob }); 
@@ -132,8 +132,8 @@ describe("FileManager Component", () => {
 
   it("opens delete modal and deletes file", async () => {
     const mockFiles = [{ id: "file1", name: "document.pdf", status: "completed" }];
-    (axios.get as any).mockResolvedValue({ data: { files: mockFiles } });
-    (axios.delete as any).mockResolvedValue({ data: { success: true } });
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+    (axios.delete as import("vitest").Mock).mockResolvedValue({ data: { success: true } });
 
     renderFileManager();
 
@@ -165,7 +165,7 @@ describe("FileManager Component", () => {
 
   it("closes delete modal when cancel is clicked", async () => {
     const mockFiles = [{ id: "file1", name: "document.pdf", status: "completed" }];
-    (axios.get as any).mockResolvedValue({ data: { files: mockFiles } });
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
 
     renderFileManager();
 

@@ -5,11 +5,11 @@ import GlobalErrorBoundary from "../components/shared/GlobalErrorBoundary";
 const resetErrorMock = vi.fn();
 
 vi.mock("@sentry/react", async () => {
-  const actual = await vi.importActual<any>("@sentry/react");
+  const actual = await vi.importActual<Record<string, unknown>>("@sentry/react");
 
   return {
     ...actual,
-    ErrorBoundary: ({ fallback }: any) => {
+    ErrorBoundary: ({ fallback }: { fallback: (props: { error: Error; resetError: () => void }) => React.ReactNode }) => {
       return fallback({
         error: new Error("Test error"),
         resetError: resetErrorMock,
@@ -41,7 +41,7 @@ describe("GlobalErrorBoundary", () => {
     // mock DEV true
     vi.stubGlobal("import", {
       meta: { env: { DEV: true } },
-    } as any);
+    } as { meta: { env: { DEV: boolean } } });
 
     render(
       <GlobalErrorBoundary>
@@ -86,7 +86,7 @@ describe("GlobalErrorBoundary", () => {
 
   // ✅ 5. Redirects to homepage
   test("redirects to homepage on click", () => {
-    delete (globalThis as any).location;
+    delete (globalThis as unknown as { location: unknown }).location;
     (globalThis as any).location = { href: "" };
 
     render(

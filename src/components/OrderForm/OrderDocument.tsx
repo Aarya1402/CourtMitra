@@ -16,7 +16,7 @@ for (const font of fontConfigs) {
 }
 
 const renderParagraphs = (
-  styles: Record<string, any>,
+  styles: Record<string, unknown>,
   text: string | string[] | null
 ) => {
   if (!text) return null;
@@ -42,23 +42,25 @@ const renderParagraphs = (
   if (temp.length) paragraphs.push(temp.join(" "));
 
   return paragraphs.map((p) => (
-    <Text key={p} style={styles.bodyText}>
+    <Text key={p} style={styles.bodyText as import("@react-pdf/renderer").Styles}>
       {p}
     </Text>
   ));
 };
 
-const safeArray = (arr: any): string[] => (Array.isArray(arr) ? arr : []);
+const safeArray = (arr: unknown): string[] => (Array.isArray(arr) ? arr : []);
 
-const safeJoin = (arr: any): string => {
+const safeJoin = (arr: unknown): string => {
   if (!arr || !Array.isArray(arr)) return "";
   return arr
     .map((item) => {
       if (typeof item === "string") return item;
-      if (typeof item === "object" && item !== null)
+      if (typeof item === "object" && item !== null) {
+        const obj = item as Record<string, unknown>;
         return (
-          item.name || item.advocate_name || item.text || JSON.stringify(item)
-        );
+          obj.name || obj.advocate_name || obj.text || JSON.stringify(item)
+        ) as string;
+      }
       return String(item);
     })
     .join(", ");

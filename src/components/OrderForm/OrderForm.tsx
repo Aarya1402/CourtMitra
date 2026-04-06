@@ -148,15 +148,15 @@ const OrderForm: React.FC<Props> = ({
 
   const appendToArrayAtPath = (path: string[], value: string) => {
     const newData = structuredClone(formData);
-    let current: Record<string, any> = newData;
+    let current = newData as unknown as Record<string, unknown>;
 
     for (const [i, key] of path.entries()) {
       if (i === path.length - 1) {
         if (!Array.isArray(current[key])) current[key] = [];
-        current[key].push(value);
+        (current[key] as string[]).push(value);
       } else {
         if (!current[key]) current[key] = {};
-        current = current[key];
+        current = current[key] as Record<string, unknown>;
       }
     }
 
@@ -184,6 +184,7 @@ const OrderForm: React.FC<Props> = ({
     if (!isRecording && recordingField) {
       finalizeTranscription();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording]);
 
   const handleGeneratePDF = async () => {
@@ -207,14 +208,14 @@ const OrderForm: React.FC<Props> = ({
     }
   };
 
-  const handleChange = (path: string[], value: any) => {
+  const handleChange = (path: string[], value: string | string[]) => {
     const newData = structuredClone(formData);
-    let current: Record<string, any> = newData;
+    let current = newData as unknown as Record<string, unknown>;
 
     for (let i = 0; i < path.length - 1; i++) {
       const key = path[i];
       if (!current[key]) current[key] = {};
-      current = current[key];
+      current = current[key] as Record<string, unknown>;
     }
 
     const lastKey = path.at(-1);
@@ -224,15 +225,16 @@ const OrderForm: React.FC<Props> = ({
     }
   };
 
-  const safeJoinArray = (arr: any): string => {
+  const safeJoinArray = (arr: unknown): string => {
     if (!arr || !Array.isArray(arr)) return "";
     return arr
       .map((item) => {
         if (typeof item === "string") return item;
         if (typeof item === "object" && item !== null) {
+          const obj = item as Record<string, unknown>;
           return (
-            item.name || item.advocate_name || item.text || JSON.stringify(item)
-          );
+            obj.name || obj.advocate_name || obj.text || JSON.stringify(item)
+          ) as string;
         }
         return String(item);
       })

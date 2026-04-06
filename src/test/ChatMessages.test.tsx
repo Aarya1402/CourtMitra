@@ -77,7 +77,7 @@ describe("ChatMessages", () => {
 
   // ❌ Copy failure (catch block)
   it("handles copy failure", async () => {
-    (navigator.clipboard.writeText as any).mockRejectedValueOnce(
+    (navigator.clipboard.writeText as import("vitest").Mock).mockRejectedValueOnce(
       new Error("fail")
     );
 

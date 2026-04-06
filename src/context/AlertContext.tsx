@@ -21,6 +21,7 @@ interface AlertContextType {
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAlert = () => {
   const context = useContext(AlertContext);
   if (!context) {
@@ -36,7 +37,8 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({
   const [config, setConfig] = useState<{
     message: string;
     options?: AlertOptions;
-    resolve?: (value: any) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolve?: (value?: any) => void;
   }>({ message: "", options: {} });
 
   const showAlert = useCallback(

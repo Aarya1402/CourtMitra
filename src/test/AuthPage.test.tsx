@@ -5,7 +5,7 @@ import { beforeEach, describe, vi } from "vitest";
 // 🔥 Mock navigation
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<any>("react-router-dom");
+  const actual = await vi.importActual<Record<string, unknown>>("react-router-dom");
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -67,7 +67,7 @@ describe("AuthPage", () => {
 
   // ✅ 4. Login success
   test("calls SignIn and navigates on success", async () => {
-    vi.mocked(AuthApi.SignIn).mockResolvedValue({} as any);
+    vi.mocked(AuthApi.SignIn).mockResolvedValue({} as unknown);
 
     render(<AuthPage />);
 
@@ -89,7 +89,7 @@ describe("AuthPage", () => {
 
   // ✅ 5. Signup flow
   test("calls SignUp on signup", async () => {
-    vi.mocked(AuthApi.SignUp).mockResolvedValue({} as any);
+    vi.mocked(AuthApi.SignUp).mockResolvedValue({} as unknown);
 
     render(<AuthPage />);
 
@@ -125,7 +125,7 @@ describe("AuthPage", () => {
       response: {
         data: { message: "Invalid credentials" },
       },
-    } as any);
+    } as unknown);
 
     render(<AuthPage />);
 
@@ -167,7 +167,7 @@ describe("AuthPage", () => {
 
   // ✅ 8. Forgot password flow
   test("handles forgot password", async () => {
-    vi.mocked(AuthApi.ForgotPassword).mockResolvedValue({} as any);
+    vi.mocked(AuthApi.ForgotPassword).mockResolvedValue({} as unknown);
 
     render(<AuthPage />);
 
@@ -199,7 +199,7 @@ describe("AuthPage", () => {
 
   // ✅ 10. Google login success
   test("calls GoogleLogin", async () => {
-    vi.mocked(AuthApi.GoogleLogin).mockResolvedValue({} as any);
+    vi.mocked(AuthApi.GoogleLogin).mockResolvedValue({} as unknown);
 
     render(<AuthPage />);
 

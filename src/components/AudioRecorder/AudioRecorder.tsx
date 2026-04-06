@@ -282,6 +282,7 @@ export default function AudioRecorder({
     onAudioBlobComplete,
     setAudioURL,
     language,
+    drawBars,
   ]);
 
   const hasStartedRef = useRef(false);
@@ -289,7 +290,7 @@ export default function AudioRecorder({
   useEffect(() => {
     if (autoStart && !hasStartedRef.current) {
       hasStartedRef.current = true;
-      startRecording();
+      setTimeout(() => startRecording(), 0);
     }
   }, [autoStart, startRecording]);
 

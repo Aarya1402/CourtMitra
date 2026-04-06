@@ -4,6 +4,7 @@ import { SignIn, SignUp, GoogleLogin, ForgotPassword } from "./AuthPage.logic";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { ArrowLeft } from "lucide-react";
+import axios from "axios";
 
 export type FormState = {
   name: string;
@@ -121,16 +122,19 @@ export default function AuthPage() {
       }
 
       navigate("/");
-    } catch (error: any) {
-      if (error.response?.data) {
-        const messages = error.response.data.errors || error.response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const data = error.response.data as Record<string, unknown>;
+        const messages = data.errors || data;
         setErrorMsg(
           Array.isArray(messages)
-            ? messages
-            : [{ message: messages.message || messages || "Error occurred" }]
+            ? (messages as { message: string }[])
+            : [{ message: String((messages as Record<string, unknown>).message || messages || "Error occurred") }]
         );
-      } else {
+      } else if (error instanceof Error) {
         setErrorMsg([{ message: error.message || "Network Error" }]);
+      } else {
+        setErrorMsg([{ message: "An unknown error occurred" }]);
       }
       console.error("Auth error:", error);
     }

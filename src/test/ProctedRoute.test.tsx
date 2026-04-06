@@ -7,7 +7,7 @@ import ProtectedRoute from "../components/shared/ProtectedRoute";
 // mock navigate
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<any>("react-router-dom");
+  const actual = await vi.importActual<Record<string, unknown>>("react-router-dom");
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -33,7 +33,7 @@ describe("ProtectedRoute", () => {
 
   // ✅ 1. shows loader initially
   test("shows loader while verifying", async () => {
-    (isLoggedIn as any).mockImplementation(
+    (isLoggedIn as import("vitest").Mock).mockImplementation(
       () => new Promise(() => {}) // never resolves
     );
 
@@ -48,7 +48,7 @@ describe("ProtectedRoute", () => {
 
   // ✅ 2. renders children when authenticated
   test("renders children when user is authenticated", async () => {
-    (isLoggedIn as any).mockResolvedValue({});
+    (isLoggedIn as import("vitest").Mock).mockResolvedValue({});
 
     render(
       <ProtectedRoute>
@@ -63,7 +63,7 @@ describe("ProtectedRoute", () => {
 
   // ✅ 3. redirects when authentication fails
   test("redirects to /auth when authentication fails", async () => {
-    (isLoggedIn as any).mockRejectedValue(new Error("Unauthorized"));
+    (isLoggedIn as import("vitest").Mock).mockRejectedValue(new Error("Unauthorized"));
 
     render(
       <ProtectedRoute>
@@ -78,7 +78,7 @@ describe("ProtectedRoute", () => {
 
   // ✅ 4. calls isLoggedIn on mount
   test("calls isLoggedIn on mount", async () => {
-    (isLoggedIn as any).mockResolvedValue({});
+    (isLoggedIn as import("vitest").Mock).mockResolvedValue({});
 
     render(
       <ProtectedRoute>
@@ -93,7 +93,7 @@ describe("ProtectedRoute", () => {
 
   // ✅ 5. hides loader after success
   test("hides loader after verification success", async () => {
-    (isLoggedIn as any).mockResolvedValue({});
+    (isLoggedIn as import("vitest").Mock).mockResolvedValue({});
 
     render(
       <ProtectedRoute>

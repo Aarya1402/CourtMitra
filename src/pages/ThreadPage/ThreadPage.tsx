@@ -46,7 +46,7 @@ const Activity: React.FC<{
   return mode === "visible" ? <>{children}</> : null;
 };
 
-const normalizeOrderData = (data: any): OrderData => {
+const normalizeOrderData = (data: Partial<OrderData> | null): OrderData => {
   if (!data) return initialOrderData;
 
   const normalized = {
@@ -62,16 +62,16 @@ const normalizeOrderData = (data: any): OrderData => {
   if (!Array.isArray(normalized.reasoning_points)) {
     normalized.reasoning_points =
       typeof normalized.reasoning_points === "string" &&
-      normalized.reasoning_points.trim()
-        ? [normalized.reasoning_points]
+      (normalized.reasoning_points as string).trim()
+        ? [(normalized.reasoning_points as string)]
         : [];
   }
 
   if (!Array.isArray(normalized.operative_order.directions)) {
     normalized.operative_order.directions =
       typeof normalized.operative_order.directions === "string" &&
-      normalized.operative_order.directions.trim()
-        ? [normalized.operative_order.directions]
+      (normalized.operative_order.directions as string).trim()
+        ? [(normalized.operative_order.directions as string)]
         : [];
   }
 
@@ -94,7 +94,7 @@ const GlobalHeader: React.FC<{
   showLogout: boolean;
   setShowLogout: (v: boolean) => void;
   handleLogout: () => void;
-  userMenuRef: React.RefObject<any>;
+  userMenuRef: React.RefObject<HTMLDivElement | null>;
   navigate: (path: string) => void;
 }> = ({
   threadTitle,
@@ -155,7 +155,7 @@ const GlobalHeader: React.FC<{
         <Plus size={18} />
         <span>New Chat</span>
       </button>
-      <div style={{ position: "relative" }} ref={userMenuRef}>
+      <div style={{ position: "relative" }} ref={userMenuRef as React.RefObject<HTMLDivElement>}>
         <button
           className={styles.userProfile}
           onClick={() => setShowLogout(!showLogout)}
@@ -222,8 +222,8 @@ const TranscriptWorkspace: React.FC<{
   showLanguageMenu: boolean;
   setShowLanguageMenu: (v: boolean) => void;
   handleLanguageChange: (v: string) => void;
-  modificationRange: any;
-  setModificationRange: (v: any) => void;
+  modificationRange: { start: number; end: number } | null;
+  setModificationRange: (v: { start: number; end: number } | null) => void;
   originalTranscriptBeforeModify: string;
   setOriginalTranscriptBeforeModify: (v: string) => void;
   setIsProcessing: (v: boolean) => void;
@@ -425,7 +425,7 @@ const TranscriptWorkspace: React.FC<{
 /** ✅ CHAT WORKSPACE COMPONENT */
 const ChatWorkspace: React.FC<{
   isFetchingHistory: boolean;
-  filteredMessages: any[];
+  filteredMessages: { id: string; text: string; sender: "bot" | "user"; _id?: string; options?: string[]; attachments?: unknown[] }[];
   handleDelete: (id: string) => void;
   handleSend: (text: string) => void;
   loading: boolean;
@@ -474,8 +474,8 @@ const DivisionLeft: React.FC<{
   leftWidth: number;
   errorMessage: string | null;
   setErrorMessage: (v: string | null) => void;
-  transcriptWorkspaceProps: any;
-  orderFormProps: any;
+  transcriptWorkspaceProps: React.ComponentProps<typeof TranscriptWorkspace>;
+  orderFormProps: React.ComponentProps<typeof OrderForm>;
 }> = ({
   isMobile,
   mobileTab,
@@ -554,7 +554,7 @@ const DivisionCenter: React.FC<{
   setCenterTab: (v: "chat" | "files") => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   handleScroll: () => void;
-  chatWorkspaceProps: any;
+  chatWorkspaceProps: React.ComponentProps<typeof ChatWorkspace>;
 }> = ({
   isMobile,
   mobileTab,
@@ -708,7 +708,7 @@ const ThreadPage: React.FC = () => {
     const checkAuth = async () => {
       try {
         await isLoggedIn();
-      } catch (error) {
+      } catch (error: unknown) {
         if (
           axios.isAxiosError(error) &&
           (!error.response ||
@@ -809,7 +809,7 @@ const ThreadPage: React.FC = () => {
       if (response.data.transcript) {
         setTranscript(response.data.transcript);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Upload transcription failed:", error);
       const errorMsg =
         axios.isAxiosError(error) && error.response?.data?.error
@@ -828,7 +828,7 @@ const ThreadPage: React.FC = () => {
     try {
       await axios.post(`${API_BASE_URL}/api/talkument/auth/logout`);
       navigate("/auth", { replace: true });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Logout error", error);
       navigate("/auth", { replace: true });
     }
@@ -896,10 +896,11 @@ const ThreadPage: React.FC = () => {
   useEffect(() => {
     if (!threadId) return;
 
-    loadThreadState(threadId).then((state) => {
+    loadThreadState(threadId).then((rawState) => {
+      const state = rawState as { transcript?: string; orderData?: Partial<OrderData>; audioBlob?: Blob; language?: string } | null;
       if (state) {
         setTranscript(state.transcript || "");
-        setOrderData(normalizeOrderData(state.orderData));
+        setOrderData(normalizeOrderData(state.orderData || null));
         setAudioBlob(state.audioBlob || null);
         if (state.language) {
           dispatch(
@@ -914,7 +915,8 @@ const ThreadPage: React.FC = () => {
       }
       setIsStateLoaded(true);
     });
-  }, [threadId]); // ✅ ONLY threadId
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId]); 
 
   // Save persistent workspace state whenever it updates (after initial load)
   useEffect(() => {
@@ -926,6 +928,7 @@ const ThreadPage: React.FC = () => {
         language,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, orderData, audioBlob, threadId, isStateLoaded]);
 
   const extractDataFromChunk = async (fullTranscript: string) => {
@@ -964,7 +967,7 @@ const ThreadPage: React.FC = () => {
           setMobileTab("order");
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Extraction error", err);
     } finally {
       setIsExtracting(false);
@@ -984,7 +987,8 @@ const ThreadPage: React.FC = () => {
     const samples = audioBuffer.getChannelData(0);
     const sampleRate = audioBuffer.sampleRate;
 
-    const mp3encoder = new (globalThis as any).lamejs.Mp3Encoder(
+    const _global = globalThis as unknown as { lamejs: { Mp3Encoder: new (c: number, s: number, b: number) => { encodeBuffer: (d: Int16Array) => Int8Array; flush: () => Int8Array } } };
+    const mp3encoder = new _global.lamejs.Mp3Encoder(
       1,
       sampleRate,
       128
@@ -1004,7 +1008,9 @@ const ThreadPage: React.FC = () => {
     const mp3buf = mp3encoder.flush();
     if (mp3buf.length > 0) mp3Data.push(mp3buf);
 
-    const mp3Blob = new Blob(mp3Data, { type: "audio/mp3" });
+    const mp3Blob = new Blob(mp3Data as unknown as BlobPart[], {
+      type: "audio/mp3",
+    });
 
     const url = URL.createObjectURL(mp3Blob);
     const a = document.createElement("a");
@@ -1022,7 +1028,7 @@ const ThreadPage: React.FC = () => {
       );
       const threadTitle = threadsRes.data.title || "";
       setThreadTitle(threadTitle);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Failed to fetch thread title:", e);
     }
   };
@@ -1036,7 +1042,7 @@ const ThreadPage: React.FC = () => {
     try {
       setThreadTitle(newTitle);
       await updateThreadTitle(threadId, newTitle);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Failed to update title:", e);
       setIsEditingTitle(false);
     }
@@ -1116,7 +1122,7 @@ const ThreadPage: React.FC = () => {
 
         // We use requestAnimationFrame to wait for the DOM render
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to fetch chat history:", err);
     } finally {
       isLoadingHistoryRef.current = false;
@@ -1127,6 +1133,7 @@ const ThreadPage: React.FC = () => {
   useEffect(() => {
     fetchChatHistory();
     fetchThreadTitle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId, botId]);
 
   const prevMessageCountRef = useRef(0);
@@ -1163,7 +1170,7 @@ const ThreadPage: React.FC = () => {
       );
 
       const allFiles = responseFile.data.files || [];
-      const currentDocumentIds = allFiles.map((f: any) => f.file_id);
+      const currentDocumentIds = allFiles.map((f: { file_id: string }) => f.file_id);
 
       // ✅ update in Redux so UI stays in sync
       if (currentDocumentIds.length > 0) {
@@ -1229,7 +1236,7 @@ const ThreadPage: React.FC = () => {
                     })
                   );
                 }
-              } catch (err) {
+              } catch (err: unknown) {
                 console.error(err);
               }
             }
@@ -1239,8 +1246,8 @@ const ThreadPage: React.FC = () => {
 
       // ✅ optional: refresh history
       setTimeout(fetchChatHistory, 500);
-    } catch (err) {
-      console.error("Interact error:", err);
+    } catch (error: unknown) {
+      console.error("Chat Error:", error);
       dispatch(
         addBotMessage({
           text: "Error getting response",
@@ -1284,7 +1291,7 @@ const ThreadPage: React.FC = () => {
         showLogout={showLogout}
         setShowLogout={setShowLogout}
         handleLogout={handleLogout}
-        userMenuRef={userMenuRef as any}
+        userMenuRef={userMenuRef as unknown as React.RefObject<HTMLDivElement>}
         navigate={navigate}
       />
 

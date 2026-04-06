@@ -12,7 +12,7 @@ import {
 
 vi.mock("axios");
 
-const mockedAxios = axios as any;
+const mockedAxios = axios as import("vitest").Mocked<typeof axios>;
 
 describe("HomePage.logic API tests", () => {
   beforeEach(() => {

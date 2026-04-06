@@ -89,7 +89,7 @@ const HomePage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [threads, setThreads] = useState<any[]>([]);
+  const [threads, setThreads] = useState<{ thread_uuid: string; title: string }[]>([]);
   const [user, setUser] = useState<{
     name: string;
     email: string;
@@ -142,9 +142,11 @@ const HomePage: React.FC = () => {
           const threads = await fetchThreads(botId);
           setThreads(threads);
         }
-      } catch (error: any) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          navigate("/auth", { replace: true });
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            navigate("/auth", { replace: true });
+          }
         }
       }
     }
@@ -157,9 +159,11 @@ const HomePage: React.FC = () => {
           return;
         }
         setUser(user);
-      } catch (error: any) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          navigate("/auth", { replace: true });
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            navigate("/auth", { replace: true });
+          }
         }
       }
     }
@@ -268,7 +272,7 @@ const HomePage: React.FC = () => {
     try {
       await deleteThread(threadToDelete.id);
       setThreads((prev) =>
-        prev.filter((t: any) => t.thread_uuid !== threadToDelete.id)
+        prev.filter((t) => t.thread_uuid !== threadToDelete.id)
       );
       setThreadToDelete(null);
     } catch (error) {

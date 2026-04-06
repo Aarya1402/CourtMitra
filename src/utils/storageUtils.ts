@@ -10,8 +10,9 @@ function getDb(): Promise<IDBDatabase> {
     request.onerror = () =>
       reject(request.error || new Error("Failed to open IndexedDB"));
     request.onsuccess = () => resolve(request.result);
-    request.onupgradeneeded = (event: any) => {
-      const db = event.target.result;
+    request.onupgradeneeded = (event: Event) => {
+      const target = event.target as IDBOpenDBRequest;
+      const db = target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME);
       }
@@ -21,7 +22,7 @@ function getDb(): Promise<IDBDatabase> {
 
 export async function saveThreadState(
   threadId: string,
-  state: any
+  state: unknown
 ): Promise<void> {
   if (!threadId) return;
   const db = await getDb();
@@ -35,7 +36,7 @@ export async function saveThreadState(
   });
 }
 
-export async function loadThreadState(threadId: string): Promise<any> {
+export async function loadThreadState(threadId: string): Promise<Record<string, unknown> | null> {
   if (!threadId) return null;
   const db = await getDb();
   return new Promise((resolve, reject) => {

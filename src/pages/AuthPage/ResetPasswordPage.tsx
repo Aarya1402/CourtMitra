@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { ResetPassword } from "./AuthPage.logic";
 import styles from "./AuthPage.module.css";
 import gsap from "gsap";
+import axios from "axios";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -45,21 +46,24 @@ export default function ResetPasswordPage() {
       });
       setSuccessMsg("Password reset successfully! Redirecting to login...");
       setTimeout(() => navigate("/auth"), 2000);
-    } catch (error: any) {
-      if (error.response?.data) {
-        const messages = error.response.data.errors || error.response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const data = error.response.data as Record<string, unknown>;
+        const messages = data.errors || data;
         setErrorMsg(
           Array.isArray(messages)
-            ? messages
+            ? (messages as { message: string }[])
             : [
                 {
                   message:
-                    messages.message || messages.detail || "Error occurred",
+                    String((messages as Record<string, unknown>).message || (messages as Record<string, unknown>).detail || messages || "Error occurred"),
                 },
               ]
         );
-      } else {
+      } else if (error instanceof Error) {
         setErrorMsg([{ message: error.message || "Network Error" }]);
+      } else {
+        setErrorMsg([{ message: "An unknown error occurred" }]);
       }
     }
   };

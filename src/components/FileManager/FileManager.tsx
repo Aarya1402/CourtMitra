@@ -34,8 +34,8 @@ const DeleteFileModal = ({
 }) => {
   if (!isOpen) return null;
   return (
-    <button className={styles.modalOverlay} onClick={onCancel}>
-      <button
+    <div className={styles.modalOverlay} onClick={onCancel}>
+      <div
         className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
       >
@@ -60,8 +60,8 @@ const DeleteFileModal = ({
             Delete
           </button>
         </div>
-      </button>
-    </button>
+      </div>
+    </div>
   );
 };
 
@@ -244,8 +244,8 @@ const FileManager: React.FC<FileManagerProps> = () => {
       const blobUrl = URL.createObjectURL(blob);
       setPreviewUrl(blobUrl);
       setPreviewFileName(file.name);
-    } catch (err: any) {
-      if (err.name === "CanceledError" || err.name === "AbortError") {
+    } catch (err: unknown) {
+      if ((err as Error).name === "CanceledError" || (err as Error).name === "AbortError") {
         console.log("Request aborted");
         return;
       }

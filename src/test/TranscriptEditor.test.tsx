@@ -14,7 +14,7 @@ vi.mock("lucide-react", () => ({
 
 // 🔥 Mock Button
 vi.mock("../components/shared/Button", () => ({
-  default: ({ onClick, icon }: any) => (
+  default: ({ onClick, icon }: { onClick?: () => void; icon?: React.ReactNode }) => (
     <button onClick={onClick}>{icon}</button>
   ),
 }));
@@ -31,7 +31,7 @@ vi.mock("../context/AlertContext", () => ({
 const mockStart = vi.fn();
 const mockStop = vi.fn();
 
-let mockTranscriberState: any = {};
+let mockTranscriberState: Record<string, unknown> = {};
 
 vi.mock("../hooks/useTranscriber", () => ({
   useTranscriber: () => mockTranscriberState,
@@ -41,14 +41,14 @@ vi.mock("../hooks/useTranscriber", () => ({
 const mockToBlob = vi.fn();
 vi.mock("@react-pdf/renderer", () => ({
   // ✅ Needed by TranscriptDocument
-  Document: ({ children }: any) => <div>{children}</div>,
-  Page: ({ children }: any) => <div>{children}</div>,
-  Text: ({ children, render }: any) => {
+  Document: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  Page: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  Text: ({ children, render }: React.PropsWithChildren<{ render?: (props: { pageNumber: number }) => React.ReactNode }>) => {
     if (render) return <span>{render({ pageNumber: 1 })}</span>;
     return <span>{children}</span>;
   },
-  View: ({ children }: any) => <div>{children}</div>,
-  StyleSheet: { create: (styles: any) => styles },
+  View: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  StyleSheet: { create: (styles: Record<string, unknown>) => styles },
 
   // ✅ THIS FIXES YOUR ERROR
   Font: {

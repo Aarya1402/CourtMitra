@@ -9,12 +9,12 @@ vi.mock("@react-pdf/renderer", () => ({
   pdf: vi.fn().mockReturnValue({
     toBlob: async () => new Blob(["mock pdf"], { type: "application/pdf" }),
   }),
-  Document: ({ children }: any) => <div data-testid="pdf-document">{children}</div>,
-  Page: ({ children }: any) => <div data-testid="pdf-page">{children}</div>,
-  Text: ({ children }: any) => <span data-testid="pdf-text">{children}</span>,
-  View: ({ children }: any) => <div data-testid="pdf-view">{children}</div>,
+  Document: ({ children }: React.PropsWithChildren) => <div data-testid="pdf-document">{children}</div>,
+  Page: ({ children }: React.PropsWithChildren) => <div data-testid="pdf-page">{children}</div>,
+  Text: ({ children }: React.PropsWithChildren) => <span data-testid="pdf-text">{children}</span>,
+  View: ({ children }: React.PropsWithChildren) => <div data-testid="pdf-view">{children}</div>,
   StyleSheet: {
-    create: (styles: any) => styles,
+    create: (styles: Record<string, unknown>) => styles,
   },
   Font: {
     register: vi.fn(),
@@ -32,7 +32,7 @@ describe("OrderForm Component", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    (useTranscriberHook.useTranscriber as any).mockReturnValue({
+    (useTranscriberHook.useTranscriber as unknown as import("vitest").Mock).mockReturnValue({
       isRecording: false,
       transcript: "",
       start: vi.fn(),
@@ -211,7 +211,7 @@ describe("OrderForm Component", () => {
 
   it("toggles voice recording when mic button is clicked", async () => {
     const mockStart = vi.fn();
-    (useTranscriberHook.useTranscriber as any).mockReturnValue({
+    (useTranscriberHook.useTranscriber as unknown as import("vitest").Mock).mockReturnValue({
       isRecording: false,
       transcript: "",
       start: mockStart,
