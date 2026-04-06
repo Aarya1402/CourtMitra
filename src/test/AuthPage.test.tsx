@@ -1,6 +1,17 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import AuthPage from "../pages/AuthPage/AuthPage";
-import { beforeEach, describe, vi } from "vitest";
+import { beforeEach, describe, vi, expect, test } from "vitest";
+
+vi.mock("axios", () => ({
+  default: {
+    isAxiosError: (error: unknown): error is import("axios").AxiosError => {
+      return typeof error === "object" && error !== null && "response" in error;
+    },
+  },
+  isAxiosError: (error: unknown): error is import("axios").AxiosError => {
+    return typeof error === "object" && error !== null && "response" in error;
+  },
+}));
 
 // 🔥 Mock navigation
 const mockNavigate = vi.fn();
@@ -123,7 +134,9 @@ describe("AuthPage", () => {
   test("shows error on failed login", async () => {
     vi.mocked(AuthApi.SignIn).mockRejectedValue({
       response: {
-        data: { message: "Invalid credentials" },
+        data: {
+          errors: [{ message: "Invalid credentials" }],
+        },
       },
     } as unknown);
 

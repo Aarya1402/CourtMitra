@@ -125,12 +125,18 @@ export default function AuthPage() {
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.data) {
         const data = error.response.data as Record<string, unknown>;
-        const messages = data.errors || data;
-        setErrorMsg(
-          Array.isArray(messages)
-            ? (messages as { message: string }[])
-            : [{ message: String((messages as Record<string, unknown>).message || messages || "Error occurred") }]
-        );
+        let errorList: { message: string }[] = [];
+
+        if (Array.isArray(data.errors)) {
+          errorList = data.errors as { message: string }[];
+        } else if (typeof data.message === "string") {
+          errorList = [{ message: data.message }];
+        } else if (typeof data.error === "string") {
+          errorList = [{ message: data.error }];
+        } else {
+          errorList = [{ message: "An error occurred" }];
+        }
+        setErrorMsg(errorList);
       } else if (error instanceof Error) {
         setErrorMsg([{ message: error.message || "Network Error" }]);
       } else {

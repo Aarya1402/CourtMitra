@@ -1,0 +1,292 @@
+
+[1m[46m RUN [49m[22m [36mv4.1.2 [39m[90m/home/aarya/Internship_Projects/courtMitra/client[39m
+
+[90mstderr[2m | src/test/AuthPage.test.tsx[2m > [22m[2mAuthPage[2m > [22m[2mshows error on failed login
+[22m[39mAuth error: { response: { data: { errors: [36m[Array][39m } } }
+
+[90mstderr[2m | src/test/AuthPage.test.tsx[2m > [22m[2mAuthPage[2m > [22m[2mshows network error if no response
+[22m[39mAuth error: Error: Network Error
+    at [90m/home/aarya/Internship_Projects/courtMitra/client/[39msrc/test/AuthPage.test.tsx:151:49
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1893:26
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2316:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2313:10[90m)[39m
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2295:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2262:10[90m)[39m
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2945:64
+
+[90mstderr[2m | src/test/AuthPage.test.tsx[2m > [22m[2mAuthPage[2m > [22m[2mhandles Google login error
+[22m[39mGoogle Login error: Error: fail
+    at [90m/home/aarya/Internship_Projects/courtMitra/client/[39msrc/test/AuthPage.test.tsx:217:54
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1893:26
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2316:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2313:10[90m)[39m
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2295:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2262:10[90m)[39m
+    at [90mfile:///home/aarya/Internship_Projects/courtMitra/client/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2945:64
+
+ [31m❯[39m src/test/AuthPage.test.tsx [2m([22m[2m12 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1510[2mms[22m[39m
+     [32m✓[39m renders login form by default[32m 49[2mms[22m[39m
+     [32m✓[39m switches to signup mode[32m 15[2mms[22m[39m
+     [32m✓[39m updates input values[32m 11[2mms[22m[39m
+     [32m✓[39m calls SignIn and navigates on success[32m 202[2mms[22m[39m
+     [32m✓[39m calls SignUp on signup[32m 95[2mms[22m[39m
+[31m     [31m×[31m shows error on failed login[39m[33m 1039[2mms[22m[39m
+     [32m✓[39m shows network error if no response[32m 27[2mms[22m[39m
+     [32m✓[39m handles forgot password[32m 37[2mms[22m[39m
+     [32m✓[39m returns to login view[32m 11[2mms[22m[39m
+     [32m✓[39m calls GoogleLogin[32m 5[2mms[22m[39m
+     [32m✓[39m handles Google login error[32m 8[2mms[22m[39m
+     [32m✓[39m resets form on toggle[32m 8[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/test/AuthPage.test.tsx[2m > [22mAuthPage[2m > [22mshows error on failed login
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an element with the text: /invalid credentials/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"_wrapper_d8011e"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_card_d8011e"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mclass[39m=[32m"_title_d8011e"[39m
+        [36m>[39m
+          [0mWelcome back[0m
+        [36m</h2>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"_subtitle_d8011e"[39m
+        [36m>[39m
+          [0mSign in to your account[0m
+        [36m</p>[39m
+        [36m<form[39m
+          [33mclass[39m=[32m"_form_d8011e"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_fieldWrapper_d8011e"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"_label_d8011e"[39m
+            [36m>[39m
+              [0mEmail[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"_input_d8011e"[39m
+              [33mname[39m=[32m"email"[39m
+              [33mplaceholder[39m=[32m"john@talkument.co"[39m
+              [33mrequired[39m=[32m""[39m
+              [33mtype[39m=[32m"email"[39m
+              [33mvalue[39m=[32m"wrong@mail.com"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; flex-direction: column; gap: 10px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_fieldWrapper_d8011e"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"_label_d8011e"[39m
+              [36m>[39m
+                [0mPassword[0m
+              [36m</label>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"_input_d8011e"[39m
+                [33mname[39m=[32m"password"[39m
+                [33mplaceholder[39m=[32m"••••••••"[39m
+                [33mrequired[39m=[32m""[39m
+                [33mtype[39m=[32m"password"[39m
+                [33mvalue[39m=[32m"wrong"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_forgotPassword_d8011e"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mForgot Password?[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"_error_d8011e"[39m
+          [36m>[39m
+            [0mAn unknown error occurred[0m
+          [36m</p>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"_button_d8011e"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mLogin[0m
+          [36m</button>[39m
+        [36m</form>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_divider_d8011e"[39m
+        [36m>[39m
+          [0mor[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"_googleButton_d8011e"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<img[39m
+            [33malt[39m=[32m"Google"[39m
+            [33mclass[39m=[32m"_googleLogo_d8011e"[39m
+            [33msrc[39m=[32m"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"[39m
+          [36m/>[39m
+          [36m<span>[39m
+            [0mContinue with Google[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"_toggleText_d8011e"[39m
+        [36m>[39m
+          [0mDon't have an account?[0m
+          [36m<button[39m
+            [33mclass[39m=[32m"_toggleLink_d8011e"[39m
+          [36m>[39m
+            [0mSign up[0m
+          [36m</button>[39m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"_wrapper_d8011e"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"_card_d8011e"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"_title_d8011e"[39m
+          [36m>[39m
+            [0mWelcome back[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"_subtitle_d8011e"[39m
+          [36m>[39m
+            [0mSign in to your account[0m
+          [36m</p>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"_form_d8011e"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"_fieldWrapper_d8011e"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"_label_d8011e"[39m
+              [36m>[39m
+                [0mEmail[0m
+              [36m</label>[39m
+              [36m<input[39m
+                [33mclass[39m=[32m"_input_d8011e"[39m
+                [33mname[39m=[32m"email"[39m
+                [33mplaceholder[39m=[32m"john@talkument.co"[39m
+                [33mrequired[39m=[32m""[39m
+                [33mtype[39m=[32m"email"[39m
+                [33mvalue[39m=[32m"wrong@mail.com"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: flex; flex-direction: column; gap: 10px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"_fieldWrapper_d8011e"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"_label_d8011e"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"_input_d8011e"[39m
+                  [33mname[39m=[32m"password"[39m
+                  [33mplaceholder[39m=[32m"••••••••"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m"wrong"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"_forgotPassword_d8011e"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mForgot Password?[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"_error_d8011e"[39m
+            [36m>[39m
+              [0mAn unknown error occurred[0m
+            [36m</p>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"_button_d8011e"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mLogin[0m
+            [36m</button>[39m
+          [36m</form>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"_divider_d8011e"[39m
+          [36m>[39m
+            [0mor[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"_googleButton_d8011e"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<img[39m
+              [33malt[39m=[32m"Google"[39m
+              [33mclass[39m=[32m"_googleLogo_d8011e"[39m
+              [33msrc[39m=[32m"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"[39m
+            [36m/>[39m
+            [36m<span>[39m
+              [0mContinue with Google[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"_toggleText_d8011e"[39m
+          [36m>[39m
+            [0mDon't have an account?[0m
+            [36m<button[39m
+              [33mclass[39m=[32m"_toggleLink_d8011e"[39m
+            [36m>[39m
+              [0mSign up[0m
+            [36m</button>[39m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+[90m [2m❯[22m Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:[2m163:27[22m[39m
+[36m [2m❯[22m src/test/AuthPage.test.tsx:[2m144:11[22m[39m
+    [90m142|[39m     fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [36m/login/i[39m }))[33m;[39m
+    [90m143|[39m
+    [90m144|[39m     [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m   |[39m           [31m^[39m
+    [90m145|[39m       expect(screen.getByText(/invalid credentials/i)).toBeInTheDocume…
+    [90m146|[39m     })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m11 passed[39m[22m[90m (12)[39m
+[2m   Start at [22m 16:42:40
+[2m   Duration [22m 2.58s[2m (transform 106ms, setup 53ms, import 271ms, tests 1.51s, environment 630ms)[22m
+
