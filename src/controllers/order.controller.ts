@@ -140,14 +140,14 @@ Only return JSON. Absolutely no <think> commentary.`;
 
     const client = getSarvamClient();
     const response = (await client.chat.completions({
-      model: "sarvam-m",
+      model: "sarvam-30b",
       messages: [
         {
           role: "user",
           content: promptText,
         },
       ],
-      max_tokens: 3000,
+      max_tokens: 5000,
     })) as SarvamChatResponse;
 
     const responseText = response.choices[0].message.content;
@@ -217,14 +217,14 @@ Return ONLY the translated JSON object in "${language}" now. No other text.`;
 
     const client = getSarvamClient();
     const response = (await client.chat.completions({
-      model: "sarvam-m",
+      model: "sarvam-30b",
       messages: [
         {
           role: "user",
           content: promptText,
         },
       ],
-      max_tokens: 3000,
+      max_tokens: 5000,
     })) as SarvamChatResponse;
 
     const responseText = response.choices[0].message.content;
