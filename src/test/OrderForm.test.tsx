@@ -272,8 +272,8 @@ describe("OrderForm Component", () => {
 
     // Decision date placeholder is "DD/MM/YYYY" but multiple inputs use it.
     // OrderForm.tsx line 431 uses t.decision_date label and renderInline
-    // Let's find the decision date input near "Decision Date" label
-    const decisionDateInput = screen.getAllByPlaceholderText("DD/MM/YYYY")[2]; // indices: 0: filing, 1: registration, 2: decision
+    // indices: 0: filing, 1: registration, 2: decision
+    const decisionDateInput = screen.getAllByPlaceholderText("DD/MM/YYYY")[2];
     fireEvent.change(decisionDateInput, { target: { value: "01/01/2024" } });
 
     expect(mockOnUpdate).toHaveBeenCalledWith(
@@ -307,5 +307,449 @@ describe("OrderForm Component", () => {
         }),
       })
     );
+  });
+
+  it("uses initialOrderData when data prop is null", () => {
+    render(
+      <OrderForm
+        data={null}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    expect(screen.getByText("Court Order")).toBeInTheDocument();
+  });
+
+  it("handles PDF generation", async () => {
+    const mockLink = {
+      click: vi.fn(),
+      href: "",
+      download: "",
+    };
+    
+    // Explicitly mock pdf().toBlob() for this test
+    const { pdf } = await import("@react-pdf/renderer");
+    (pdf as any).mockReturnValue({
+      toBlob: async () => new Blob(["mock pdf"], { type: "application/pdf" }),
+    });
+
+    const originalCreateElement = document.createElement;
+    vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+      if (tagName === "a") return mockLink as any;
+      return originalCreateElement.call(document, tagName);
+    });
+
+    render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const pdfBtn = screen.getByTitle("Generates a multi-page PDF (handles overflow)");
+    fireEvent.click(pdfBtn);
+
+    // PDF generation is async
+    await vi.waitFor(() => {
+      expect(window.URL.createObjectURL).toHaveBeenCalled();
+      expect(mockLink.click).toHaveBeenCalled();
+      expect(window.URL.revokeObjectURL).toHaveBeenCalled();
+    });
+  });
+
+  it("updates case details fields (acts, sections, category)", () => {
+    const dataWithDetails = {
+      ...initialOrderData,
+      case_details: {
+        ...initialOrderData.case_details,
+        acts_sections: "Section 302 IPC",
+        case_category: "Criminal",
+        police_station: "Central PS",
+      },
+    };
+
+    render(
+      <OrderForm
+        data={dataWithDetails}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const actsInput = screen.getByPlaceholderText("Relevant acts and sections");
+    fireEvent.change(actsInput, { target: { value: "Section 307 IPC" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        case_details: expect.objectContaining({
+          acts_sections: "Section 307 IPC",
+        }),
+      })
+    );
+
+    const categoryInput = screen.getByPlaceholderText("Case category");
+    fireEvent.change(categoryInput, { target: { value: "Civil" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        case_details: expect.objectContaining({
+          case_category: "Civil",
+        }),
+      })
+    );
+
+    const psInput = screen.getByPlaceholderText("Police station name");
+    fireEvent.change(psInput, { target: { value: "Town PS" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        case_details: expect.objectContaining({
+          police_station: "Town PS",
+        }),
+      })
+    );
+  });
+
+  it("adds and removes operative order directions", () => {
+    const dataWithDir = {
+      ...initialOrderData,
+      operative_order: {
+        ...initialOrderData.operative_order,
+        directions: ["Dir 1"],
+      },
+    };
+
+    render(
+      <OrderForm
+        data={dataWithDir}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const addBtn = screen.getByText("+ Add Direction");
+    fireEvent.click(addBtn);
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operative_order: expect.objectContaining({
+          directions: ["Dir 1", ""],
+        }),
+      })
+    );
+
+    const removeBtn = screen.getByTitle("Remove Direction");
+    fireEvent.click(removeBtn);
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operative_order: expect.objectContaining({
+          directions: [],
+        }),
+      })
+    );
+  });
+
+  it("updates appearance mode", () => {
+    const dataWithMode = {
+      ...initialOrderData,
+      appearance_mode: "Video Conference",
+    };
+
+    render(
+      <OrderForm
+        data={dataWithMode}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const modeInput = screen.getByPlaceholderText("e.g. In Person / Video Conference");
+    fireEvent.change(modeInput, { target: { value: "In Person" } });
+
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appearance_mode: "In Person",
+      })
+    );
+  });
+
+  it("updates signature fields", () => {
+    render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const judgeInputs = screen.getAllByPlaceholderText("Judge");
+    fireEvent.change(judgeInputs[judgeInputs.length - 1], { target: { value: "Hon'ble Judge A" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signature: expect.objectContaining({ judge_name: "Hon'ble Judge A" }),
+      })
+    );
+
+    const desigInput = screen.getByPlaceholderText("Designation");
+    fireEvent.change(desigInput, { target: { value: "District Judge" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signature: expect.objectContaining({ designation: "District Judge" }),
+      })
+    );
+  });
+
+  it("updates final outcome and final order", () => {
+    const data = {
+      ...initialOrderData,
+      operative_order: { ...initialOrderData.operative_order, final_outcome: "Outcome" },
+      final_order: "Final order text",
+    };
+
+    render(
+      <OrderForm
+        data={data}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const outcomeInput = screen.getByPlaceholderText("Final outcome of the case");
+    fireEvent.change(outcomeInput, { target: { value: "Updated Outcome" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operative_order: expect.objectContaining({ final_outcome: "Updated Outcome" }),
+      })
+    );
+
+    const finalOrderInput = screen.getByPlaceholderText("Final order text");
+    fireEvent.change(finalOrderInput, { target: { value: "Updated Order" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        final_order: "Updated Order",
+      })
+    );
+  });
+
+  it("safeJoinArray handles different object types in parties/advocates", () => {
+    const data = {
+      ...initialOrderData,
+      parties: {
+        ...initialOrderData.parties,
+        complainant: [{ name: "Comp 1" } as any],
+        accused: [{ text: "Acc 1" } as any],
+        other_parties: [{ advocate_name: "Adv 1" } as any, "Other"],
+      },
+    };
+
+    render(
+      <OrderForm
+        data={data}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    expect(screen.getByDisplayValue("Comp 1")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Acc 1")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Adv 1, Other")).toBeInTheDocument();
+  });
+
+  it("handles voice recording flow for different fields", async () => {
+    const mockStart = vi.fn();
+    const mockStop = vi.fn();
+    const { rerender } = render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    // Mock hook for starting recording
+    (useTranscriberHook.useTranscriber as any).mockReturnValue({
+      isRecording: false,
+      transcript: "",
+      start: mockStart,
+      stop: mockStop,
+    });
+
+    rerender(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const micBtn = screen.getByTitle("Add Point via Audio");
+    fireEvent.click(micBtn);
+    expect(mockStart).toHaveBeenCalled();
+
+    // Now mock it as recording
+    (useTranscriberHook.useTranscriber as any).mockReturnValue({
+      isRecording: true,
+      transcript: "Recorded Text",
+      start: mockStart,
+      stop: mockStop,
+    });
+
+    rerender(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    // Stop recording
+    fireEvent.click(micBtn);
+    expect(mockStop).toHaveBeenCalled();
+
+    // Finalize check (after stop it goes to finalizeTranscription via useEffect)
+    (useTranscriberHook.useTranscriber as any).mockReturnValue({
+      isRecording: false,
+      transcript: "Recorded Text",
+      start: mockStart,
+      stop: mockStop,
+    });
+
+    rerender(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    // finalizeTranscription should have been called
+    expect(mockOnUpdate).toHaveBeenCalled();
+  });
+
+  it("updates location and case type in header", () => {
+    render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const locationInput = screen.getByPlaceholderText("Location");
+    fireEvent.change(locationInput, { target: { value: "High Court" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        header: expect.objectContaining({ location: "High Court" }),
+      })
+    );
+
+    const caseTypeInput = screen.getByPlaceholderText("Case Type");
+    fireEvent.change(caseTypeInput, { target: { value: "Writ Petition" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        header: expect.objectContaining({ case_type: "Writ Petition" }),
+      })
+    );
+  });
+
+  it("handles voice recording for operative order directions", async () => {
+    const mockStart = vi.fn();
+    (useTranscriberHook.useTranscriber as any).mockReturnValue({
+      isRecording: false,
+      transcript: "",
+      start: mockStart,
+      stop: vi.fn(),
+    });
+
+    render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const micBtn = screen.getByTitle("Add Direction via Audio");
+    fireEvent.click(micBtn);
+    expect(mockStart).toHaveBeenCalled();
+  });
+
+  it("handles PDF generation error", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { pdf } = await import("@react-pdf/renderer");
+    (pdf as any).mockImplementation(() => ({
+      toBlob: () => Promise.reject(new Error("PDF Error")),
+    }));
+
+    render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const pdfBtn = screen.getByTitle("Generates a multi-page PDF (handles overflow)");
+    fireEvent.click(pdfBtn);
+
+    await vi.waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith("PDF generation error:", expect.any(Error));
+    });
+    consoleSpy.mockRestore();
+  });
+
+  it("updates case number in header", () => {
+    render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+      />
+    );
+
+    const caseNumberInput = screen.getByPlaceholderText("Case Number");
+    fireEvent.change(caseNumberInput, { target: { value: "ABC-123" } });
+    expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        header: expect.objectContaining({ case_number: "ABC-123" }),
+      })
+    );
+  });
+
+  it("closes language menu when backdrop is clicked on mobile", () => {
+    render(
+      <OrderForm
+        data={initialOrderData}
+        onUpdate={mockOnUpdate}
+        onLanguageChange={mockOnLanguageChange}
+        language="en-IN"
+        isMobile={true}
+      />
+    );
+
+    // Open menu
+    fireEvent.click(screen.getByText("English"));
+    expect(screen.getByText("Gujarati")).toBeInTheDocument();
+
+    // Click backdrop
+    const backdrop = screen.getByLabelText("Close language menu");
+    fireEvent.click(backdrop);
+
+    // Menu should be gone
+    expect(screen.queryByText("Gujarati")).not.toBeInTheDocument();
   });
 });

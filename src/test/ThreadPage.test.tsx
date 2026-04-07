@@ -9,7 +9,14 @@ import * as ThreadPageLogic from "../pages/ThreadPage/ThreadPage.logic";
 import { initialOrderData } from "../components/OrderForm/OrderForm.logic";
 
 // Mock axios
-vi.mock("axios");
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
+    isAxiosError: vi.fn((err: any) => err && err.isAxiosError === true),
+  },
+}));
 
 // Mock Redux
 vi.mock("react-redux", () => ({
@@ -100,6 +107,9 @@ describe("ThreadPage Component", () => {
       }
       return Promise.resolve({ data: {} });
     });
+    
+    (axios.post as any).mockResolvedValue({ data: {} });
+    (axios.delete as any).mockResolvedValue({ data: { success: true } });
   });
 
   const renderThreadPage = (threadId = "test-thread") => {
@@ -238,6 +248,28 @@ describe("ThreadPage Component", () => {
     });
   });
 
+  it("sends message and updates document IDs from file status", async () => {
+    (axios.get as any).mockImplementation((url: string) => {
+      if (url.includes("/file/") && url.includes("/status")) {
+        return Promise.resolve({ data: { files: [{ file_id: "doc-123" }] } });
+      }
+      return Promise.resolve({ data: {} });
+    });
+
+    renderThreadPage();
+
+    fireEvent.change(screen.getByPlaceholderText("Type your message here..."), { target: { value: "Status check" } });
+    fireEvent.click(screen.getByLabelText("Send Message"));
+
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining("/status"));
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ 
+        type: "document/setDocumentIds",
+        payload: expect.objectContaining({ documentIds: ["doc-123"] })
+      }));
+    });
+  });
+
   it("can trigger MP3 download", async () => {
     (storageUtils.loadThreadState as any).mockResolvedValue({ 
       audioURL: "blob:mock-url",
@@ -309,6 +341,26 @@ describe("ThreadPage Component", () => {
     });
   });
 
+  it("handles language change when the form is empty", async () => {
+    (storageUtils.loadThreadState as any).mockResolvedValue({ 
+        orderData: initialOrderData 
+    });
+
+    renderThreadPage();
+    await screen.findByText("Default Title");
+
+    const langSelect = screen.getByRole("combobox");
+    fireEvent.change(langSelect, { target: { value: "hi-IN" } });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ 
+        type: "bot/setLanguageForThread"
+      }));
+      // Should NOT call translate API
+      expect(axios.post).not.toHaveBeenCalledWith(expect.stringContaining("/translate"), expect.any(Object));
+    });
+  });
+
   it("allows resizing divisions via drag", async () => {
     renderThreadPage();
 
@@ -372,6 +424,165 @@ describe("ThreadPage Component", () => {
         expect(axios.post).toHaveBeenCalledWith(expect.stringContaining("/extract"), expect.any(Object));
         // Using getByRole for tab to be safer
         expect(screen.getByRole("button", { name: "Order" })).toHaveClass(/activeTab/);
+    });
+  });
+
+  it("handles delete message success and error", async () => {
+    (axios.delete as any).mockResolvedValueOnce({ data: { success: true } });
+    renderThreadPage();
+
+    // 1. Open the message menu for the user message
+    const menuTriggers = screen.getAllByRole("button").filter(btn => 
+        btn.innerHTML.includes("lucide-chevron-down")
+    );
+    fireEvent.click(menuTriggers[0]);
+
+    // 2. Click "Delete" in the dropdown
+    const dropdownDelete = await screen.findByText("Delete");
+    fireEvent.click(dropdownDelete);
+
+    // 3. Click "Delete" in the confirmation modal
+    const modalDelete = await screen.findByRole("button", { name: "Delete" });
+    fireEvent.click(modalDelete);
+
+    await waitFor(() => {
+      expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining("/chat/1/delete"));
+      expect(dispatch).toHaveBeenCalledWith({ type: "chat/deleteMessage", payload: "1" });
+    });
+
+    // Error case
+    console.error = vi.fn();
+    (axios.delete as any).mockRejectedValueOnce(new Error("Delete failed"));
+    
+    // Open menu for the same message (it's still there because it's a mock state)
+    fireEvent.click(menuTriggers[0]);
+    const dropdownDeleteErr = await screen.findByText("Delete");
+    fireEvent.click(dropdownDeleteErr);
+    const modalDeleteErr = await screen.findByRole("button", { name: "Delete" });
+    fireEvent.click(modalDeleteErr);
+    
+    await waitFor(() => {
+      expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining("/chat/1/delete"));
+    });
+  });
+
+  it("handles auth failure and redirects to /auth", async () => {
+    const { isLoggedIn } = await import("../pages/HomePage/HomePage.logic");
+    (isLoggedIn as any).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 401 }
+    });
+
+    renderThreadPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("Auth Page")).toBeInTheDocument();
+    });
+  });
+
+  it("handles audio upload invalid types and errors", async () => {
+    renderThreadPage();
+
+    const file = new File(["dummy content"], "test.txt", { type: "text/plain" });
+    const hiddenInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    
+    fireEvent.change(hiddenInput, { target: { files: [file] } });
+    expect(mockShowAlert).toHaveBeenCalledWith(expect.stringContaining("Only MP3, OGG, and WAV"));
+
+    // Mock upload error
+    (axios.post as any).mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { data: { error: "Transcription Server Error" } }
+    });
+    const validFile = new File(["audio"], "test.mp3", { type: "audio/mpeg" });
+    fireEvent.change(hiddenInput, { target: { files: [validFile] } });
+    
+    await waitFor(() => {
+        expect(screen.getByText("Transcription Server Error")).toBeInTheDocument();
+    });
+  });
+
+  it("loads more history on scroll to top", async () => {
+    (axios.get as any).mockImplementation((url: string) => {
+        if (url.includes("/chat_history") && url.includes("page=1")) {
+            // Return 30 items to keep hasMore=true
+            const history = Array.from({ length: 30 }, (_, i) => ({ user: `Msg ${i}`, chat_id: i.toString() }));
+            return Promise.resolve({ data: { history } });
+        }
+        if (url.includes("/chat_history") && url.includes("page=2")) {
+            return Promise.resolve({ data: { history: [{ user: "Old message", chat_id: "99" }], has_more: false } });
+        }
+        return Promise.resolve({ data: { history: [] } });
+    });
+
+    renderThreadPage();
+    
+    // Wait for initial load to finish (isFetchingHistory -> false)
+    await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledWith(expect.stringContaining("page=1"));
+    });
+
+    // Simulate scroll to top
+    const scrollContainer = screen.getByTestId("center-workspace");
+    // Ensure height/scrollHeight allows scrolling and it's at top
+    Object.defineProperty(scrollContainer, 'scrollTop', { value: 0, configurable: true });
+    
+    fireEvent.scroll(scrollContainer);
+
+    await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledWith(expect.stringContaining("page=2"));
+        expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "chat/prependMessagesForThread" }));
+    });
+  });
+
+  it("closes user menu on outside click", async () => {
+    renderThreadPage();
+    const userBtn = screen.getByLabelText("User Profile");
+    fireEvent.click(userBtn);
+    expect(screen.getByText("Logout")).toBeInTheDocument();
+
+    // Click outside
+    fireEvent.mouseDown(document);
+    await waitFor(() => {
+      expect(screen.queryByText("Logout")).not.toBeInTheDocument();
+    });
+  });
+
+  it("handles send message error", async () => {
+    (axios.post as any).mockRejectedValueOnce(new Error("Network Error"));
+    renderThreadPage();
+
+    const input = screen.getByPlaceholderText("Type your message here...");
+    fireEvent.change(input, { target: { value: "Fail this message" } });
+    fireEvent.click(screen.getByLabelText("Send Message"));
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ 
+        type: "chat/addBotMessage",
+        payload: expect.objectContaining({ text: "Error getting response" })
+      }));
+    });
+  });
+
+  it("normalizes order data with string reasoning_points and directions", async () => {
+    (storageUtils.loadThreadState as any).mockResolvedValue({ 
+        orderData: { 
+            reasoning_points: "Single point string",
+            operative_order: { directions: "One direction string" }
+        }
+    });
+
+    renderThreadPage();
+
+    const orderTabBtn = screen.getByText("Order");
+    fireEvent.click(orderTabBtn);
+
+    // If it's normalized correctly, OrderForm should receive them as arrays.
+    // We can verify this via internal component state/render if visible, 
+    // but here we just check if it renders without crashing and shows the strings.
+    await waitFor(() => {
+        expect(screen.getByText("Single point string")).toBeInTheDocument();
+        expect(screen.getByText("One direction string")).toBeInTheDocument();
     });
   });
 });

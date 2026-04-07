@@ -609,6 +609,7 @@ const DivisionCenter: React.FC<{
         className={styles.centerWorkspace}
         ref={scrollRef}
         onScroll={handleScroll}
+        data-testid="center-workspace"
       >
         {isChatTabActive && <ChatWorkspace {...chatWorkspaceProps} />}
 

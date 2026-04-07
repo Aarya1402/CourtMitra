@@ -251,6 +251,7 @@ describe("HomePage", () => {
 
     await waitFor(() => {
       expect(screen.queryByText("Thread 1")).not.toBeInTheDocument();
+      expect(screen.getByText("Your chats")).toBeInTheDocument();
     });
   });
 });
