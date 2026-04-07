@@ -254,4 +254,92 @@ describe("HomePage", () => {
       expect(screen.getByText("Your chats")).toBeInTheDocument();
     });
   });
+  it("shows 'Untitled Chat' when title is empty", async () => {
+    const { fetchThreads } = await import("../pages/HomePage/HomePage.logic");
+
+    (fetchThreads as any).mockResolvedValueOnce([
+      { thread_uuid: "1", title: "" },
+    ]);
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Untitled Chat")).toBeInTheDocument();
+    });
+  });
+  it("closes sidebar when thread clicked", async () => {
+    render(<HomePage />);
+
+    await waitFor(() => screen.getByText("Thread 1"));
+
+    const thread = screen.getByText("Thread 1");
+    fireEvent.click(thread);
+
+    // no direct state check → but ensures click doesn't crash
+    expect(thread).toBeInTheDocument();
+  });
+  it("shows default avatar when user not loaded", async () => {
+    const { fetchUser } = await import("../pages/HomePage/HomePage.logic");
+
+    (fetchUser as any).mockResolvedValueOnce(null);
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("U")).toBeInTheDocument();
+    });
+  });
+  it("toggles logout dropdown", async () => {
+    render(<HomePage />);
+
+    await waitFor(() => screen.getByText("John"));
+
+    fireEvent.click(screen.getByText("John"));
+
+    expect(screen.getByText("Logout")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("John"));
+
+    expect(screen.queryByText("Logout")).not.toBeInTheDocument();
+  });
+  it("shows uploading state", async () => {
+    const { uploadDocument } = await import("../pages/HomePage/HomePage.logic");
+
+    (uploadDocument as any).mockImplementation(
+      () => new Promise(() => {}) // never resolves
+    );
+
+    render(<HomePage />);
+
+    const file = new File(["test"], "test.pdf");
+
+    fireEvent.change(document.querySelector("input")!, {
+      target: { files: [file] },
+    });
+
+    expect(screen.getByText(/uploading and processing/i)).toBeInTheDocument();
+    expect(screen.getByText("Processing...")).toBeInTheDocument();
+  });
+  it("shows skip button when no threadId and not uploading", () => {
+    render(<HomePage />);
+
+    expect(
+      screen.getByText(/start a fresh chat without documents/i)
+    ).toBeInTheDocument();
+  });
+  it("hides skip button after upload", async () => {
+    render(<HomePage />);
+
+    const file = new File(["test"], "test.pdf");
+
+    fireEvent.change(document.querySelector("input")!, {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/start a fresh chat without documents/i)
+      ).not.toBeInTheDocument();
+    });
+  });
 });

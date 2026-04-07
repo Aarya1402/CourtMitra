@@ -89,7 +89,9 @@ const HomePage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [threads, setThreads] = useState<{ thread_uuid: string; title: string }[]>([]);
+  const [threads, setThreads] = useState<
+    { thread_uuid: string; title: string }[]
+  >([]);
   const [user, setUser] = useState<{
     name: string;
     email: string;
@@ -144,7 +146,10 @@ const HomePage: React.FC = () => {
         }
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
-          if (error.response?.status === 401 || error.response?.status === 403) {
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
             navigate("/auth", { replace: true });
           }
         }
@@ -161,7 +166,10 @@ const HomePage: React.FC = () => {
         setUser(user);
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
-          if (error.response?.status === 401 || error.response?.status === 403) {
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
             navigate("/auth", { replace: true });
           }
         }
@@ -468,8 +476,10 @@ const HomePage: React.FC = () => {
           onClick={handleGetStarted}
           disabled={isUploading || !threadId}
         >
-          {isUploading && "Processing..."}
-          {!isUploading && threadId ? "Get Started" : "Waiting for Upload..."}
+          {(isUploading && "Processing...") ||
+            (!isUploading && threadId
+              ? "Get Started"
+              : "Waiting for Upload...")}
         </button>
 
         {!threadId && !isUploading && (
