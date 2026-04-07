@@ -362,55 +362,51 @@ describe("HomePage", () => {
   it("handles mobile logo click", () => {
     setup();
     const mobileLogo = screen.getAllByRole("button").find(b => b.className.includes("mobileLogo"));
-    if (mobileLogo) {
-      fireEvent.click(mobileLogo);
-      expect(mockNavigate).toHaveBeenCalledWith("/");
-    }
+    expect(mobileLogo).toBeDefined();
+    fireEvent.click(mobileLogo!);
+    expect(mockNavigate).toHaveBeenCalledWith("/");
   });
 
   it("navigates to home when logo is clicked in sidebar", async () => {
     setup();
     const sidebarLogo = screen.getAllByRole("button").find(b => b.className.includes("logoSection"));
-    if (sidebarLogo) {
-      fireEvent.click(sidebarLogo);
-      expect(mockNavigate).toHaveBeenCalledWith("/");
-    }
+    expect(sidebarLogo).toBeDefined();
+    fireEvent.click(sidebarLogo!);
+    expect(mockNavigate).toHaveBeenCalledWith("/");
   });
 
   it("toggles sidebar on menu button click", () => {
     setup();
     const menuBtn = screen.getAllByRole("button").find(b => b.className.includes("menuBtn"));
-    if (menuBtn) {
-      fireEvent.click(menuBtn);
-      const aside = document.querySelector("aside");
-      expect(aside?.className).toContain("sidebarOpen");
-    }
+    expect(menuBtn).toBeDefined();
+    fireEvent.click(menuBtn!);
+    const aside = document.querySelector("aside");
+    expect(aside?.className).toContain("sidebarOpen");
   });
 
   it("closes sidebar on close button click", () => {
     setup();
     const menuBtn = screen.getAllByRole("button").find(b => b.className.includes("menuBtn"));
-    if (menuBtn) fireEvent.click(menuBtn);
+    expect(menuBtn).toBeDefined();
+    fireEvent.click(menuBtn!);
     
     const closeBtn = screen.getAllByRole("button").find(b => b.className.includes("closeSidebarBtn"));
-    if (closeBtn) {
-      fireEvent.click(closeBtn);
-      const aside = document.querySelector("aside");
-      expect(aside?.className).not.toContain("sidebarOpen");
-    }
+    expect(closeBtn).toBeDefined();
+    fireEvent.click(closeBtn!);
+    const aside = document.querySelector("aside");
+    expect(aside?.className).not.toContain("sidebarOpen");
   });
 
   it("opens delete modal and cancels", async () => {
     setup();
     await waitFor(() => screen.getByText("Thread 1"));
     const deleteBtn = screen.getAllByRole("button").find(b => b.className.includes("deleteBtn"));
-    if (deleteBtn) {
-      fireEvent.click(deleteBtn);
-      expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
-      const cancelBtn = screen.getByText("Cancel");
-      fireEvent.click(cancelBtn);
-      expect(screen.queryByText(/Are you sure you want to delete/)).not.toBeInTheDocument();
-    }
+    expect(deleteBtn).toBeDefined();
+    fireEvent.click(deleteBtn!);
+    expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+    const cancelBtn = screen.getByText("Cancel");
+    fireEvent.click(cancelBtn);
+    expect(screen.queryByText(/Are you sure you want to delete/)).not.toBeInTheDocument();
   });
 
   it("handles thread deletion success", async () => {
@@ -418,15 +414,14 @@ describe("HomePage", () => {
     setup();
     await waitFor(() => screen.getByText("Thread 1"));
     const deleteBtn = screen.getAllByRole("button").find(b => b.className.includes("deleteBtn"));
-    if (deleteBtn) {
-      fireEvent.click(deleteBtn);
-      const confirmBtn = screen.getByText("Delete");
-      fireEvent.click(confirmBtn);
-      await waitFor(() => {
-        expect(deleteThread).toHaveBeenCalledWith("1");
-        expect(screen.queryByText("Thread 1")).not.toBeInTheDocument();
-      });
-    }
+    expect(deleteBtn).toBeDefined();
+    fireEvent.click(deleteBtn!);
+    const confirmBtn = screen.getByText("Delete");
+    fireEvent.click(confirmBtn);
+    await waitFor(() => {
+      expect(deleteThread).toHaveBeenCalledWith("1");
+      expect(screen.queryByText("Thread 1")).not.toBeInTheDocument();
+    });
   });
 
   it("handles thread deletion failure", async () => {
@@ -435,14 +430,13 @@ describe("HomePage", () => {
     setup();
     await waitFor(() => screen.getByText("Thread 1"));
     const deleteBtn = screen.getAllByRole("button").find(b => b.className.includes("deleteBtn"));
-    if (deleteBtn) {
-      fireEvent.click(deleteBtn);
-      const confirmBtn = screen.getByText("Delete");
-      fireEvent.click(confirmBtn);
-      await waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith("Failed to delete thread.", expect.any(Object));
-      });
-    }
+    expect(deleteBtn).toBeDefined();
+    fireEvent.click(deleteBtn!);
+    const confirmBtn = screen.getByText("Delete");
+    fireEvent.click(confirmBtn);
+    await waitFor(() => {
+      expect(mockAlert).toHaveBeenCalledWith("Failed to delete thread.", expect.any(Object));
+    });
   });
 
   it("shows alert when starting without upload", () => {
