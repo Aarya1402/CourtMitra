@@ -474,7 +474,6 @@ const HomePage: React.FC = () => {
         <button
           className={styles.getStartedBtn}
           onClick={handleGetStarted}
-          disabled={isUploading || !threadId}
         >
           {(isUploading && "Processing...") ||
             (!isUploading && threadId
