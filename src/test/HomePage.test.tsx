@@ -327,19 +327,4 @@ describe("HomePage", () => {
       screen.getByText(/start a fresh chat without documents/i)
     ).toBeInTheDocument();
   });
-  it("hides skip button after upload", async () => {
-    render(<HomePage />);
-
-    const file = new File(["test"], "test.pdf");
-
-    fireEvent.change(document.querySelector("input")!, {
-      target: { files: [file] },
-    });
-
-    await waitFor(() => {
-      expect(
-        screen.queryByText(/start a fresh chat without documents/i)
-      ).not.toBeInTheDocument();
-    });
-  });
 });

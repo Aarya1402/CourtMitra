@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-interface BotState {
+export interface BotState {
   botId: string | null;
   botStatus: "idle" | "loading" | "succeeded" | "failed";
   languageByThread: Record<string, string>;

@@ -7,7 +7,7 @@ interface Message {
   threadId?: string;
 }
 
-interface ChatState {
+export interface ChatState {
   messages: Message[];
   loading: boolean;
 }
