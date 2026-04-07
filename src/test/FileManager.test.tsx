@@ -205,4 +205,119 @@ describe("FileManager Component", () => {
       expect.objectContaining({ title: "Notice" })
     );
   });
+
+  it("handles upload failure", async () => {
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
+    (axios.post as import("vitest").Mock).mockRejectedValue(new Error("Upload fail"));
+
+    renderFileManager();
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [new File([""], "test.pdf")] } });
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith("Upload failed. Please try again.", expect.any(Object));
+    });
+  });
+
+  it("handles preview URL not found", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock)
+      .mockResolvedValueOnce({ data: { files: mockFiles } })
+      .mockResolvedValueOnce({ data: { file_url: null } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("View Preview"));
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith("Preview URL not found.", expect.any(Object));
+    });
+  });
+
+  it("handles preview abort error", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock)
+      .mockResolvedValueOnce({ data: { files: mockFiles } })
+      .mockRejectedValueOnce({ name: "CanceledError" });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("View Preview"));
+
+    await waitFor(() => {
+        expect(screen.queryByText(/Loading Preview/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("handles delete failure", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+    (axios.delete as import("vitest").Mock).mockRejectedValue(new Error("Delete fail"));
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete$/ }));
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith("Failed to delete file.", expect.any(Object));
+    });
+  });
+
+
+  it("closes delete modal on Escape key", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("Delete"));
+
+    expect(screen.getByText(/Delete file\?/i)).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Delete file\?/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("closes delete modal when clicking outside", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("Delete"));
+
+    expect(screen.getByText(/Delete file\?/i)).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Delete file\?/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("closes dropdown when clicking outside", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    
+    expect(screen.getByText("View Preview")).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+
+    await waitFor(() => {
+      expect(screen.queryByText("View Preview")).not.toBeInTheDocument();
+    });
+  });
 });

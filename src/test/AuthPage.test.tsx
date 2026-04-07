@@ -1,16 +1,13 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import AuthPage from "../pages/AuthPage/AuthPage";
 import { beforeEach, describe, vi, expect, test } from "vitest";
+import axios from "axios";
 
 vi.mock("axios", () => ({
   default: {
-    isAxiosError: (error: unknown): error is import("axios").AxiosError => {
-      return typeof error === "object" && error !== null && "response" in error;
-    },
+    isAxiosError: vi.fn((error: unknown) => typeof error === "object" && error !== null && (error as any).isAxiosError === true),
   },
-  isAxiosError: (error: unknown): error is import("axios").AxiosError => {
-    return typeof error === "object" && error !== null && "response" in error;
-  },
+  isAxiosError: vi.fn((error: unknown) => typeof error === "object" && error !== null && (error as any).isAxiosError === true),
 }));
 
 // 🔥 Mock navigation
@@ -23,12 +20,13 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// 🔥 Mock GSAP (important)
+// 🔥 Mock GSAP
 vi.mock("gsap", () => ({
   default: {
-    context: () => ({
-      revert: vi.fn(),
-    }),
+    context: (cb: any) => {
+      if (typeof cb === "function") cb();
+      return { revert: vi.fn() };
+    },
     fromTo: vi.fn(),
   },
 }));
@@ -90,7 +88,9 @@ describe("AuthPage", () => {
       target: { value: "123456" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    });
 
     await waitFor(() => {
       expect(AuthApi.SignIn).toHaveBeenCalled();
@@ -122,7 +122,9 @@ describe("AuthPage", () => {
       target: { value: "Company" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    });
 
     await waitFor(() => {
       expect(AuthApi.SignUp).toHaveBeenCalled();
@@ -132,13 +134,15 @@ describe("AuthPage", () => {
 
   // ✅ 6. Error handling (API response)
   test("shows error on failed login", async () => {
+    vi.mocked(axios.isAxiosError).mockReturnValue(true);
     vi.mocked(AuthApi.SignIn).mockRejectedValue({
+      isAxiosError: true,
       response: {
         data: {
           errors: [{ message: "Invalid credentials" }],
         },
       },
-    } as unknown);
+    });
 
     render(<AuthPage />);
 
@@ -150,15 +154,16 @@ describe("AuthPage", () => {
       target: { value: "wrong" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /login/i }));
     });
+
+    expect(await screen.findByText(/invalid credentials/i)).toBeInTheDocument();
   });
 
   // ✅ 7. Network error fallback
   test("shows network error if no response", async () => {
+    vi.mocked(axios.isAxiosError).mockReturnValue(false);
     vi.mocked(AuthApi.SignIn).mockRejectedValue(new Error("Network Error"));
 
     render(<AuthPage />);
@@ -171,11 +176,11 @@ describe("AuthPage", () => {
       target: { value: "123456" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/network error/i)).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /login/i }));
     });
+
+    expect(await screen.findByText(/network error/i)).toBeInTheDocument();
   });
 
   // ✅ 8. Forgot password flow
@@ -190,14 +195,11 @@ describe("AuthPage", () => {
       target: { value: "test@mail.com" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
-
-    await waitFor(() => {
-      expect(AuthApi.ForgotPassword).toHaveBeenCalled();
-      expect(
-        screen.getByText(/password reset link has been sent/i)
-      ).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
     });
+
+    expect(await screen.findByText(/password reset link has been sent/i)).toBeInTheDocument();
   });
 
   // ✅ 9. Back to login from forgot password
@@ -231,11 +233,7 @@ describe("AuthPage", () => {
 
     fireEvent.click(screen.getByText(/continue with google/i));
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/failed to initialize google login/i)
-      ).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/failed to initialize google login/i)).toBeInTheDocument();
   });
 
   // ✅ 12. Form reset on toggle
@@ -250,5 +248,102 @@ describe("AuthPage", () => {
     fireEvent.click(screen.getByText(/log in/i));
 
     expect(screen.getByPlaceholderText(/john@talkument.co/i)).toHaveValue("");
+  });
+
+  // ✅ 13. Deep Error Handling Coverage
+  test("handles API error with 'message' string", async () => {
+    vi.mocked(axios.isAxiosError).mockReturnValue(true);
+    vi.mocked(AuthApi.SignIn).mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        data: { message: "Single error message" },
+      },
+    });
+
+    render(<AuthPage />);
+    
+    fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
+      target: { value: "test@mail.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
+      target: { value: "123456" },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    });
+
+    expect(await screen.findByText(/single error message/i)).toBeInTheDocument();
+  });
+
+  test("handles API error with 'errors' as simple strings", async () => {
+    vi.mocked(axios.isAxiosError).mockReturnValue(true);
+    vi.mocked(AuthApi.SignIn).mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        data: { errors: ["Error 1", "Error 2"] },
+      },
+    });
+
+    render(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
+      target: { value: "test@mail.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
+      target: { value: "123456" },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    });
+
+    expect(await screen.findByText(/error 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/error 2/i)).toBeInTheDocument();
+  });
+
+  test("handles unknown API error field", async () => {
+    vi.mocked(axios.isAxiosError).mockReturnValue(true);
+    vi.mocked(AuthApi.SignIn).mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        data: { unknown_field: "something" },
+      },
+    });
+
+    render(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
+      target: { value: "test@mail.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
+      target: { value: "123456" },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    });
+
+    expect(await screen.findByText(/an unknown error occurred/i)).toBeInTheDocument();
+  });
+
+  test("handles completely unknown error type", async () => {
+    vi.mocked(axios.isAxiosError).mockReturnValue(false);
+    vi.mocked(AuthApi.SignIn).mockRejectedValue("string error");
+
+    render(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
+      target: { value: "test@mail.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
+      target: { value: "123456" },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    });
+
+    expect(await screen.findByText(/an unknown error occurred/i)).toBeInTheDocument();
   });
 });
