@@ -180,4 +180,77 @@ describe("HomePage", () => {
       expect(mockAlert).toHaveBeenCalled();
     });
   });
+
+  it("handle fetchThread Error", async () => {
+    const { fetchThreads } = await import("../pages/HomePage/HomePage.logic");
+
+    (fetchThreads as any).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 401 },
+    });
+
+    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
+
+    setup();
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/auth", { replace: true });
+    });
+  });
+
+  it("handles fetchUser error", async () => {
+    const { fetchUser } = await import("../pages/HomePage/HomePage.logic");
+
+    (fetchUser as any).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 401 },
+    });
+
+    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
+
+    setup();
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/auth", { replace: true });
+    });
+  });
+
+  it("handles uploadDocument error", async () => {
+    const { uploadDocument } = await import("../pages/HomePage/HomePage.logic");
+
+    (uploadDocument as any).mockRejectedValueOnce(new Error("fail"));
+
+    setup();
+
+    const file = new File(["test"], "test.pdf", { type: "application/pdf" });
+    const input = document.querySelector("input[type='file']")!;
+
+    fireEvent.change(input, {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => {
+      expect(mockAlert).toHaveBeenCalled();
+    });
+  });
+
+  it("disables button if no file uploaded", () => {
+    setup();
+
+    const btn = screen.getByText("Waiting for Upload...");
+
+    expect(btn).toBeDisabled();
+  });
+
+  it("handles empty threads list", async () => {
+    const { fetchThreads } = await import("../pages/HomePage/HomePage.logic");
+
+    (fetchThreads as any).mockResolvedValueOnce([]);
+
+    setup();
+
+    await waitFor(() => {
+      expect(screen.queryByText("Thread 1")).not.toBeInTheDocument();
+    });
+  });
 });
