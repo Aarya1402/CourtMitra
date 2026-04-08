@@ -63,9 +63,12 @@ const chatSlice = createSlice({
       const { threadId, messages } = action.payload;
 
       state.messages = state.messages.filter((m) => m.threadId !== threadId);
+      const crypto = globalThis.crypto;
+      const array = new Uint32Array(1);
+      const randomValue = crypto.getRandomValues(array);
 
       const formatted = messages.map((msg) => ({
-        id: msg.id || `${Date.now()}-${Math.random()}`,
+        id: msg.id || `${Date.now()}-${randomValue}`,
         text: msg.text,
         sender: msg.sender,
         threadId: msg.threadId,
@@ -87,8 +90,12 @@ const chatSlice = createSlice({
     ) => {
       const { messages } = action.payload;
 
+      const crypto = globalThis.crypto;
+      const array = new Uint32Array(1);
+      const randomValue = crypto.getRandomValues(array);
+
       const formatted = messages.map((msg) => ({
-        id: msg.id || `${Date.now()}-${Math.random()}`,
+        id: msg.id || `${Date.now()}-${randomValue}`,
         text: msg.text,
         sender: msg.sender,
         threadId: msg.threadId,
