@@ -340,6 +340,21 @@ type JSONState = {
   lastMeaningfulCharPos: number;
 };
 
+function setComplete(state: JSONState, char: string, pos: number) {
+  state.lastCompletePos = pos + 1;
+  state.lastMeaningfulChar = char;
+  state.lastMeaningfulCharPos = pos;
+}
+
+function handlePrimitiveOrDelimiter(char: string, pos: number, state: JSONState) {
+  if (char === ":" || char === ",") {
+    state.lastMeaningfulChar = char;
+    state.lastMeaningfulCharPos = pos;
+  } else if (/[0-9.truefalsn]/.test(char)) {
+    setComplete(state, char, pos);
+  }
+}
+
 function analyzeJSONStructure(text: string): JSONState {
   const state: JSONState = {
     stack: [],
@@ -351,13 +366,10 @@ function analyzeJSONStructure(text: string): JSONState {
 
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
+    // Handle quotes
     if (char === '"' && (i === 0 || text[i - 1] !== "\\")) {
       state.inString = !state.inString;
-      if (!state.inString) {
-        state.lastCompletePos = i + 1;
-        state.lastMeaningfulChar = '"';
-        state.lastMeaningfulCharPos = i;
-      }
+      if (!state.inString) setComplete(state, '"', i);
       continue;
     }
 
@@ -365,22 +377,11 @@ function analyzeJSONStructure(text: string): JSONState {
 
     if (char === "{" || char === "[") {
       state.stack.push(char === "{" ? "}" : "]");
-      state.lastCompletePos = i + 1;
-      state.lastMeaningfulChar = char;
-      state.lastMeaningfulCharPos = i;
+      setComplete(state, char, i);
     } else if (char === "}" || char === "]") {
-      if (state.stack.pop()) {
-        state.lastCompletePos = i + 1;
-        state.lastMeaningfulChar = char;
-        state.lastMeaningfulCharPos = i;
-      }
-    } else if (char === ":" || char === ",") {
-      state.lastMeaningfulChar = char;
-      state.lastMeaningfulCharPos = i;
-    } else if (/[0-9.truefalsn]/.test(char)) {
-      state.lastMeaningfulChar = char;
-      state.lastMeaningfulCharPos = i;
-      state.lastCompletePos = i + 1;
+      if (state.stack.pop()) setComplete(state, char, i);
+    } else {
+      handlePrimitiveOrDelimiter(char, i, state);
     }
   }
   return state;
