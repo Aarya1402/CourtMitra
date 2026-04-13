@@ -67,6 +67,7 @@ app.post(
 
       const filePath = req.file.path;
       const language = req.body.language || "gu-IN";
+      console.log(`[Transcription] Received request for file: ${req.file.originalname} with language: ${language}`);
       const transcriptText = await getTranscript(filePath, language);
 
       if (fs.existsSync(filePath)) {

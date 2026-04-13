@@ -106,6 +106,21 @@ describe("Order Controller", () => {
       expect(res.status).toBe(200);
       expect(res.body.result.header.court_name).toBe("Markdown Court");
     });
+
+    it("should handle truncated JSON with trailing comma", async () => {
+      mockCompletions.mockResolvedValueOnce({
+        choices: [
+          { message: { content: '{"header": {"court_name": "Comma Court"}, "parties": ["A",' } },
+        ],
+      });
+
+      const res = await request(app).post("/api/order/extract").send({ chunk: "text" });
+      expect(res.status).toBe(200);
+      expect(res.body.result.header.court_name).toBe("Comma Court");
+      expect(res.body.result.parties).toEqual(["A"]);
+    });
+
+
   });
 
   describe("POST /api/order/translate", () => {

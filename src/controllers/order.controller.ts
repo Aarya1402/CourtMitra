@@ -12,9 +12,35 @@ const getSarvamClient = () => {
   });
 };
 
+const LANGUAGE_MAP: Record<string, string> = {
+  "en-IN": "English",
+  "hi-IN": "Hindi",
+  "gu-IN": "Gujarati",
+  "kn-IN": "Kannada",
+  "ml-IN": "Malayalam",
+  "mr-IN": "Marathi",
+  "bn-IN": "Bengali",
+  "pa-IN": "Punjabi",
+  "ta-IN": "Tamil",
+  "te-IN": "Telugu",
+  "or-IN": "Odia",
+};
+
+const resolveLanguage = (lang: string) => {
+  if (!lang) return "English";
+  const normalized = lang.trim().toLowerCase();
+  for (const [code, name] of Object.entries(LANGUAGE_MAP)) {
+    if (code.toLowerCase() === normalized || name.toLowerCase() === normalized) {
+      return name;
+    }
+  }
+  return lang;
+};
+
 export const extractOrderData = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { chunk, language = "English" } = req.body;
+    const { chunk, language: langParam = "en-IN" } = req.body;
+    const language = resolveLanguage(langParam);
 
     console.log(
       `[OrderController] Starting synthesis for transcript (length: ${chunk?.length || 0} chars) in language: ${language} using Sarvam AI`,
@@ -149,7 +175,8 @@ Generate the JSON order in "${language}" now. Return ONLY JSON.`;
 
 export const translateOrderData = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { orderData, language = "English" } = req.body;
+    const { orderData, language: langParam = "en-IN" } = req.body;
+    const language = resolveLanguage(langParam);
 
     if (!orderData) {
       return res.status(400).json({ error: "orderData is required" });
@@ -322,6 +349,8 @@ function repairTruncatedJSON(jsonString: string): Record<string, unknown> | null
   let lastCompletePos = 0;
   let lastMeaningfulChar = "";
 
+  let lastMeaningfulCharPos = 0;
+
   for (let i = 0; i < repaired.length; i++) {
     const char = repaired[i];
     
@@ -330,6 +359,7 @@ function repairTruncatedJSON(jsonString: string): Record<string, unknown> | null
       if (!inString) {
         lastCompletePos = i + 1;
         lastMeaningfulChar = '"';
+        lastMeaningfulCharPos = i;
       }
       continue;
     }
@@ -342,30 +372,30 @@ function repairTruncatedJSON(jsonString: string): Record<string, unknown> | null
       stack.push(char === "{" ? "}" : "]");
       lastCompletePos = i + 1;
       lastMeaningfulChar = char;
+      lastMeaningfulCharPos = i;
     } else if (char === "}" || char === "]") {
       const expected = stack.pop();
       if (expected) {
         lastCompletePos = i + 1;
         lastMeaningfulChar = char;
+        lastMeaningfulCharPos = i;
       }
     } else if (char === ":" || char === ",") {
       lastMeaningfulChar = char;
-      // We don't update lastCompletePos yet because we need the value/key to complete
+      lastMeaningfulCharPos = i;
     } else {
       // Numerical values or booleans/null
       if (/[0-9.truefalsenull]/.test(char)) {
          lastMeaningfulChar = char;
+         lastMeaningfulCharPos = i;
          lastCompletePos = i + 1;
       }
     }
   }
 
   // If we're left with a dangling "key": or a dangling comma, strip back
-  if (lastMeaningfulChar === ":" || lastMeaningfulChar === "," || inString) {
-    // Strip back to the last brace/bracket or the character before the dangling part
-    // This is a bit complex, but essentially we want to validly close what we have.
-    // Let's try a simpler heuristic: if we can't parse it with just adding stack,
-    // we try stripping the last property.
+  if (!inString && (lastMeaningfulChar === ":" || lastMeaningfulChar === ",")) {
+    repaired = repaired.substring(0, lastMeaningfulCharPos);
   }
 
   // Simple balance strategy first
