@@ -279,53 +279,119 @@ function extractJSON(text: string): Record<string, unknown> | null {
   if (!text) return null;
 
   // Remove markdown ```json blocks
-  text = text
+  const content = text
     .replaceAll(/```json/gi, "")
     .replaceAll("```", "")
     .trim();
 
-  // Try direct parse first
+  // 1. Try direct parse first
   try {
-    return JSON.parse(text);
+    return JSON.parse(content);
   } catch {
-    // Falls through to extraction logic if direct JSON parsing fails
+    // Falls through
   }
 
-  // If it starts with <think> or other text, find the first '{' and last '}'
-  let firstBrace = text.indexOf("{");
-  let lastBrace = text.lastIndexOf("}");
+  // 2. Try identifying first brace
+  const firstBrace = content.indexOf("{");
+  if (firstBrace === -1) return null;
 
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    const potentialJSON = text.substring(firstBrace, lastBrace + 1);
+  // 3. Try identified range from last brace
+  const lastBrace = content.lastIndexOf("}");
+  if (lastBrace > firstBrace) {
     try {
-      return JSON.parse(potentialJSON);
+      return JSON.parse(content.substring(firstBrace, lastBrace + 1));
     } catch {
-      // If it fails, maybe it's still truncated after the last brace (e.g. { "a": { "b": 1 }, "c": 2 )
-      // We'll try to find the previous last brace below if needed, but for now let's try basic repair
+      // Falls through
     }
   }
 
-  // TRUNCATED JSON REPAIR (Best effort)
-  // If we couldn't parse it and it looks truncated (starts with { but ends without }),
-  // we try to close all open brackets.
-  if (firstBrace !== -1 && !text.trim().endsWith("}")) {
-    try {
-      return repairTruncatedJSON(text.substring(firstBrace));
-    } catch {
-      // Final attempt: find the last valid close brace that allows parsing
-      let currentLastBrace = lastBrace;
-      while (currentLastBrace > firstBrace) {
-        const subContent = text.substring(firstBrace, currentLastBrace + 1);
-        try {
-          return JSON.parse(subContent);
-        } catch {
-          currentLastBrace = text.lastIndexOf("}", currentLastBrace - 1);
-        }
-      }
-    }
+  // 4. Try truncated repair (best effort for incomplete streams)
+  try {
+    return repairTruncatedJSON(content.substring(firstBrace));
+  } catch {
+    // Falls through
   }
 
+  // 5. Final attempt: find the last valid close brace backwards
+  return findLastValidJSON(content, firstBrace, lastBrace);
+}
+
+function findLastValidJSON(
+  text: string,
+  start: number,
+  lastBrace: number,
+): Record<string, unknown> | null {
+  let currentLastBrace = lastBrace;
+  while (currentLastBrace > start) {
+    try {
+      return JSON.parse(text.substring(start, currentLastBrace + 1));
+    } catch {
+      currentLastBrace = text.lastIndexOf("}", currentLastBrace - 1);
+    }
+  }
   return null;
+}
+
+type JSONState = {
+  stack: string[];
+  inString: boolean;
+  lastCompletePos: number;
+  lastMeaningfulChar: string;
+  lastMeaningfulCharPos: number;
+};
+
+function analyzeJSONStructure(text: string): JSONState {
+  const state: JSONState = {
+    stack: [],
+    inString: false,
+    lastCompletePos: 0,
+    lastMeaningfulChar: "",
+    lastMeaningfulCharPos: 0,
+  };
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === '"' && (i === 0 || text[i - 1] !== "\\")) {
+      state.inString = !state.inString;
+      if (!state.inString) {
+        state.lastCompletePos = i + 1;
+        state.lastMeaningfulChar = '"';
+        state.lastMeaningfulCharPos = i;
+      }
+      continue;
+    }
+
+    if (state.inString || /[ \n\r\t]/.test(char)) continue;
+
+    if (char === "{" || char === "[") {
+      state.stack.push(char === "{" ? "}" : "]");
+      state.lastCompletePos = i + 1;
+      state.lastMeaningfulChar = char;
+      state.lastMeaningfulCharPos = i;
+    } else if (char === "}" || char === "]") {
+      if (state.stack.pop()) {
+        state.lastCompletePos = i + 1;
+        state.lastMeaningfulChar = char;
+        state.lastMeaningfulCharPos = i;
+      }
+    } else if (char === ":" || char === ",") {
+      state.lastMeaningfulChar = char;
+      state.lastMeaningfulCharPos = i;
+    } else if (/[0-9.truefalsn]/.test(char)) {
+      state.lastMeaningfulChar = char;
+      state.lastMeaningfulCharPos = i;
+      state.lastCompletePos = i + 1;
+    }
+  }
+  return state;
+}
+
+function completeJSONWithStack(text: string, inString: boolean, stack: string[]): string {
+  let balanced = text;
+  if (inString) balanced += '"';
+  const tempStack = [...stack];
+  while (tempStack.length > 0) balanced += tempStack.pop();
+  return balanced;
 }
 
 /**
@@ -333,98 +399,23 @@ function extractJSON(text: string): Record<string, unknown> | null {
  */
 function repairTruncatedJSON(jsonString: string): Record<string, unknown> | null {
   let repaired = jsonString.trim();
+  const state = analyzeJSONStructure(repaired);
 
-  // 1. Remove obvious trailing garbage
-
-
-  // 2. Handle dangling structures by stripping back to the last reasonably complete property
-  // We look for the last "}", "]", or a completed string value followed by a potential comma
-  // But a safer approach for varied truncation:
-  
-  // Try to find the last colon. If there's content after it that doesn't look like a closed value,
-  // we might be mid-value. If there's a comma after the last closed value, we might be mid-key.
-  
-  const stack: string[] = [];
-  let inString = false;
-  let lastCompletePos = 0;
-  let lastMeaningfulChar = "";
-
-  let lastMeaningfulCharPos = 0;
-
-  for (let i = 0; i < repaired.length; i++) {
-    const char = repaired[i];
-    
-    if (char === '"' && (i === 0 || repaired[i - 1] !== "\\")) {
-      inString = !inString;
-      if (!inString) {
-        lastCompletePos = i + 1;
-        lastMeaningfulChar = '"';
-        lastMeaningfulCharPos = i;
-      }
-      continue;
-    }
-    
-    if (inString) continue;
-
-    if (/[ \n\r\t]/.test(char)) continue;
-
-    if (char === "{" || char === "[") {
-      stack.push(char === "{" ? "}" : "]");
-      lastCompletePos = i + 1;
-      lastMeaningfulChar = char;
-      lastMeaningfulCharPos = i;
-    } else if (char === "}" || char === "]") {
-      const expected = stack.pop();
-      if (expected) {
-        lastCompletePos = i + 1;
-        lastMeaningfulChar = char;
-        lastMeaningfulCharPos = i;
-      }
-    } else if (char === ":" || char === ",") {
-      lastMeaningfulChar = char;
-      lastMeaningfulCharPos = i;
-    } else {
-      // Numerical values or booleans/null
-      if (/[0-9.truefalsenull]/.test(char)) {
-         lastMeaningfulChar = char;
-         lastMeaningfulCharPos = i;
-         lastCompletePos = i + 1;
-      }
-    }
+  if (!state.inString && (state.lastMeaningfulChar === ":" || state.lastMeaningfulChar === ",")) {
+    repaired = repaired.substring(0, state.lastMeaningfulCharPos);
   }
 
-  // If we're left with a dangling "key": or a dangling comma, strip back
-  if (!inString && (lastMeaningfulChar === ":" || lastMeaningfulChar === ",")) {
-    repaired = repaired.substring(0, lastMeaningfulCharPos);
-  }
-
-  // Simple balance strategy first
-  let attempt1 = repaired;
-  if (inString) attempt1 += '"';
-  
-  const tempStack = [...stack];
-  let bal1 = attempt1;
-  while (tempStack.length > 0) bal1 += tempStack.pop();
-
+  // Attempt 1: Balance wherever we stopped
   try {
+    const bal1 = completeJSONWithStack(repaired, state.inString, state.stack);
     return JSON.parse(bal1);
   } catch {
     // Attempt 2: Strip back to the last index where a structure was actually closed or opened
-    let attempt2 = repaired.substring(0, lastCompletePos);
-    const stack2: string[] = [];
-    let inStr2 = false;
-    for (let i = 0; i < attempt2.length; i++) {
-      const c = attempt2[i];
-      if (c === '"' && (i === 0 || attempt2[i - 1] !== "\\")) { inStr2 = !inStr2; continue; }
-      if (inStr2) continue;
-      if (c === "{") stack2.push("}");
-      else if (c === "[") stack2.push("]");
-      else if (c === "}" || c === "]") stack2.pop();
-    }
-    while (stack2.length > 0) attempt2 += stack2.pop();
-    
     try {
-      return JSON.parse(attempt2);
+      const substructure = repaired.substring(0, state.lastCompletePos);
+      const state2 = analyzeJSONStructure(substructure);
+      const bal2 = completeJSONWithStack(substructure, state2.inString, state2.stack);
+      return JSON.parse(bal2);
     } catch {
       return null;
     }
