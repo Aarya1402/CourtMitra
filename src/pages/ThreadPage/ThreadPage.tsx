@@ -689,12 +689,9 @@ const ThreadPage: React.FC = () => {
     if (!isFormEmpty) {
       setIsExtracting(true);
       try {
-        const langLabel =
-          LANGUAGE_OPTIONS.find((opt) => opt.value === newLang)?.label ||
-          newLang;
         const res = await axios.post(`${API_BASE_URL}/api/order/translate`, {
           orderData,
-          language: langLabel,
+          language: newLang,
         });
 
         if (res.data.result) {
@@ -804,8 +801,8 @@ const ThreadPage: React.FC = () => {
     setAudioBlob(file); // reuse your existing state
 
     const formData = new FormData();
-    formData.append("audio", file);
     formData.append("language", language || "gu-IN");
+    formData.append("audio", file);
 
     try {
       const response = await axios.post("/api/transcribe", formData, {
@@ -940,14 +937,10 @@ const ThreadPage: React.FC = () => {
   const extractDataFromChunk = async (fullTranscript: string) => {
     setIsExtracting(true);
 
-    const selectedLanguageLabel =
-      LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ||
-      "English";
-
     try {
       const data = {
         chunk: fullTranscript,
-        language: selectedLanguageLabel,
+        language: language,
       };
 
       const response = await axios.post(

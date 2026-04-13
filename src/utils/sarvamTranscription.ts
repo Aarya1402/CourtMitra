@@ -7,8 +7,8 @@ const BACKEND_URL = "/api/transcribe";
 export async function transcribeAudio(blob: Blob, language: string = "gu-IN"): Promise<string> {
   try {
     const formData = new FormData();
-    formData.append("audio", blob, "recording.webm");
     formData.append("language", language);
+    formData.append("audio", blob, "recording.webm");
 
     const response = await axios.post(BACKEND_URL, formData, {
       headers: { "Content-Type": "multipart/form-data" },
