@@ -147,7 +147,7 @@ Only return JSON. Absolutely no <think> commentary.`;
           content: promptText,
         },
       ],
-      max_tokens: 3000,
+      max_tokens: 4000,
     })) as SarvamChatResponse;
 
     const responseText = response.choices[0].message.content;
@@ -224,7 +224,7 @@ Return ONLY the translated JSON object in "${language}" now. No other text.`;
           content: promptText,
         },
       ],
-      max_tokens: 3000,
+      max_tokens: 4000,
     })) as SarvamChatResponse;
 
     const responseText = response.choices[0].message.content;
