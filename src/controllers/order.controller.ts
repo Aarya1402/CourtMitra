@@ -24,133 +24,95 @@ export const extractOrderData = async (req: Request, res: Response): Promise<Res
       return res.status(400).json({ error: "chunk is required" });
     }
 
-    const promptText = `You are a legal document synthesis expert specializing in Indian court proceedings.
+    const systemPrompt = `You are a legal document synthesis expert specializing in Indian court proceedings.
+Your task: Analyze the transcript and generate a COMPLETE, VALID JSON object in "${language}" strictly following the schema.
 
-Your task is to analyze the FULL TRANSCRIPT of a court session and generate a COMPLETE and VALID JSON object strictly following the schema provided below.
+RULES:
+1. Return ONLY the JSON object. No preamble, no conversational text, no markdown.
+2. If info is missing, use null. No hallucinations.
+3. LANGUAGE CONSISTENCY: The entire response MUST be in "${language}". Do NOT translate to English unless "${language}" is "English". Preserve original legal terminology from the transcript.
+4. Extract Reasoning (concise array) and Operative Directions (separate items).
+5. Ensure legal formatting for final_order.
 
-🔒 LANGUAGE REQUIREMENT:
-- The output MUST be entirely in the following language: "${language}".
-- Do NOT translate content unnecessarily.
-- Preserve original legal phrasing, tone, and terminology from the transcript wherever possible.
-- If the transcript contains mixed languages, normalize the FINAL ORDER and narrative fields into "${language}" while preserving legal accuracy.
-
-⚠️ STRICT JSON SCHEMA:
+SCHEMA:
 {
-  "header": {
-    "court_name": "string | null",
-    "case_number": "string | null",
-    "case_type": "string | null",
-    "location": "string | null",
-    "dates": {
-      "filing_date": "string | null",
-      "registration_date": "string | null",
-      "decision_date": "string | null",
-      "other_dates": ["string"]
-    }
-  },
-  "case_title": {
-    "petitioner": "string | null",
-    "respondent": "string | null",
-    "full_title_text": "string | null"
-  },
-  "parties": {
-    "petitioners": ["string"],
-    "respondents": ["string"],
-    "accused": ["string"],
-    "complainant": ["string"],
-    "other_parties": ["string"]
-  },
-  "advocates": {
-    "petitioner_side": ["string"],
-    "respondent_side": ["string"],
-    "government_side": ["string"],
-    "other": ["string"]
-  },
-  "appearance_mode": "string | null",
-  "case_details": {
-    "acts_sections": "string | null",
-    "case_category": "string | null",
-    "police_station": "string | null",
-    "property_details": "string | null",
-    "other_details": "string | null"
-  },
-  "procedural_history": "string | null",
-  "issues_framed": "string | null",
-  "evidence": {
-    "oral_evidence": "string | null",
-    "documentary_evidence": "string | null"
-  },
-  "arguments": "string | null",
+  "header": { "court_name": "string|null", "case_number": "string|null", "case_type": "string|null", "location": "string|null", "dates": { "filing_date": "string|null", "registration_date": "string|null", "decision_date": "string|null", "other_dates": ["string"] } },
+  "case_title": { "petitioner": "string|null", "respondent": "string|null", "full_title_text": "string|null" },
+  "parties": { "petitioners": ["string"], "respondents": ["string"], "accused": ["string"], "complainant": ["string"], "other_parties": ["string"] },
+  "advocates": { "petitioner_side": ["string"], "respondent_side": ["string"], "government_side": ["string"], "other": ["string"] },
+  "appearance_mode": "string|null",
+  "case_details": { "acts_sections": "string|null", "case_category": "string|null", "police_station": "string|null", "property_details": "string|null", "other_details": "string|null" },
+  "procedural_history": "string|null",
+  "issues_framed": "string|null",
+  "evidence": { "oral_evidence": "string|null", "documentary_evidence": "string|null" },
+  "arguments": "string|null",
   "reasoning_points": ["string"],
-  "operative_order": {
-    "full_text": "string | null",
-    "directions": ["string"],
-    "final_outcome": "string | null"
-  },
-  "final_order": "string | null",
-  "signature": {
-    "judge_name": "string | null",
-    "designation": "string | null",
-    "court": "string | null",
-    "date": "string | null",
-    "place": "string | null"
-  }
-}
+  "operative_order": { "full_text": "string|null", "directions": ["string"], "final_outcome": "string|null" },
+  "final_order": "string|null",
+  "signature": { "judge_name": "string|null", "designation": "string|null", "court": "string|null", "date": "string|null", "place": "string|null" }
+}`;
 
-⚠️ EXTRACTION & SYNTHESIS RULES:
-
-1. STRICT SCHEMA COMPLIANCE  
-   - Output MUST match the schema EXACTLY.  
-   - Do NOT add, remove, or rename fields.  
-
-2. NO HALLUCINATION  
-   - If any information is missing from the transcript, set it to null.  
-   - Never infer or fabricate case details.  
-
-3. REASONING EXTRACTION  
-   - Extract judicial reasoning into "reasoning_points" as a clear array of concise points.  
-   - Each point should represent one logical step in the judge’s reasoning.  
-
-4. FINAL DIRECTIONS EXTRACTION  
-   - Extract all explicit directions/orders (numbered or implied) into "operative_order.directions" as separate items.  
-
-5. DRAFT CORRECTION PRIORITY  
-   - A draft JSON is provided below (if any).  
-   - Use it as a base, but VERIFY and CORRECT it using the FULL TRANSCRIPT.  
-   - Fill missing fields and fix inconsistencies.  
-
-6. LEGAL FORMATTING  
-   - Ensure "final_order" and "operative_order.full_text" read like formal Indian court orders.  
-   - Maintain formal tone and structure consistent with judicial writing.  
-
-7. CLEAN OUTPUT (CRITICAL)
-   - Return ONLY the JSON object.  
-   - Do NOT include explanations, markdown, or extra text.  
-   - PROHIBITED: Do NOT use <think> tags, chain-of-thought blocks, or any reasoning text in the output.
-   - Start your response directly with '{' and end with '}'.
-
----
-FULL TRANSCRIPT:
+    const userPrompt = `FULL TRANSCRIPT:
 ${chunk}
 
 ---
-FINAL INSTRUCTION:
-Generate a complete, accurate, and legally structured court order JSON in "${language}", strictly adhering to the schema and rules above.
-Only return JSON. Absolutely no <think> commentary.`;
+Generate the JSON order in "${language}" now. Return ONLY JSON.`;
 
     const client = getSarvamClient();
-    const response = (await client.chat.completions({
+    let response = (await client.chat.completions({
       model: "sarvam-30b",
       messages: [
         {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
           role: "user",
-          content: promptText,
+          content: userPrompt,
         },
       ],
-      max_tokens: 4000,
+      max_tokens: 4096,
     })) as SarvamChatResponse;
 
+    // Retry once if content is null
+    if (
+      (!response?.choices || response.choices.length === 0 || !response.choices[0].message.content) &&
+      response.choices?.[0]?.finish_reason !== "content_filter"
+    ) {
+      console.log("[OrderController] Received null content, retrying synthesis...");
+      response = (await client.chat.completions({
+        model: "sarvam-30b",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+        max_tokens: 4096,
+      })) as SarvamChatResponse;
+    }
+
+    if (!response?.choices || response.choices.length === 0) {
+      throw new Error("Sarvam AI returned an empty response (no choices)");
+    }
+
     const responseText = response.choices[0].message.content;
+
+    if (responseText === null || responseText === undefined) {
+      const finishReason = response.choices[0].finish_reason;
+      console.error(
+        "[OrderController] Sarvam AI response content is null. Full response:",
+        JSON.stringify(response, null, 2),
+      );
+      throw new Error(
+        `Sarvam AI returned a response with null content (Finish Reason: ${finishReason})`,
+      );
+    }
+
     console.log(`[OrderController] AI response received (length: ${responseText.length} chars)`);
 
     const cleanedJSON = extractJSON(responseText);
@@ -161,8 +123,10 @@ Only return JSON. Absolutely no <think> commentary.`;
         responseText.substring(0, 500),
       );
 
-      // Special handling for truncated responses - maybe tell user to try again
-      const isTruncated = responseText.length > 0 && !responseText.trim().endsWith("}");
+      // Special handling for truncated responses
+      const isTruncated =
+        (responseText.length > 0 && !responseText.trim().endsWith("}")) ||
+        response.choices[0].finish_reason === "length";
 
       return res.status(500).json({
         error: isTruncated
@@ -195,39 +159,75 @@ export const translateOrderData = async (req: Request, res: Response): Promise<R
       `[OrderController] Starting translation of orderData to language: ${language} using Sarvam AI`,
     );
 
-    const promptText = `You are a legal translation expert. 
-Translate the following JSON object representing a court order into the language: "${language}".
+    const systemPrompt = `You are a legal translation expert. 
+Your task: Translate the following JSON representing a court order into "${language}".
 
-🔒 RULES:
-1. STRICT SCHEMA COMPLIANCE: Do NOT add, remove, or rename any keys. The structure must remain EXACTLY as provided.
-2. LEGAL ACCURACY: Use proper legal terminology and formal tone appropriate for an Indian court document in "${language}".
-3. TRANSLATE ALL VALUES: Translate every string value within the JSON object to "${language}".
-4. CLEAN OUTPUT (CRITICAL): Return ONLY a valid JSON object. 
-   - Do NOT add any preamble, markdown formatting, or explanations.
-   - Do NOT use <think> tags or internal reasoning blocks.
-   - Start your response directly with '{' and end with '}'.
+RULES:
+1. CRITICAL: ALL values must be translated into "${language}". Do NOT keep text from the original source language.
+2. STRICT SCHEMA COMPLIANCE: Do NOT add, remove, or rename any keys. 
+3. LEGAL ACCURACY: Use proper legal terminology in "${language}".
+4. CLEAN OUTPUT: Return ONLY a valid JSON object. No preamble, no markdown.`;
 
----
-JSON TO TRANSLATE:
+    const userPrompt = `JSON TO TRANSLATE (TARGET LANGUAGE: ${language.toUpperCase()}):
 ${JSON.stringify(orderData, null, 2)}
 
 ---
-FINAL INSTRUCTION:
-Return ONLY the translated JSON object in "${language}" now. No other text.`;
+Translate all values to "${language}" now. Return ONLY JSON.`;
 
     const client = getSarvamClient();
-    const response = (await client.chat.completions({
+    let response = (await client.chat.completions({
       model: "sarvam-30b",
       messages: [
         {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
           role: "user",
-          content: promptText,
+          content: userPrompt,
         },
       ],
-      max_tokens: 4000,
+      max_tokens: 4096,
     })) as SarvamChatResponse;
 
+    // Retry once if content is null
+    if (
+      (!response?.choices || response.choices.length === 0 || !response.choices[0].message.content) &&
+      response.choices?.[0]?.finish_reason !== "content_filter"
+    ) {
+      console.log("[OrderController] Received null content, retrying translation...");
+      response = (await client.chat.completions({
+        model: "sarvam-30b",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+        max_tokens: 4096,
+      })) as SarvamChatResponse;
+    }
+
+    if (!response?.choices || response.choices.length === 0) {
+      throw new Error("Sarvam AI returned an empty translation response");
+    }
+
     const responseText = response.choices[0].message.content;
+
+    if (responseText === null || responseText === undefined) {
+      const finishReason = response.choices[0].finish_reason;
+      console.error(
+        "[OrderController] Sarvam AI translation response content is null. Full response:",
+        JSON.stringify(response, null, 2),
+      );
+      throw new Error(
+        `Sarvam AI returned a translation response with null content (Finish Reason: ${finishReason})`,
+      );
+    }
 
     const cleanedJSON = extractJSON(responseText);
 
@@ -264,18 +264,139 @@ function extractJSON(text: string): Record<string, unknown> | null {
     // Falls through to extraction logic if direct JSON parsing fails
   }
 
-  // If it starts with <think> or other text, find the first '{'
-  const firstBrace = text.indexOf("{");
-  const lastBrace = text.lastIndexOf("}");
+  // If it starts with <think> or other text, find the first '{' and last '}'
+  let firstBrace = text.indexOf("{");
+  let lastBrace = text.lastIndexOf("}");
 
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     const potentialJSON = text.substring(firstBrace, lastBrace + 1);
     try {
       return JSON.parse(potentialJSON);
     } catch {
-      // Ignore parse failure; results in null being returned
+      // If it fails, maybe it's still truncated after the last brace (e.g. { "a": { "b": 1 }, "c": 2 )
+      // We'll try to find the previous last brace below if needed, but for now let's try basic repair
+    }
+  }
+
+  // TRUNCATED JSON REPAIR (Best effort)
+  // If we couldn't parse it and it looks truncated (starts with { but ends without }),
+  // we try to close all open brackets.
+  if (firstBrace !== -1 && !text.trim().endsWith("}")) {
+    try {
+      return repairTruncatedJSON(text.substring(firstBrace));
+    } catch {
+      // Final attempt: find the last valid close brace that allows parsing
+      let currentLastBrace = lastBrace;
+      while (currentLastBrace > firstBrace) {
+        const subContent = text.substring(firstBrace, currentLastBrace + 1);
+        try {
+          return JSON.parse(subContent);
+        } catch {
+          currentLastBrace = text.lastIndexOf("}", currentLastBrace - 1);
+        }
+      }
     }
   }
 
   return null;
+}
+
+/**
+ * Basic JSON repair for truncated strings
+ */
+function repairTruncatedJSON(jsonString: string): Record<string, unknown> | null {
+  let repaired = jsonString.trim();
+
+  // 1. Remove obvious trailing garbage
+  repaired = repaired.replace(/,?\s*[a-zA-Z0-9_]*"?$/, "");
+
+  // 2. Handle dangling structures by stripping back to the last reasonably complete property
+  // We look for the last "}", "]", or a completed string value followed by a potential comma
+  // But a safer approach for varied truncation:
+  
+  // Try to find the last colon. If there's content after it that doesn't look like a closed value,
+  // we might be mid-value. If there's a comma after the last closed value, we might be mid-key.
+  
+  const stack: string[] = [];
+  let inString = false;
+  let lastCompletePos = 0;
+  let lastMeaningfulChar = "";
+
+  for (let i = 0; i < repaired.length; i++) {
+    const char = repaired[i];
+    
+    if (char === '"' && (i === 0 || repaired[i - 1] !== "\\")) {
+      inString = !inString;
+      if (!inString) {
+        lastCompletePos = i + 1;
+        lastMeaningfulChar = '"';
+      }
+      continue;
+    }
+    
+    if (inString) continue;
+
+    if (/[ \n\r\t]/.test(char)) continue;
+
+    if (char === "{" || char === "[") {
+      stack.push(char === "{" ? "}" : "]");
+      lastCompletePos = i + 1;
+      lastMeaningfulChar = char;
+    } else if (char === "}" || char === "]") {
+      const expected = stack.pop();
+      if (expected) {
+        lastCompletePos = i + 1;
+        lastMeaningfulChar = char;
+      }
+    } else if (char === ":" || char === ",") {
+      lastMeaningfulChar = char;
+      // We don't update lastCompletePos yet because we need the value/key to complete
+    } else {
+      // Numerical values or booleans/null
+      if (/[0-9.truefalsenull]/.test(char)) {
+         lastMeaningfulChar = char;
+         lastCompletePos = i + 1;
+      }
+    }
+  }
+
+  // If we're left with a dangling "key": or a dangling comma, strip back
+  if (lastMeaningfulChar === ":" || lastMeaningfulChar === "," || inString) {
+    // Strip back to the last brace/bracket or the character before the dangling part
+    // This is a bit complex, but essentially we want to validly close what we have.
+    // Let's try a simpler heuristic: if we can't parse it with just adding stack,
+    // we try stripping the last property.
+  }
+
+  // Simple balance strategy first
+  let attempt1 = repaired;
+  if (inString) attempt1 += '"';
+  
+  const tempStack = [...stack];
+  let bal1 = attempt1;
+  while (tempStack.length > 0) bal1 += tempStack.pop();
+
+  try {
+    return JSON.parse(bal1);
+  } catch {
+    // Attempt 2: Strip back to the last index where a structure was actually closed or opened
+    let attempt2 = repaired.substring(0, lastCompletePos);
+    const stack2: string[] = [];
+    let inStr2 = false;
+    for (let i = 0; i < attempt2.length; i++) {
+      const c = attempt2[i];
+      if (c === '"' && (i === 0 || attempt2[i - 1] !== "\\")) { inStr2 = !inStr2; continue; }
+      if (inStr2) continue;
+      if (c === "{") stack2.push("}");
+      else if (c === "[") stack2.push("]");
+      else if (c === "}" || c === "]") stack2.pop();
+    }
+    while (stack2.length > 0) attempt2 += stack2.pop();
+    
+    try {
+      return JSON.parse(attempt2);
+    } catch {
+      return null;
+    }
+  }
 }
