@@ -56,8 +56,8 @@ describe("Order Controller", () => {
       });
 
       const res = await request(app).post("/api/order/extract").send({ chunk: "text" });
-      expect(res.status).toBe(500);
-      expect(res.body.error).toContain("truncated");
+      expect(res.status).toBe(200);
+      expect(res.body.result).toEqual({ incomplete: "json" });
     });
 
     it("should handle complete JSON parsing failure", async () => {

@@ -308,7 +308,7 @@ function repairTruncatedJSON(jsonString: string): Record<string, unknown> | null
   let repaired = jsonString.trim();
 
   // 1. Remove obvious trailing garbage
-  repaired = repaired.replace(/,?\s*[a-zA-Z0-9_]*"?$/, "");
+
 
   // 2. Handle dangling structures by stripping back to the last reasonably complete property
   // We look for the last "}", "]", or a completed string value followed by a potential comma
