@@ -37,6 +37,51 @@ const resolveLanguage = (lang: string) => {
   return lang;
 };
 
+const callSarvamAI = async (
+  systemPrompt: string,
+  userPrompt: string,
+  logPrefix: string,
+): Promise<string> => {
+  const client = getSarvamClient();
+  const completionOptions = {
+    model: "sarvam-30b",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 4096,
+  };
+
+  let response = (await client.chat.completions(
+    completionOptions as any,
+  )) as unknown as SarvamChatResponse;
+
+  // Retry once if content is null
+  if (
+    (!response?.choices ||
+      response.choices.length === 0 ||
+      !response.choices[0].message.content) &&
+    response.choices?.[0]?.finish_reason !== "content_filter"
+  ) {
+    console.log(`${logPrefix} Received null content, retrying...`);
+    response = (await client.chat.completions(
+      completionOptions as any,
+    )) as unknown as SarvamChatResponse;
+  }
+
+  if (!response?.choices || response.choices.length === 0) {
+    throw new Error("Sarvam AI returned an empty response (no choices)");
+  }
+
+  const content = response.choices[0].message.content;
+  if (!content) {
+    const reason = response.choices[0].finish_reason;
+    throw new Error(`Sarvam AI returned null content (Finish Reason: ${reason})`);
+  }
+
+  return content;
+};
+
 export const extractOrderData = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { chunk, language: langParam = "en-IN" } = req.body;
@@ -84,80 +129,15 @@ ${chunk}
 ---
 Generate the JSON order in "${language}" now. Return ONLY JSON.`;
 
-    const client = getSarvamClient();
-    let response = (await client.chat.completions({
-      model: "sarvam-30b",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-      max_tokens: 4096,
-    })) as SarvamChatResponse;
-
-    // Retry once if content is null
-    if (
-      (!response?.choices || response.choices.length === 0 || !response.choices[0].message.content) &&
-      response.choices?.[0]?.finish_reason !== "content_filter"
-    ) {
-      console.log("[OrderController] Received null content, retrying synthesis...");
-      response = (await client.chat.completions({
-        model: "sarvam-30b",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: userPrompt,
-          },
-        ],
-        max_tokens: 4096,
-      })) as SarvamChatResponse;
-    }
-
-    if (!response?.choices || response.choices.length === 0) {
-      throw new Error("Sarvam AI returned an empty response (no choices)");
-    }
-
-    const responseText = response.choices[0].message.content;
-
-    if (responseText === null || responseText === undefined) {
-      const finishReason = response.choices[0].finish_reason;
-      console.error(
-        "[OrderController] Sarvam AI response content is null. Full response:",
-        JSON.stringify(response, null, 2),
-      );
-      throw new Error(
-        `Sarvam AI returned a response with null content (Finish Reason: ${finishReason})`,
-      );
-    }
+    const responseText = await callSarvamAI(systemPrompt, userPrompt, "[OrderController]");
 
     console.log(`[OrderController] AI response received (length: ${responseText.length} chars)`);
 
     const cleanedJSON = extractJSON(responseText);
 
     if (!cleanedJSON) {
-      console.error(
-        "[OrderController] Failed to clean AI response into JSON:",
-        responseText.substring(0, 500),
-      );
-
-      // Special handling for truncated responses
-      const isTruncated =
-        (responseText.length > 0 && !responseText.trim().endsWith("}")) ||
-        response.choices[0].finish_reason === "length";
-
       return res.status(500).json({
-        error: isTruncated
-          ? "AI response was truncated. Please try again with a shorter chunk."
-          : "Failed to parse JSON from AI response",
+        error: "Failed to parse JSON from AI response",
         raw: responseText,
       });
     }
@@ -201,70 +181,18 @@ ${JSON.stringify(orderData, null, 2)}
 ---
 Translate all values to "${language}" now. Return ONLY JSON.`;
 
-    const client = getSarvamClient();
-    let response = (await client.chat.completions({
-      model: "sarvam-30b",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-      max_tokens: 4096,
-    })) as SarvamChatResponse;
-
-    // Retry once if content is null
-    if (
-      (!response?.choices || response.choices.length === 0 || !response.choices[0].message.content) &&
-      response.choices?.[0]?.finish_reason !== "content_filter"
-    ) {
-      console.log("[OrderController] Received null content, retrying translation...");
-      response = (await client.chat.completions({
-        model: "sarvam-30b",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: userPrompt,
-          },
-        ],
-        max_tokens: 4096,
-      })) as SarvamChatResponse;
-    }
-
-    if (!response?.choices || response.choices.length === 0) {
-      throw new Error("Sarvam AI returned an empty translation response");
-    }
-
-    const responseText = response.choices[0].message.content;
-
-    if (responseText === null || responseText === undefined) {
-      const finishReason = response.choices[0].finish_reason;
-      console.error(
-        "[OrderController] Sarvam AI translation response content is null. Full response:",
-        JSON.stringify(response, null, 2),
-      );
-      throw new Error(
-        `Sarvam AI returned a translation response with null content (Finish Reason: ${finishReason})`,
-      );
-    }
+    const responseText = await callSarvamAI(systemPrompt, userPrompt, "[TranslateController]");
 
     const cleanedJSON = extractJSON(responseText);
 
     if (!cleanedJSON) {
       return res.status(500).json({
-        error: "Failed to parse translated JSON from AI response",
+        error: "Failed to parse JSON from translation response",
         raw: responseText,
       });
     }
 
+    console.log("[OrderController] Translation successful, sending refined JSON");
     return res.json({
       result: cleanedJSON as unknown as LegalOrderData,
     });
@@ -355,6 +283,30 @@ function handlePrimitiveOrDelimiter(char: string, pos: number, state: JSONState)
   }
 }
 
+function handleQuote(char: string, i: number, text: string, state: JSONState): boolean {
+  if (char === '"' && (i === 0 || text[i - 1] !== "\\")) {
+    state.inString = !state.inString;
+    if (!state.inString) setComplete(state, '"', i);
+    return true;
+  }
+  return false;
+}
+
+function shouldSkip(char: string, state: JSONState): boolean {
+  return state.inString || /[ \n\r\t]/.test(char);
+}
+
+function handleStructuralChar(char: string, i: number, state: JSONState) {
+  if (char === "{" || char === "[") {
+    state.stack.push(char === "{" ? "}" : "]");
+    setComplete(state, char, i);
+  } else if (char === "}" || char === "]") {
+    if (state.stack.pop()) setComplete(state, char, i);
+  } else {
+    handlePrimitiveOrDelimiter(char, i, state);
+  }
+}
+
 function analyzeJSONStructure(text: string): JSONState {
   const state: JSONState = {
     stack: [],
@@ -366,23 +318,9 @@ function analyzeJSONStructure(text: string): JSONState {
 
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
-    // Handle quotes
-    if (char === '"' && (i === 0 || text[i - 1] !== "\\")) {
-      state.inString = !state.inString;
-      if (!state.inString) setComplete(state, '"', i);
-      continue;
-    }
-
-    if (state.inString || /[ \n\r\t]/.test(char)) continue;
-
-    if (char === "{" || char === "[") {
-      state.stack.push(char === "{" ? "}" : "]");
-      setComplete(state, char, i);
-    } else if (char === "}" || char === "]") {
-      if (state.stack.pop()) setComplete(state, char, i);
-    } else {
-      handlePrimitiveOrDelimiter(char, i, state);
-    }
+    if (handleQuote(char, i, text, state)) continue;
+    if (shouldSkip(char, state)) continue;
+    handleStructuralChar(char, i, state);
   }
   return state;
 }
