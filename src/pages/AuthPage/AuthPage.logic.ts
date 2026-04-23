@@ -20,7 +20,7 @@ export async function SignUp(
     );
 
     // Auto login after signup
-    return response.data;
+    await SignIn(email, password);
   } catch (error) {
     console.error("SignUp Error:", error);
     throw error;
