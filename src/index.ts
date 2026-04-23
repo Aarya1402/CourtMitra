@@ -1,3 +1,4 @@
+import "./instrument.js";
 import { createServer } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
 import { SarvamAIClient } from "sarvamai";
