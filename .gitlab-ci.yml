@@ -66,8 +66,16 @@ build:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile dockerfile --destination $IMAGE_NAME:latest
-
+    - /kaniko/executor \
+        --context $CI_PROJECT_DIR \
+        --dockerfile dockerfile \
+        --destination $IMAGE_NAME:latest \
+        --build-arg VITE_SENTRY_DSN=$VITE_SENTRY_DSN \
+        --build-arg VITE_API_BASE=$VITE_API_BASE \
+        --build-arg VITE_WS_URL=$VITE_WS_URL \
+        --build-arg VITE_TALKUMENT_API_BASE=$VITE_TALKUMENT_API_BASE \
+        --build-arg API_BASE_URL=$API_BASE_URL
+        
 # 🚀 DEPLOY
 deploy:
   stage: deploy
