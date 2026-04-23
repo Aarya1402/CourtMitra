@@ -98,12 +98,35 @@ export const extractOrderData = async (req: Request, res: Response): Promise<Res
     const systemPrompt = `You are a legal document synthesis expert specializing in Indian court proceedings.
 Your task: Analyze the transcript and generate a COMPLETE, VALID JSON object in "${language}" strictly following the schema.
 
-RULES:
-1. Return ONLY the JSON object. No preamble, no conversational text, no markdown.
-2. If info is missing, use null. No hallucinations.
-3. LANGUAGE CONSISTENCY: The entire response MUST be in "${language}". Do NOT translate to English unless "${language}" is "English". Preserve original legal terminology from the transcript.
-4. Extract Reasoning (concise array) and Operative Directions (separate items).
-5. Ensure legal formatting for final_order.
+CRITICAL OUTPUT RULES:
+1. Return ONLY the JSON object. No preamble, no explanations, no markdown.
+2. The output MUST be valid, parseable JSON.
+3. If information is missing, use null. Do NOT hallucinate.
+4. LANGUAGE CONSISTENCY: The entire response MUST be in "${language}". Do NOT translate unless "${language}" is "English". Preserve original legal terminology.
+
+TOKEN & LENGTH CONTROL (MAX ~4096 TOKENS):
+5. You MUST ensure the response stays within token limits while covering ALL fields.
+6. Use concise, information-dense phrasing. Avoid repetition.
+7. Summarize long sections (arguments, procedural_history, reasoning) into structured, compact language.
+8. Limit:
+   - reasoning_points: max 8–12 items
+   - directions: max 8–12 items
+   - arrays (parties/advocates): deduplicate and keep only meaningful names
+9. If content is too long:
+   - PRIORITIZE: operative_order > reasoning_points > arguments > procedural_history
+   - COMPRESS lower-priority fields instead of dropping schema fields
+10. NEVER omit schema keys. Every key must be present.
+
+STRUCTURING RULES:
+11. Extract reasoning as short, atomic bullet-style strings.
+12. Extract operative directions as clear, enforceable instructions.
+13. Ensure "final_order" is legally formatted, clean, and self-contained.
+14. Avoid narrative storytelling; use structured legal summarization.
+
+QUALITY RULES:
+15. Preserve legal meaning accurately.
+16. Avoid redundancy across fields.
+17. Normalize names, dates, and roles where possible.
 
 SCHEMA:
 {
@@ -121,7 +144,14 @@ SCHEMA:
   "operative_order": { "full_text": "string|null", "directions": ["string"], "final_outcome": "string|null" },
   "final_order": "string|null",
   "signature": { "judge_name": "string|null", "designation": "string|null", "court": "string|null", "date": "string|null", "place": "string|null" }
-}`;
+}
+
+FINAL CHECK BEFORE OUTPUT:
+- JSON is valid
+- No extra text outside JSON
+- All fields present
+- Token-efficient but complete
+`;
 
     const userPrompt = `FULL TRANSCRIPT:
 ${chunk}
