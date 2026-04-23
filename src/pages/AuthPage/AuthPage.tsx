@@ -145,7 +145,6 @@ export default function AuthPage() {
       } else {
         await SignUp(form.name, form.email, form.password, form.organisation);
       }
-
       navigate("/");
     } catch (error: unknown) {
       handleAuthError(error);
@@ -248,6 +247,7 @@ export default function AuthPage() {
               {err.message}
             </p>
           ))}
+
           <button type="submit" className={styles.button}>
             {isForgotPassword && "Send Reset Link"}
             {!isForgotPassword && isLogin ? "Login" : "Sign up"}

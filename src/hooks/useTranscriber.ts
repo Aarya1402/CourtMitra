@@ -16,7 +16,7 @@ const mergeTranscriptChunk = (previous: string, incoming: string) => {
 };
 
 export function useTranscriber() {
-  const idRef = useRef(`recorder_${crypto.randomUUID()}`); // 🔥 UNIQUE INSTANCE
+  const idRef = useRef(`recorder_${crypto.randomUUID()}`);
 
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");

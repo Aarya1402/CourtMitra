@@ -17,7 +17,7 @@ export async function SignUp(
     });
 
     // Auto login after signup
-    return await SignIn(email, password);
+    await SignIn(email, password);
   } catch (error) {
     console.error("SignUp Error:", error);
     throw error;

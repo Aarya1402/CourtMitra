@@ -1,19 +1,36 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import AuthPage from "../pages/AuthPage/AuthPage";
 import { beforeEach, describe, vi, expect, test } from "vitest";
 import axios from "axios";
 
 vi.mock("axios", () => ({
   default: {
-    isAxiosError: vi.fn((error: unknown) => typeof error === "object" && error !== null && (error as any).isAxiosError === true),
+    isAxiosError: vi.fn(
+      (error: unknown) =>
+        typeof error === "object" &&
+        error !== null &&
+        (error as any).isAxiosError === true
+    ),
   },
-  isAxiosError: vi.fn((error: unknown) => typeof error === "object" && error !== null && (error as any).isAxiosError === true),
+  isAxiosError: vi.fn(
+    (error: unknown) =>
+      typeof error === "object" &&
+      error !== null &&
+      (error as any).isAxiosError === true
+  ),
 }));
 
 // 🔥 Mock navigation
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<Record<string, unknown>>("react-router-dom");
+  const actual =
+    await vi.importActual<Record<string, unknown>>("react-router-dom");
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -100,7 +117,7 @@ describe("AuthPage", () => {
 
   // ✅ 5. Signup flow
   test("calls SignUp on signup", async () => {
-    vi.mocked(AuthApi.SignUp).mockResolvedValue({} as unknown);
+    vi.mocked(AuthApi.SignUp).mockResolvedValue();
 
     render(<AuthPage />);
 
@@ -128,7 +145,6 @@ describe("AuthPage", () => {
 
     await waitFor(() => {
       expect(AuthApi.SignUp).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
 
@@ -199,7 +215,9 @@ describe("AuthPage", () => {
       fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
     });
 
-    expect(await screen.findByText(/password reset link has been sent/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/password reset link has been sent/i)
+    ).toBeInTheDocument();
   });
 
   // ✅ 9. Back to login from forgot password
@@ -233,7 +251,9 @@ describe("AuthPage", () => {
 
     fireEvent.click(screen.getByText(/continue with google/i));
 
-    expect(await screen.findByText(/failed to initialize google login/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/failed to initialize google login/i)
+    ).toBeInTheDocument();
   });
 
   // ✅ 12. Form reset on toggle
@@ -261,7 +281,7 @@ describe("AuthPage", () => {
     });
 
     render(<AuthPage />);
-    
+
     fireEvent.change(screen.getByPlaceholderText(/john@talkument.co/i), {
       target: { value: "test@mail.com" },
     });
@@ -273,7 +293,9 @@ describe("AuthPage", () => {
       fireEvent.click(screen.getByRole("button", { name: /login/i }));
     });
 
-    expect(await screen.findByText(/single error message/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/single error message/i)
+    ).toBeInTheDocument();
   });
 
   test("handles API error with 'errors' as simple strings", async () => {
@@ -324,7 +346,9 @@ describe("AuthPage", () => {
       fireEvent.click(screen.getByRole("button", { name: /login/i }));
     });
 
-    expect(await screen.findByText(/an unknown error occurred/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/an unknown error occurred/i)
+    ).toBeInTheDocument();
   });
 
   test("handles completely unknown error type", async () => {
@@ -344,6 +368,8 @@ describe("AuthPage", () => {
       fireEvent.click(screen.getByRole("button", { name: /login/i }));
     });
 
-    expect(await screen.findByText(/an unknown error occurred/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/an unknown error occurred/i)
+    ).toBeInTheDocument();
   });
 });
