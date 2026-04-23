@@ -117,7 +117,7 @@ describe("AuthPage", () => {
 
   // ✅ 5. Signup flow
   test("calls SignUp on signup", async () => {
-    vi.mocked(AuthApi.SignUp).mockResolvedValue();
+    vi.mocked(AuthApi.SignUp).mockResolvedValue({} as unknown);
 
     render(<AuthPage />);
 
