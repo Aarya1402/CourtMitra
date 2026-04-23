@@ -9,15 +9,18 @@ export async function SignUp(
   organisation: string
 ) {
   try {
-    await axios.post(`${API_BASE_URL}/api/talkument/auth/signup`, {
-      name,
-      email,
-      password,
-      org_name: organisation,
-    });
+    const response = await axios.post(
+      `${API_BASE_URL}/api/talkument/auth/signup`,
+      {
+        name,
+        email,
+        password,
+        org_name: organisation,
+      }
+    );
 
     // Auto login after signup
-    return await SignIn(email, password);
+    return response.data;
   } catch (error) {
     console.error("SignUp Error:", error);
     throw error;

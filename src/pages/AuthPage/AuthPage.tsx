@@ -142,11 +142,11 @@ export default function AuthPage() {
 
       if (isLogin) {
         await SignIn(form.email, form.password);
+        navigate("/");
       } else {
         await SignUp(form.name, form.email, form.password, form.organisation);
+        navigate("/auth");
       }
-
-      navigate("/");
     } catch (error: unknown) {
       handleAuthError(error);
     }
