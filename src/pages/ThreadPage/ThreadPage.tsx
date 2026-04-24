@@ -9,6 +9,7 @@ import {
   Upload,
   Mic,
   Download,
+  Bug,
 } from "lucide-react";
 import styles from "./ThreadPage.module.css";
 import { useParams, useNavigate } from "react-router-dom";
@@ -147,6 +148,17 @@ const GlobalHeader: React.FC<{
       )}
     </div>
     <div className={styles.headerRightSection}>
+      <button
+        className={styles.newChatBtn}
+        onClick={() => {
+          throw new Error("Sentry Test Error from CourtMitra Frontend!");
+        }}
+        type="button"
+        style={{ marginRight: "10px", backgroundColor: "#e74c3c" }}
+      >
+        <Bug size={18} />
+        <span>Test Sentry</span>
+      </button>
       <button
         className={styles.newChatBtn}
         onClick={() => navigate("/")}
