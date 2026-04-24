@@ -84,7 +84,7 @@ const callSarvamAI = async (
 
 export const extractOrderData = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { chunk, language: langParam = "en-IN" } = req.body;
+    const { chunk, language: langParam = "gu-IN" } = req.body;
     const language = resolveLanguage(langParam);
 
     console.log(
@@ -185,7 +185,7 @@ Generate the JSON order in "${language}" now. Return ONLY JSON.`;
 
 export const translateOrderData = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { orderData, language: langParam = "en-IN" } = req.body;
+    const { orderData, language: langParam = "gu-IN" } = req.body;
     const language = resolveLanguage(langParam);
 
     if (!orderData) {
