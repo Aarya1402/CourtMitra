@@ -84,7 +84,7 @@ app.post(
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "OK", message: "Server is operational" });
-});
+}); 
 
 Sentry.setupExpressErrorHandler(app);
 

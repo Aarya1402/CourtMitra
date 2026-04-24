@@ -3,6 +3,7 @@ import multer from "multer";
 import { talkumentApiCall } from "../services/talkument.service.js";
 import FormData from "form-data";
 import axios from "axios";
+import * as Sentry from "@sentry/node";
 
 const router = Router();
 const upload = multer({
@@ -104,6 +105,9 @@ const handleAuthCookies = (
 const handleProxyError = (res: Response, req: Request, error: unknown) => {
   const err = error as { message?: string; response?: { data: unknown; status: number } };
   console.error(`[TalkumentProxy] Error in ${req.method} ${req.path}:`, err.message);
+
+  // Capture the error in Sentry
+  Sentry.captureException(error);
 
   if (err.response) {
     const errorData = err.response.data;
