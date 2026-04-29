@@ -19,7 +19,7 @@ run-tests:
     - if: $CI_COMMIT_BRANCH == 'development'
   artifacts:
     paths:
-      - coverage/
+      - coverage/lcov.info
     expire_in: 1 hour
 
 
