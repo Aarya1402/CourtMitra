@@ -12,8 +12,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "sonar": "docker run --rm --network host -e SONAR_HOST_URL=\"${SONAR_HOST_URL:-http://localhost:9000}\" -e SONAR_TOKEN=\"${SONAR_TOKEN}\" -v \"$(pwd):/usr/src\" sonarsource/sonar-scanner-cli"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
