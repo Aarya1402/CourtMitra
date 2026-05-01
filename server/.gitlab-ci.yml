@@ -1,0 +1,90 @@
+image: alpine:latest
+
+stages:
+  - test
+  - build-sonar
+  - build
+  - deploy
+
+variables:
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  GIT_DEPTH: "0"
+  IMAGE_NAME: $CI_REGISTRY_IMAGE/backend
+
+run-tests:
+  stage: test
+  image: node:20
+  script:
+    - npm i
+    - npm run test:coverage
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 hour
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'development'
+
+# 🔍 SONARQUBE ANALYSIS
+build-sonar:
+  stage: build-sonar
+
+  image:
+    name: sonarsource/sonar-scanner-cli:11
+    entrypoint: [""]
+
+  cache:
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+    paths:
+      - "${SONAR_USER_HOME}/cache"
+
+  script:
+    - sonar-scanner
+      -Dsonar.host.url="${SONAR_HOST_URL}"
+      -Dsonar.token="${SONAR_TOKEN}"
+
+  allow_failure: true
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == 'master'
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'development'
+
+# 🏗 BUILD IMAGE
+build:
+  stage: build
+
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile dockerfile --destination $IMAGE_NAME:latest
+
+# 🚀 DEPLOY
+deploy:
+  stage: deploy
+  when: manual
+
+  environment:
+    name: production
+
+  before_script:
+    - apk add --no-cache openssh-client
+
+  script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "IMAGE_NAME=$IMAGE_NAME"
+
+    - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+      echo \"$CI_REGISTRY_PASSWORD\" | docker login $CI_REGISTRY -u \"$CI_REGISTRY_USER\" --password-stdin &&
+      docker pull $IMAGE_NAME:latest &&
+      docker stop courtmitra_backend || true &&
+      docker rm courtmitra_backend || true &&
+      docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_backend -p 5003:5000 -e SARVAM_API_KEY="$SARVAM_API_KEY" -e PORT="$PORT" -e TALKUMENT_API_BASE="$TALKUMENT_API_BASE" -e SENTRY_DSN="$SENTRY_DSN" $IMAGE_NAME:latest
+      "

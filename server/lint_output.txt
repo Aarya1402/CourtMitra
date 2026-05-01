@@ -1,0 +1,80 @@
+
+> audiorecorder-server@1.0.0 lint
+> eslint .
+
+
+/home/aarya/Internship_Projects/courtMitra/server/src/app.ts
+  19:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  73:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/controllers/order.controller.ts
+   14:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  217:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  242:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:11  error    Empty block statement                     no-empty
+  270:13  error    Empty block statement                     no-empty
+
+/home/aarya/Internship_Projects/courtMitra/server/src/controllers/talkument.controller.ts
+   8:3   error    'next' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   9:12  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  51:19  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/index.ts
+  16:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  50:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/processAudio.ts
+  25:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/routes/order.route.ts
+  6:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  7:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/routes/talkument.route.ts
+   48:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:91  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  154:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/services/talkument.service.ts
+   9:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/tests/order.test.ts
+   4:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/tests/processAudio.test.ts
+    6:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   17:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   37:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/tests/talkument.test.ts
+   5:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/aarya/Internship_Projects/courtMitra/server/src/tests/transcribe.test.ts
+  38:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 49 problems (3 errors, 46 warnings)
+
