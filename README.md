@@ -2,6 +2,30 @@
 
 CourtMitra is a full-stack application. This repository is a monorepo containing both the frontend client and the backend server. The application features an AI-integrated backend (via Google Generative AI & Sarvam AI) and a modern React frontend.
 
+> 📖 **User Manual**: For detailed instructions on how to use CourtMitra, please refer to the [CourtMitra User Manual](./docs/CourtMitra_User_Manual.pdf).
+
+---
+
+## Features: Your Intelligent Multilingual Legal Partner
+
+### Step 1: Secure Access & Workspace
+- **Secure Authorized Login**: Access is restricted to registered users via email/password or integrated "Continue with Google" authentication to ensure data privacy.
+- **Universal Workspace**: A clean, centralized interface allows users to manage files, start new chats, and toggle between transcripts and court orders.
+
+### Step 2: Intelligent Case Paper Analysis
+- **Seamless Document Upload**: Easily upload case papers into the system for deep AI analysis and information extraction.
+- **"Talk to the Document" AI**: Query your documents directly by typing or using the microphone; the AI agent retrieves specific information hidden within the files.
+- **Instant Case Summaries**: Automatically generate structured summaries covering case backgrounds, plaintiff details, and key legal points.
+
+### Step 3: Advanced Document Generation
+- **Smart Dictation Mode**: Capture legal proceedings or notes via the Transcribe Tab, featuring dedicated audio controls for record, pause, resume, and stop.
+- **Multilingual Support**: Full support for English, Gujarati, and Hindi, with the capability to integrate other vernacular languages.
+- **Automated Court Order Creation**: The AI uses a standard legal knowledge graph to convert transcripts into formatted court orders automatically.
+
+### Step 4: Refinement & Professional Export
+- **Fully Editable Transcripts & Orders**: All AI-generated text is fully editable within the platform, allowing for manual adjustments and final legal vetting.
+- **Professional PDF Export**: Once finalized, documents can be saved and exported as professional PDFs for official court use or filing.
+
 ## Project Structure
 
 This monorepo is split into two main directories:
