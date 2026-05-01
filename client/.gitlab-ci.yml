@@ -1,0 +1,95 @@
+stages:
+  - test
+  - build-sonar
+  - build
+  - deploy
+
+variables:
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  IMAGE_NAME: $CI_REGISTRY_IMAGE/frontend
+
+run-tests:
+  stage: test
+  image: node:20
+  script:
+    - npm i
+    - npm run test:coverage
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'development'
+  artifacts:
+    paths:
+      - coverage/lcov.info
+    expire_in: 1 hour
+
+
+
+# 🔍 SONARQUBE ANALYSIS
+build-sonar:
+  stage: build-sonar
+
+  image:
+    name: sonarsource/sonar-scanner-cli:11
+    entrypoint: [""]
+
+  cache:
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+    paths:
+      - "${SONAR_USER_HOME}/cache"
+      - sonar-scanner/
+
+  script:
+    - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
+
+  allow_failure: true
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == 'master'
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'development'
+
+# 🚀 DEPLOY
+deploy:
+  stage: deploy
+  when: manual
+# 🏗 BUILD IMAGE
+build:
+  stage: build
+
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile dockerfile --destination $IMAGE_NAME:latest --build-arg VITE_TALKUMENT_API_BASE="$VITE_TALKUMENT_API_BASE" --build-arg VITE_WS_URL="$VITE_WS_URL" --build-arg VITE_API_BASE="$VITE_API_BASE" --build-arg API_BASE_URL="$API_BASE_URL" --build-arg VITE_SENTRY_DSN="$VITE_SENTRY_DSN"
+
+# 🚀 DEPLOY
+deploy:
+  stage: deploy
+  when: manual
+
+  image: alpine:latest
+
+  before_script:
+    - apk add --no-cache openssh-client
+
+  script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "IMAGE_NAME=$IMAGE_NAME"
+
+    - ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+        echo \"$CI_REGISTRY_PASSWORD\" | docker login $CI_REGISTRY -u \"$CI_REGISTRY_USER\" --password-stdin &&
+
+        docker pull $IMAGE_NAME:latest &&
+
+        docker stop courtmitra_frontend || true &&
+        docker rm courtmitra_frontend || true &&
+
+        docker run -d --add-host=host.docker.internal:host-gateway --name courtmitra_frontend -p 3002:80 -e VITE_TALKUMENT_API_BASE="$VITE_TALKUMENT_API_BASE" -e VITE_WS_URL="$VITE_WS_URL" -e VITE_API_BASE="$VITE_API_BASE" -e API_BASE_URL="$API_BASE_URL" -e VITE_SENTRY_DSN="$VITE_SENTRY_DSN" $IMAGE_NAME:latest
+     "

@@ -1,0 +1,789 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--bg-secondary);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 2rem;
+  background-color: white;
+  border-bottom: 1px solid var(--border-strong);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: "Outfit", sans-serif;
+}
+
+.statusGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.processingBadge {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.languageSelect {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-base);
+}
+
+.languageSelect:hover {
+  border-color: var(--accent);
+  background-color: white;
+}
+
+.languageSelect:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  background-color: white;
+}
+
+.pdfButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.pdfButton:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.pdfButton:disabled {
+  background-color: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.formContainer {
+  flex: 1;
+  padding: 3rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.loaderOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1.2rem;
+  font-family: var(--font-outfit);
+}
+
+.spinner {
+  width: 54px;
+  height: 54px;
+  border: 5px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  margin-bottom: 24px;
+  box-shadow: 0 0 15px var(--accent-light);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Document Page Styles */
+.documentPage {
+  background: white;
+  width: 210mm;
+  max-width: 100%;
+  min-height: 297mm;
+  padding: 30mm 25mm;
+  box-shadow: var(--shadow-xl);
+  font-family: "Times New Roman", Times, serif;
+  color: black;
+  font-size: 13pt;
+  line-height: 1.7;
+  position: relative;
+  border-radius: 4px;
+}
+
+.docTextarea,
+.docInlineTextarea {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 100%;
+  resize: none;
+  min-height: 1.6em;
+  overflow: hidden;
+  padding: 4px;
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-sm);
+  border-bottom: 1px dashed transparent;
+}
+
+.docInlineTextareaCenter {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 100%;
+  resize: none;
+  min-height: 1.6em;
+  overflow: hidden;
+  padding: 4px;
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-sm);
+  border-bottom: 1px dashed transparent;
+  text-align: center;
+}
+
+.docTextarea:focus,
+.docInlineTextarea:focus .docInlineTextareaCenter {
+  outline: none;
+  background: var(--bg-tertiary);
+  border-bottom-color: var(--accent);
+}
+
+.docTextarea:hover,
+.docInlineTextarea:hover .docInlineTextareaCenter {
+  background: #fafafa;
+  border-bottom-color: var(--border-strong);
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+  font-size: 11pt;
+  font-weight: bold;
+}
+
+.courtNameSection {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.courtNameSection h2 {
+  font-size: 18pt;
+  margin: 0;
+  font-weight: bold;
+  text-align: center;
+}
+
+.courtNameSection h3 {
+  font-size: 14pt;
+  margin: 8px 0 0 0;
+  text-align: center;
+}
+
+.caseTypeSection {
+  text-align: center;
+  margin-bottom: 35px;
+  font-weight: bold;
+  font-size: 14pt;
+}
+
+.partiesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 35px;
+}
+
+.partyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.partyDetails {
+  flex: 1;
+  max-width: 78%;
+}
+
+.partyRole {
+  width: 20%;
+  text-align: right;
+  font-weight: bold;
+}
+
+.vsText {
+  text-align: center;
+  font-weight: bold;
+  margin: 15px 0;
+}
+
+.divider {
+  border: 0;
+  border-top: 2px solid black;
+  margin: 25px 0;
+}
+
+.advocatesSection {
+  margin-bottom: 35px;
+}
+
+.advocateRow {
+  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
+}
+
+.advocateRow span {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.orderBodyTitle {
+  text-align: center;
+  font-weight: bold;
+  font-size: 16pt;
+  margin: 50px 0 25px 0;
+  letter-spacing: 0.1em;
+}
+
+.orderContent {
+  margin-bottom: 45px;
+  text-align: justify;
+}
+
+.signatureSection {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 60px;
+  page-break-inside: avoid;
+}
+
+.sigLeft {
+  width: 42%;
+}
+
+.sigRow {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sigRow span {
+  font-weight: bold;
+}
+
+.sigRight {
+  width: 42%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sigPlaceholder {
+  margin-bottom: 45px;
+}
+
+.judgeName {
+  font-weight: bold;
+}
+
+.pdfMode * {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.reasoningSection {
+  margin-bottom: 35px;
+}
+
+.reasoningSection h5 {
+  font-size: 13pt;
+  margin: 0 0 15px 0;
+  font-weight: bold;
+}
+
+.reasoningPoint,
+.directionPoint {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+.addBtn {
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all var(--transition-base);
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.addBtn:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.addActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.micBtn {
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+}
+
+.micBtn:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.micBtn.recording {
+  background: #fef2f2;
+  color: var(--danger);
+  border-color: #fee2e2;
+  animation: pulseMic 1.5s infinite;
+}
+
+.recordingText {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+@keyframes pulseMic {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.recorderWrapper {
+  margin-top: 15px;
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  width: fit-content;
+}
+
+.liveTranscript {
+  padding: 8px;
+  background: #fef2f2;
+  border-radius: var(--radius-sm);
+  font-style: italic;
+  color: var(--danger);
+  font-size: 11pt;
+  margin-bottom: 4px;
+}
+
+.liveTranscriptNew {
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: var(--radius-md);
+  margin-top: 8px;
+  font-style: italic;
+  color: var(--danger);
+  font-size: 11pt;
+  border: 1px dashed var(--danger);
+}
+
+.directionsList {
+  margin-top: 25px;
+}
+
+.removeBtn {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1.4rem;
+  transition: all var(--transition-base);
+  padding: 0 6px;
+  line-height: 1;
+}
+
+.removeBtn:hover {
+  transform: scale(1.2);
+  color: #b91c1c;
+}
+
+.pointActions {
+  display: flex;
+  gap: 4px;
+}
+
+.micBtnSmall {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+  padding: 0 4px;
+}
+
+.micBtnSmall:hover {
+  transform: scale(1.2);
+  color: var(--accent-hover);
+}
+
+.micBtnSmall.recording {
+  color: var(--danger);
+  animation: pulseMic 1.5s infinite;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .wrapper,
+  .wrapper * {
+    visibility: visible;
+  }
+  .wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .toolbar {
+    display: none !important;
+  }
+  .formContainer {
+    padding: 0 !important;
+  }
+  .documentPage {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  .docTextarea,
+  .docInlineTextarea {
+    border-bottom: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .statusGroup {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .formContainer {
+    padding: 1rem 0.5rem;
+  }
+
+  .documentPage {
+    padding: 15mm 10mm;
+    font-size: 11pt;
+    min-height: auto;
+  }
+
+  .courtNameSection h2 {
+    font-size: 14pt;
+  }
+
+  .courtNameSection h3 {
+    font-size: 11pt;
+  }
+
+  .caseTypeSection {
+    font-size: 11pt;
+    margin-bottom: 20px;
+  }
+
+  .partyRole {
+    font-size: 10pt;
+  }
+
+  .orderBodyTitle {
+    font-size: 13pt;
+    margin: 30px 0 15px 0;
+  }
+
+  .signatureSection {
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .sigLeft,
+  .sigRight {
+    width: 100%;
+    text-align: center;
+  }
+
+  .sigRow {
+    justify-content: center;
+  }
+}
+
+.languageInline {
+  height: 42px;
+  background: white;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  min-width: 110px;
+  flex: 0 1 auto;
+}
+
+.languageInline:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-tertiary);
+}
+
+.languageMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 299;
+  border: none;
+  padding: 0;
+}
+
+.languageMenuSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border-top: 1px solid var(--border-strong);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 300;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.languageMenuItem {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.languageMenuItem:hover {
+  background: var(--bg-tertiary);
+}
+
+.languageMenuItemActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+/* ── NEW FIELDS ─────────────────────────────────────────── */
+
+.datesSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin-bottom: 20px;
+  font-size: 12pt;
+}
+
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateRow span {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.partiesDetailSection {
+  margin-bottom: 20px;
+}
+
+.partyDetailRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  align-items: flex-start;
+}
+
+.partyDetailLabel {
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.appearanceRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 12pt;
+}
+
+.appearanceRow span {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.caseDetailsSection {
+  margin-bottom: 30px;
+}
+
+.sectionHeading {
+  text-decoration: underline;
+  font-size: 14pt;
+  margin: 0 0 12px 0;
+  font-weight: bold;
+}
+
+.caseDetailRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  align-items: flex-start;
+}
+
+.caseDetailLabel {
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 160px;
+}
+
+.narrativeSection {
+  margin-bottom: 30px;
+}
+
+.narrativeSection h5 {
+  font-size: 13pt;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .datesSection {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .caseDetailLabel,
+  .partyDetailLabel {
+    min-width: 90px;
+    font-size: 10pt;
+  }
+}

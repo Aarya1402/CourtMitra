@@ -1,0 +1,99 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
+/* ================= INLINE RECORDER ================= */
+
+.inlineRecorder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  justify-content: flex-start; /* LEFT ALIGN */
+  flex-wrap: nowrap;
+
+  padding-left: 6px;
+  padding-right: 6px;
+  background: #fafafa;
+  border-radius: 12px;
+}
+
+/* ================= TIMER ================= */
+
+.timerInline {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 45px;
+  text-align: center;
+
+  flex: 0 0 auto;
+}
+
+/* ================= WAVEFORM ================= */
+
+.waveformInline {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  height: 24px;
+
+  flex: 0 0 auto; /* NO STRETCH */
+  max-width: 120px;
+
+  overflow: hidden;
+}
+
+.barInline {
+  width: 2px;
+  border-radius: 2px;
+  transition: height 0.05s ease;
+}
+
+/* ================= BUTTON BASE ================= */
+
+.btn {
+  width: auto;
+  height: 40px;
+  padding: 0 14px;
+  gap: 8px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  cursor: pointer;
+
+  flex: 0 0 auto;
+  transition: all 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+/* ================= BUTTON VARIANTS ================= */
+
+.btnRecord {
+  background: #ff3c3c;
+  color: white;
+  border: none;
+}
+
+.btnRecord:hover {
+  background: #d32f2f;
+}
+
+.btnPause {
+  background: #ffffff;
+  color: #333;
+}
+
+.btnPause:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.btnPause:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

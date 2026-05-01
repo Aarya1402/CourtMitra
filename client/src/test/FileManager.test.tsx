@@ -1,0 +1,323 @@
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import FileManager from "../components/FileManager/FileManager";
+import axios from "axios";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import * as AlertContext from "../context/AlertContext";
+
+// Mock axios
+vi.mock("axios");
+
+const mockShowAlert = vi.fn();
+
+// Polyfill for Blob.arrayBuffer if not present in test environment
+if (typeof Blob !== "undefined" && !Blob.prototype.arrayBuffer) {
+  Blob.prototype.arrayBuffer = function () {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.readAsArrayBuffer(this);
+    });
+  };
+}
+
+// Create a helper to render the component with a specific threadId
+const renderFileManager = (threadId = "test-thread-id") => {
+  return render(
+    <MemoryRouter initialEntries={[`/thread/${threadId}`]}>
+      <Routes>
+        <Route path="/thread/:threadId" element={<FileManager />} />
+        <Route path="/" element={<FileManager />} />
+      </Routes>
+    </MemoryRouter>
+  );
+};
+
+describe("FileManager Component", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.useRealTimers();
+    vi.spyOn(AlertContext, "useAlert").mockReturnValue({
+      showAlert: mockShowAlert,
+      showConfirm: vi.fn(),
+    } as unknown as ReturnType<typeof AlertContext.useAlert>);
+  });
+
+  it("renders empty state when no files exist", async () => {
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
+
+    renderFileManager();
+
+    await waitFor(() => {
+      expect(screen.getByText("No documents found.")).toBeInTheDocument();
+    });
+  });
+
+  it("fetches and displays files successfully", async () => {
+    const mockFiles = [
+      { id: "1", name: "test1.pdf", status: "completed" },
+      { id: "2", name: "test2.docx", status: "pending" },
+    ];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+
+    await waitFor(() => {
+      expect(screen.getByText("test1.pdf")).toBeInTheDocument();
+      expect(screen.getByText("test2.docx")).toBeInTheDocument();
+    });
+  });
+
+  it("triggers file upload when add button is clicked", async () => {
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
+
+    renderFileManager();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Add file")).toBeInTheDocument();
+    });
+    
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+  });
+
+  it("allows file upload and refreshes file list", async () => {
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
+    (axios.post as import("vitest").Mock).mockResolvedValue({ data: { success: true } });
+
+    renderFileManager();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Add file")).toBeInTheDocument();
+    });
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const testFile = new File(["test data"], "test1.pdf", { type: "application/pdf" });
+
+    fireEvent.change(fileInput, { target: { files: [testFile] } });
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalled();
+      expect(axios.get).toHaveBeenCalledTimes(2); 
+    });
+  });
+
+  it("handles preview success flow and renders iframe", async () => {
+    const blob = new Blob(["test"], { type: "application/pdf" });
+    const mockBlobUrl = "blob:mock-url";
+    window.URL.createObjectURL = vi.fn().mockReturnValue(mockBlobUrl);
+
+    const mockFiles = [{ id: "file1", name: "document.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock)
+      .mockResolvedValueOnce({ data: { files: mockFiles } }) 
+      .mockResolvedValueOnce({ data: { file_url: "http://signed-url.com" } }) 
+      .mockResolvedValueOnce({ data: blob }); 
+
+    renderFileManager();
+
+    await waitFor(() => {
+      expect(screen.getByText("document.pdf")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText(/Actions for document.pdf/i));
+    fireEvent.click(screen.getByText(/View Preview/i));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Back/i)).toBeInTheDocument();
+      const iframe = document.querySelector("iframe");
+      expect(iframe).toBeInTheDocument();
+      expect(iframe?.src).toContain(mockBlobUrl);
+    });
+  });
+
+  it("opens delete modal and deletes file", async () => {
+    const mockFiles = [{ id: "file1", name: "document.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+    (axios.delete as import("vitest").Mock).mockResolvedValue({ data: { success: true } });
+
+    renderFileManager();
+
+    await waitFor(() => {
+      expect(screen.getByText("document.pdf")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText(/Actions for document.pdf/i));
+    
+    // Now pick Delete from the dropdown
+    const deleteBtn = screen.getByText("Delete");
+    fireEvent.click(deleteBtn);
+
+    // Wait for modal
+    await waitFor(() => {
+      expect(screen.getByText(/Delete file\?/i)).toBeInTheDocument();
+    });
+
+    // Find the confirm button specifically in the modal
+    // We can use screen.getByRole("button", { name: "Delete" }) 
+    // because the dropdown should have closed.
+    const confirmBtn = await screen.findByRole("button", { name: /^Delete$/ });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining("file1"));
+    });
+  });
+
+  it("closes delete modal when cancel is clicked", async () => {
+    const mockFiles = [{ id: "file1", name: "document.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+
+    await waitFor(() => {
+      expect(screen.getByText("document.pdf")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Actions for document.pdf/i }));
+    fireEvent.click(screen.getByText("Delete"));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Delete file\?/i)).toBeInTheDocument();
+    });
+
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Delete file\?/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("shows notice when adding file without threadId", async () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<FileManager />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const addBtn = screen.getByLabelText("Add file");
+    fireEvent.click(addBtn);
+
+    expect(mockShowAlert).toHaveBeenCalledWith(
+      "Please select or create a thread first.",
+      expect.objectContaining({ title: "Notice" })
+    );
+  });
+
+  it("handles upload failure", async () => {
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: [] } });
+    (axios.post as import("vitest").Mock).mockRejectedValue(new Error("Upload fail"));
+
+    renderFileManager();
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [new File([""], "test.pdf")] } });
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith("Upload failed. Please try again.", expect.any(Object));
+    });
+  });
+
+  it("handles preview URL not found", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock)
+      .mockResolvedValueOnce({ data: { files: mockFiles } })
+      .mockResolvedValueOnce({ data: { file_url: null } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("View Preview"));
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith("Preview URL not found.", expect.any(Object));
+    });
+  });
+
+  it("handles preview abort error", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock)
+      .mockResolvedValueOnce({ data: { files: mockFiles } })
+      .mockRejectedValueOnce({ name: "CanceledError" });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("View Preview"));
+
+    await waitFor(() => {
+        expect(screen.queryByText(/Loading Preview/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("handles delete failure", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+    (axios.delete as import("vitest").Mock).mockRejectedValue(new Error("Delete fail"));
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete$/ }));
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith("Failed to delete file.", expect.any(Object));
+    });
+  });
+
+
+  it("closes delete modal on Escape key", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("Delete"));
+
+    expect(screen.getByText(/Delete file\?/i)).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Delete file\?/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("closes delete modal when clicking outside", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    fireEvent.click(screen.getByText("Delete"));
+
+    expect(screen.getByText(/Delete file\?/i)).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Delete file\?/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("closes dropdown when clicking outside", async () => {
+    const mockFiles = [{ id: "file1", name: "doc.pdf", status: "completed" }];
+    (axios.get as import("vitest").Mock).mockResolvedValue({ data: { files: mockFiles } });
+
+    renderFileManager();
+    await waitFor(() => screen.findByText("doc.pdf"));
+    fireEvent.click(screen.getByLabelText(/Actions for doc.pdf/i));
+    
+    expect(screen.getByText("View Preview")).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+
+    await waitFor(() => {
+      expect(screen.queryByText("View Preview")).not.toBeInTheDocument();
+    });
+  });
+});
